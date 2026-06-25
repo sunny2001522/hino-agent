@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HINO AI 車隊軍師 — 待處理事項中心</title>
+<style>
+  :root{
+    --bg:#0a0f1f;--bg2:#0e1530;--card:#141d36;--card2:#1a2442;--line:#243154;
+    --txt:#e8edf7;--mut:#93a2c4;--mut2:#6b7ba0;--accent:#2bd1c4;
+    --grad:linear-gradient(135deg,#2bd1c4,#3b82f6);--good:#34d399;--warn:#fbbf24;--bad:#f87171;--info:#a78bfa;
+    --badbg:#3a1722;--warnbg:#3a2f12;--goodbg:#0f2e26;--infobg:#241c3a;--r:14px;--sh:0 8px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,sans-serif;background:radial-gradient(1200px 600px at 80% -10%,#16224a 0%,var(--bg) 55%);color:var(--txt);line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 16px 80px}
+  header{position:sticky;top:0;z-index:30;backdrop-filter:blur(12px);background:rgba(10,15,31,.85);border-bottom:1px solid var(--line)}
+  .hd{max-width:1180px;margin:0 auto;padding:11px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+  .logo{width:38px;height:38px;border-radius:11px;background:var(--grad);display:grid;place-items:center;font-size:19px;flex:0 0 auto}
+  .hd h1{font-size:16px;font-weight:850}.hd h1 small{font-weight:600;color:var(--mut);font-size:11.5px;display:block}
+  .tabs{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px;background:var(--card);border:1px solid var(--line);padding:4px;border-radius:12px}
+  .tab{font:inherit;font-size:13px;font-weight:700;color:var(--mut);background:none;border:none;padding:7px 14px;border-radius:9px;cursor:pointer}
+  .tab.on{background:var(--grad);color:#04121f}
+  section{margin-top:26px;scroll-margin-top:76px}
+  .sh{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+  .sh h2{font-size:18px;font-weight:800}.sh .tag{font-size:12px;color:var(--mut)}
+  .sh .num{font-size:12px;font-weight:800;color:#04121f;background:var(--bad);border-radius:20px;padding:2px 9px}
+  .subt{font-size:12.5px;color:var(--mut2);margin-bottom:13px}
+  /* TODO action center */
+  .todos{display:flex;flex-direction:column;gap:10px}
+  .todo{background:var(--card);border:1px solid var(--line);border-left-width:4px;border-radius:var(--r);padding:14px 16px;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;box-shadow:var(--sh)}
+  .todo.bad{border-left-color:var(--bad)}.todo.warn{border-left-color:var(--warn)}.todo.info{border-left-color:var(--info)}
+  .todo .meta{flex:1 1 320px;min-width:240px}
+  .todo .cat{font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--mut);text-transform:uppercase}
+  .todo .tt{font-size:15.5px;font-weight:800;margin:3px 0 4px}
+  .todo .dt{font-size:13px;color:var(--mut)}
+  .todo .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .tdata{border-top:1px solid var(--line);margin-top:11px;padding-top:11px;font-size:12.5px;color:var(--mut);line-height:1.75}
+  .tdata b{color:var(--accent)}
+  .btn{font:inherit;font-size:13px;font-weight:700;border:none;border-radius:9px;padding:8px 13px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .btn:active{transform:translateY(1px)}
+  .btn.pri{background:var(--grad);color:#04121f}.btn.gho{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+  .btn.dng{background:#f87171;color:#2a0b10}.btn.warnb{background:#fbbf24;color:#2a2206}.btn.gd{background:var(--good);color:#04241a}
+  .btn.sm{padding:7px 11px;font-size:12px}.btn:disabled{opacity:.45;cursor:not-allowed}
+  /* AI advice */
+  .advice{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:13px}
+  .adv{background:linear-gradient(135deg,#11203f,#15182f);border:1px solid #2a3a63;border-radius:var(--r);padding:16px 17px;box-shadow:var(--sh)}
+  .adv .f{font-size:14px;font-weight:800;margin-bottom:4px}.adv .f b{color:#7fe6dc}
+  .adv .why{font-size:12.5px;color:var(--mut);margin-bottom:10px}
+  .adv .rec{font-size:12.5px;color:#cdd7ec;margin-bottom:11px}
+  .adv .acts{display:flex;gap:7px;flex-wrap:wrap}
+  /* region compare table */
+  .tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+  .tbl th,.tbl td{padding:12px 14px;text-align:left;font-size:13.5px;border-bottom:1px solid var(--line)}
+  .tbl th{font-size:12px;color:var(--mut);font-weight:700;background:var(--bg2)}
+  .tbl td.n{font-weight:800}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl tr.click{cursor:pointer}.tbl tr.click:hover td{background:#16203c}
+  .dotcell{display:flex;align-items:center;gap:8px}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .mini{font-size:11px;color:var(--mut)}
+  .exptri{display:inline-block;width:12px;color:var(--accent)}
+  .drvbox{display:flex;flex-direction:column;gap:3px;padding:6px 2px}
+  .drvline{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:9px;flex-wrap:wrap;font-size:13px}
+  .drvline:hover{background:#16203c}.drvline .mt2{font-size:11.5px;color:var(--mut)}
+  .lvpill{font-size:11px;font-weight:800;border:1px solid;border-radius:20px;padding:1px 9px}
+  .ntag{font-size:11.5px;font-weight:700}
+  .upill{font-size:10.5px;font-weight:800;padding:2px 9px;border-radius:20px;margin-left:9px}
+  .u-bad{background:var(--badbg);color:var(--bad)}.u-warn{background:var(--warnbg);color:var(--warn)}.u-info{background:var(--infobg);color:#b9a6ff}
+  .loginbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 15px;margin-bottom:13px;font-size:13.5px}
+  .loginbar .sw{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;align-items:center}
+  .loginbar .swc{font-size:12px;font-weight:700;color:var(--mut);background:var(--card);border:1px solid var(--line);padding:5px 11px;border-radius:18px;cursor:pointer}
+  .loginbar .swc.on{color:#04121f;background:var(--grad);border-color:transparent}
+  .quickacts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  /* trend */
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}
+  .chartcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px 15px 6px;box-shadow:var(--sh)}
+  .chartcard .ch-h{display:flex;align-items:baseline;gap:10px;margin-bottom:4px;flex-wrap:wrap}
+  .chartcard .ttl{font-weight:800;font-size:14.5px}.chartcard .now{font-size:20px;font-weight:850;margin-left:auto}.chartcard .sub{font-size:12px;color:var(--mut)}
+  svg.lc{width:100%;height:auto;display:block}.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
+  .regsel{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 12px}
+  .regchip{font-size:12.5px;font-weight:700;color:var(--mut);background:var(--card);border:1px solid var(--line);padding:6px 12px;border-radius:18px;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .regchip.on{color:#04121f;background:var(--grad);border-color:transparent}.regchip .dot{width:8px;height:8px}
+  .cause{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
+  .cause .h{font-weight:800;font-size:14.5px;margin-bottom:6px}
+  .cause ul{margin:4px 0 11px 18px;font-size:13px;color:var(--mut)}.cause li{margin:3px 0}
+  .cause .acts{display:flex;gap:8px;flex-wrap:wrap}
+  /* bar */
+  .bars{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px 17px;box-shadow:var(--sh)}
+  .bar-row{display:grid;grid-template-columns:118px 1fr 88px;align-items:center;gap:11px;padding:6px 0}
+  .bar-name{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar-track{height:18px;background:var(--bg2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+  .bar-fill{height:100%;border-radius:6px 0 0 6px;transition:width .5s}
+  .bar-fill.good{background:linear-gradient(90deg,#16a34a,#34d399)}.bar-fill.bad{background:linear-gradient(90deg,#b91c1c,#f87171)}.bar-fill.mid{background:linear-gradient(90deg,#33425f,#4a5a82)}
+  .bar-val{font-size:13px;font-weight:800;text-align:right}.rk{width:18px;text-align:center}
+  .bar-leg{font-size:12px;color:var(--mut);margin-top:9px;display:flex;gap:14px;flex-wrap:wrap}.bar-leg b.g{color:var(--good)}.bar-leg b.r{color:var(--bad)}
+  .dimsol{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px 17px;margin-top:12px;box-shadow:var(--sh)}
+  .dimsol .h{font-weight:800;font-size:14px}.dimsol ul{margin:9px 0 11px 18px;font-size:13px;color:var(--mut)}.dimsol li{margin:4px 0}
+  .dimsol .acts{display:flex;gap:8px;flex-wrap:wrap}
+  /* kpi secondary */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;box-shadow:var(--sh)}
+  .kpi .k{font-size:12px;color:var(--mut)}.kpi .v{font-size:25px;font-weight:850;margin-top:4px}.kpi .s{font-size:11.5px;margin-top:2px;color:var(--mut2)}
+  /* shipper view */
+  .ship{display:flex;align-items:center;gap:13px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 16px;flex-wrap:wrap;box-shadow:var(--sh)}
+  .ship+.ship{margin-top:9px}
+  .ship .id{font-weight:800;font-size:14px;width:78px}
+  .ship .cust{flex:1 1 180px;min-width:140px}.ship .cust b{font-size:13.5px}.ship .cust .a{font-size:11.5px;color:var(--mut)}
+  .ship .eta{font-size:13px;font-weight:700;width:110px}
+  .ship .acts{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
+  .stpill{font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:20px;white-space:nowrap}
+  .st-go{background:var(--infobg);color:#b9a6ff}.st-soon{background:var(--goodbg);color:var(--good)}.st-risk{background:var(--badbg);color:var(--bad)}.st-done{background:#16263f;color:var(--mut)}
+  .eta-hero{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:5px}
+  .eta-hero .big{font-size:40px;font-weight:850;color:var(--accent);line-height:1}
+  .eta-hero .lbl{font-size:14px;color:var(--mut)}
+  .mapwrap{border:1px solid var(--line);border-radius:13px;overflow:hidden;margin:13px 0}
+  #truckG text{transition:none}
+  .tline{display:flex;justify-content:space-between;margin:6px 0 14px;position:relative}
+  .tline::before{content:"";position:absolute;top:8px;left:8%;right:8%;height:2px;background:var(--line)}
+  .tstep{display:flex;flex-direction:column;align-items:center;gap:6px;z-index:1;flex:1}
+  .tstep .d{width:17px;height:17px;border-radius:50%;background:var(--card2);border:2px solid var(--line)}
+  .tstep.done .d{background:var(--good);border-color:var(--good)}
+  .tstep.cur .d{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 5px rgba(43,209,196,.2)}
+  .tstep .t{font-size:11.5px;color:var(--mut2)}.tstep.cur .t,.tstep.done .t{color:var(--txt)}
+  .drvbar{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;flex-wrap:wrap}
+  .drvbar .av{width:40px;height:40px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:18px}
+  .hidden{display:none}
+  #toasts{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;flex-direction:column;gap:9px;max-width:90vw}
+  .toast{background:var(--card2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:11px;padding:12px 15px;font-size:13.5px;box-shadow:var(--sh);animation:slin .25s;max-width:370px}
+  .toast.ok{border-left-color:var(--good)}.toast.dn{border-left-color:var(--bad)}.toast.wn{border-left-color:var(--warn)}.toast b{display:block;margin-bottom:2px}
+  @keyframes slin{from{opacity:0;transform:translateY(12px)}to{opacity:1}}
+  .ov{position:fixed;inset:0;background:rgba(4,8,18,.74);z-index:70;display:none;place-items:center;padding:18px}.ov.on{display:grid}
+  .modal{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;max-width:500px;width:100%;box-shadow:var(--sh);max-height:86vh;overflow:auto}
+  .modal h3{font-size:18px;margin-bottom:6px}.modal p{font-size:13.5px;color:var(--mut);margin-bottom:14px}
+  .modal .mb{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+  .mrow{display:flex;align-items:center;gap:11px;padding:10px 8px;border-radius:10px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .mrow:last-child{border-bottom:none}.mrow .nm{font-size:13.5px;font-weight:700}.mrow .mt{font-size:11.5px;color:var(--mut)}
+  .mrow .ma{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+  .plan{border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:10px}
+  .plan.rec{border-color:var(--accent);background:#0f2530}
+  .plan .ph{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:5px}
+  .plan .rb{font-size:10.5px;font-weight:800;color:#04121f;background:var(--accent);padding:2px 8px;border-radius:20px}
+  .plan .pd{font-size:12.5px;color:var(--mut)}
+  .foot{margin-top:38px;text-align:center;color:var(--mut2);font-size:12px}
+  @media(max-width:760px){.charts{grid-template-columns:1fr}}
+  @media(max-width:600px){.tbl th:nth-child(3),.tbl td:nth-child(3){display:none}.bar-row{grid-template-columns:92px 1fr 68px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hd">
+    <div class="logo">🚛</div>
+    <div><h1>HINO AI 車隊軍師<small>商用車頭家的智慧夥伴 · 火箭隊</small></h1></div>
+    <div class="tabs">
+      <button class="tab on" id="tab_fleet" onclick="switchView('fleet')">車隊管理</button>
+      <button class="tab" id="tab_lead" onclick="switchView('lead')">車隊負責人</button>
+      <button class="tab" id="tab_driver" onclick="switchView('driver')">司機</button>
+      <button class="tab" id="tab_shipper" onclick="switchView('shipper')">貨主</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+<!-- ===================== 車隊管理 ===================== -->
+<div id="view_fleet">
+
+  <!-- 1. 待處理事項中心 (HERO) -->
+  <section id="todo">
+    <div class="sh"><h2>今日需處理事項</h2><span class="num" id="todoNum"></span><span class="tag">依緊急程度排序</span></div>
+    <div class="todos" id="todoList"></div>
+  </section>
+
+  <!-- 2. AI 可執行建議 -->
+  <section id="advice">
+    <div class="sh"><h2>AI 建議（可直接執行）</h2></div>
+    <div class="advice" id="adviceList"></div>
+  </section>
+
+  <!-- 人力配置 (決策行動，可展開看數據) -->
+  <section id="staffing">
+    <div class="sh"><h2>人力配置與招募建議</h2><span class="tag">單量 vs 駕駛數 · 決定招新比例</span></div>
+    <div class="todo warn" style="flex-direction:column;align-items:stretch">
+      <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+        <div class="meta"><div class="cat">人力決策</div><div class="tt">建議招募 2 名駕駛（北區 +1、中區 +1）</div><div class="dt" id="staffInsight"></div></div>
+        <div class="acts"><button class="btn gho sm" onclick="toggleStaff()"><span id="staffArr">▸</span> 展開看數據</button>
+          <button class="btn pri sm" onclick="act('已建立招募需求單：北區 +1、中區 +1，送 HR。','ok')">一鍵送招募需求</button>
+          <button class="btn gho sm" onclick="act('已將人力寬裕區的車輛調度建議發送調度。','ok')">調度支援</button></div>
+      </div>
+      <div class="tdata" id="staffPanel" style="display:none">
+        <table class="tbl"><thead><tr><th>區域</th><th>月單量</th><th>駕駛數</th><th>人均單量</th><th>負荷</th><th>建議</th></tr></thead><tbody id="staffBody"></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. 區域比較 (先比較，點擊下鑽) -->
+  <section id="region">
+    <div class="sh"><h2>區域比較</h2><span class="tag">先比較 · 點任一列看該區駕駛明細</span></div>
+    <table class="tbl"><thead><tr><th>區域</th><th>駕駛數</th><th>平均安全分</th><th>異常率</th><th>準時率</th><th></th></tr></thead>
+      <tbody id="regBody"></tbody></table>
+    <div class="quickacts">
+      <button class="btn pri sm" onclick="openBatchMail()">批次寄信低分車隊</button>
+      <button class="btn gho sm" onclick="openIdleMessage()">發訊息請各車隊降怠速</button>
+      <button class="btn gho sm" onclick="act('已產出全隊 ESG 碳排報告（GHG 格式）。','ok')">產出 ESG 報告</button>
+    </div>
+  </section>
+
+  <!-- 5. 趨勢 + 原因 (面向 tabs) -->
+  <section id="trend">
+    <div class="sh"><h2>趨勢與原因</h2><span class="tag">切換面向看全隊趨勢與成因</span></div>
+    <div class="regsel" id="metricTabs"></div>
+    <div class="charts" style="grid-template-columns:1fr">
+      <div class="chartcard"><div class="ch-h"><span class="ttl" id="m_ttl"></span><span class="sub" id="m_sub"></span><span class="now" id="m_now"></span></div><div id="chart_metric"></div>
+        <div id="m_legend" style="display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);padding:8px 2px 2px"></div></div>
+    </div>
+    <div class="cause" id="m_cause"></div>
+  </section>
+
+  <!-- 車隊排行 (次要) -->
+  <section id="rank">
+    <div class="sh"><h2>車隊排行</h2><span class="tag">切換維度 · 前三綠／後三紅</span></div>
+    <div class="regsel" id="dimsel"></div>
+    <div class="bars"><div id="barList"></div>
+      <div class="bar-leg"><span><b class="g">■</b> 前三名</span><span><b class="r">■</b> 後三名（最該改善）</span><span id="dimhint"></span></div></div>
+    <div class="dimsol" id="dimSol"></div>
+  </section>
+
+  <!-- 概覽 (移到最後，次要) -->
+  <section id="overview">
+    <div class="sh"><h2>整體概覽</h2><span class="tag">背景指標</span></div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">車輛數</div><div class="v">20</div><div class="s">HINO 300/500/700</div></div>
+      <div class="kpi"><div class="k">怠速佔比</div><div class="v">14%</div><div class="s">≈1,150 小時空轉</div></div>
+      <div class="kpi"><div class="k">待修車輛</div><div class="v">3</div><div class="s">DTC/過熱/過載</div></div>
+      <div class="kpi"><div class="k">平均準時率</div><div class="v">94%</div><div class="s">本月 -1.5%</div></div>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== 貨主視角 ===================== -->
+<div id="view_shipper" class="hidden">
+  <section id="ship">
+    <div class="sh"><h2>即時追蹤您的貨件</h2></div>
+    <div id="loginBar" class="loginbar"></div>
+    <div class="regsel" id="orderTabs"></div>
+    <div id="trackCard"></div>
+  </section>
+</div>
+
+<!-- ===================== 車隊負責人 ===================== -->
+<div id="view_lead" class="hidden">
+  <section>
+    <div class="sh"><h2>我的車隊</h2></div>
+    <div class="regsel" id="leadSel"></div>
+    <div id="leadBody"></div>
+  </section>
+</div>
+
+<!-- ===================== 司機 ===================== -->
+<div id="view_driver" class="hidden">
+  <section>
+    <div class="sh"><h2>我的駕駛儀表</h2></div>
+    <div class="regsel" id="driverSel"></div>
+    <div id="driverBody"></div>
+  </section>
+</div>
+
+  <div class="foot">HINO AI 車隊軍師 · HINO × GenAI 黑客松 Demo · 行動皆為原型模擬</div>
+</div>
+
+<div id="toasts"></div>
+<div class="ov" id="ov"><div class="modal" id="modal"></div></div>
+
+<script>
+const MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月'];
+const regions=[
+ {id:"B",name:"中區",lead:"陳國華",phone:"0912-345-678",color:"#f87171",idlePct:16,overload:180,seatbelt:318,fuel:34,anomaly:12.4,onTime:88,
+  safety:[63,61,60,58,57,55,54,52,51,50,49],brake:[180,200,230,250,270,290,300,320,330,350,360],
+  drivers:[{n:"陳大文",c:"ABC-2201",s:42,i:"超速 / 未繫安全帶"},{n:"林俊男",c:"ABC-2202",s:51,i:"急減速頻繁"},{n:"黃志偉",c:"ABC-2203",s:54,i:"超速熱點"}]},
+ {id:"A",name:"北區",lead:"林志明",phone:"0922-111-222",color:"#fb923c",idlePct:19,overload:120,seatbelt:150,fuel:33,anomaly:9.1,onTime:91,
+  safety:[70,69,67,66,64,63,62,61,60,59,58],brake:[120,130,140,150,160,170,180,190,200,210,220],
+  drivers:[{n:"王建國",c:"ABC-1101",s:52,i:"連3週急煞偏高 / 怠速19%"},{n:"張文豪",c:"ABC-1102",s:57,i:"分心駕駛"},{n:"李明哲",c:"ABC-1103",s:61,i:"未完成點檢"},{n:"周俊宏",c:"ABC-1104",s:62,i:"新進·未完成點檢"}]},
+ {id:"F",name:"東區",lead:"吳俊傑",phone:"0933-444-555",color:"#fbbf24",idlePct:14,overload:287,seatbelt:90,fuel:32,anomaly:8.0,onTime:93,
+  safety:[72,71,70,69,68,66,65,64,63,62,62],brake:[90,95,100,105,110,115,120,125,130,135,140],
+  drivers:[{n:"蔡英傑",c:"ABC-1301",s:58,i:"疑超載 / 引擎過載"},{n:"鄭家豪",c:"ABC-1302",s:63,i:"未完成點檢"},{n:"許文雄",c:"ABC-1303",s:65,i:"新進·急加速"}]},
+ {id:"D",name:"桃竹",lead:"張美玲",phone:"0955-666-777",color:"#a78bfa",idlePct:12,overload:95,seatbelt:60,fuel:31,anomaly:5.2,onTime:96,
+  safety:[74,73,72,71,70,69,69,68,68,67,67],brake:[70,72,74,76,78,80,82,84,86,88,90],
+  drivers:[{n:"劉怡君",c:"ABC-1401",s:64,i:"DTC 故障碼 / 未完成點檢"},{n:"楊大為",c:"ABC-1402",s:68,i:"怠速"},{n:"陳冠宇",c:"ABC-1403",s:69,i:"超速"}]},
+ {id:"E",name:"高雄",lead:"李建宏",phone:"0966-888-999",color:"#34d399",idlePct:10,overload:70,seatbelt:40,fuel:30,anomaly:3.8,onTime:97,
+  safety:[76,76,75,75,75,74,74,74,74,74,74],brake:[50,50,52,52,54,54,56,56,58,58,60],
+  drivers:[{n:"林佳穎",c:"ABC-1501",s:72,i:"穩定"},{n:"高志明",c:"ABC-1502",s:74,i:"穩定"},{n:"莊承翰",c:"ABC-1503",s:76,i:"良好"}]},
+ {id:"C",name:"南區",lead:"王大明",phone:"0977-000-111",color:"#38bdf8",idlePct:8,overload:45,seatbelt:25,fuel:29,anomaly:3.0,onTime:98,
+  safety:[80,80,81,81,81,81,82,81,82,82,81],brake:[30,32,30,34,32,36,34,38,36,40,38],
+  drivers:[{n:"王大年",c:"ABC-1601",s:79,i:"優良"},{n:"蘇曉婷",c:"ABC-1602",s:81,i:"優良"},{n:"何柏翰",c:"ABC-1603",s:82,i:"全隊最佳"},{n:"賴冠廷",c:"ABC-1604",s:83,i:"優良"}]},
+];
+const aggSafety=MONTHS.map((_,i)=>Math.round(regions.reduce((a,r)=>a+r.safety[i],0)/regions.length));
+const aggBrake=MONTHS.map((_,i)=>regions.reduce((a,r)=>a+r.brake[i],0));
+let curMetric="safety",curDim="safety";
+const warnState={},drvSent={},notify={};
+const ordersByRegion={B:720,A:980,F:560,D:540,E:600,C:760};const TARGET_PER_DRIVER=210;
+const speedByRegion={B:730,A:440,F:275,D:195,E:124,C:88};
+const metricCfg={speed:{type:'sum',rv:r=>speedByRegion[r.id]},idle:{type:'avg',rv:r=>r.idlePct},overload:{type:'sum',rv:r=>r.overload},seatbelt:{type:'sum',rv:r=>r.seatbelt},fuel:{type:'avg',rv:r=>r.fuel}};
+function regionSeries(m,r){
+  if(m.key==='safety')return r.safety;
+  if(m.key==='brake')return r.brake;
+  const cfg=metricCfg[m.key],sc=cfg.rv(r);
+  if(cfg.type==='sum'){const sum=regions.reduce((a,x)=>a+cfg.rv(x),0);return m.data.map(v=>Math.round(v*sc/sum));}
+  const avg=regions.reduce((a,x)=>a+cfg.rv(x),0)/regions.length;return m.data.map(v=>+(v+sc-avg).toFixed(1));
+}
+function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
+function dref(code){const r=regions.find(x=>x.id===code[0]);return {r,d:r.drivers[+code.slice(1)]};}
+function scoreColor(s){return s<55?"var(--bad)":s<70?"var(--warn)":"var(--good)";}
+
+/* ---------- view switch ---------- */
+function switchView(v){
+  ['fleet','lead','driver','shipper'].forEach(x=>{
+    document.getElementById("view_"+x).classList.toggle("hidden",v!==x);
+    document.getElementById("tab_"+x).classList.toggle("on",v===x);});
+  if(v==="shipper")renderShipperView();else if(animTimer)clearInterval(animTimer);
+  if(v==="lead")renderLead();
+  if(v==="driver")renderDriver();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- 1. TODO center ---------- */
+const todos=[
+ {sev:"bad",cat:"駕駛異常",tt:"3 位駕駛有疲勞駕駛風險",dt:"⚡ 即時偵測（行駛中），可立即介入。中區 陳大文、北區 王建國、東區 蔡英傑。",
+  acts:[{l:"查看駕駛",c:"gho",fn:"drillDrivers(['B0','A0','F0'],'疲勞風險駕駛')"},{l:"立即通知休息",c:"gho",fn:"act('已通知 3 位駕駛就近休息。','wn')"},{l:"🔄 派員交接",c:"pri",fn:"openHandover()"}]},
+ {sev:"warn",cat:"路線異常",tt:"中區 2 條路線繞行率過高（+22%）",dt:"⚡ 即時偵測（行駛中）：台中港線、烏日線 已偏離規劃路線多繞 22%，可當下調整、不必等事後。",
+  acts:[{l:"查看路線",c:"gho",fn:"openRoutePlan()"},{l:"產生優化方案",c:"pri",fn:"openRoutePlan()"}]},
+ {sev:"bad",cat:"車輛異常",tt:"3 輛車疑似超載（東區 ABC-1301 最嚴重）",dt:"ABC-1301 蔡英傑 過載 287 次、估超核定載重 12%（疑似，建議過磅確認）。",
+  acts:[{l:"查看明細",c:"gho",fn:"openOverloadFix()"},{l:"處理超載",c:"pri",fn:"openOverloadFix()"}]},
+ {sev:"warn",cat:"點檢異常",tt:"5 位駕駛未完成今日點檢",dt:"出車前車況點檢未完成：北區 2、東區 1、桃竹 1、東區 1。",
+  acts:[{l:"查看駕駛",c:"gho",fn:"drillDrivers(['A2','A3','F1','D0'],'未完成點檢')"},{l:"立即通知補點檢",c:"pri",fn:"act('已推播 5 位駕駛補完出車前點檢。','wn')"}]},
+ {sev:"warn",cat:"客訴異常",tt:"2 件到貨延誤客訴（南區）",dt:"貨主反映昨日 2 筆延誤，需回覆並指派處理。",
+  acts:[{l:"查看客訴",c:"gho",fn:"drillComplaints()"},{l:"回覆貨主",c:"pri",fn:"act('已回覆貨主並致歉，附補償方案。','ok')"}]},
+ {sev:"info",cat:"工程/維修",tt:"3 台車 DTC 故障（含 DPF P2002）",dt:"柴油濾清器相關故障碼，恐拋錨並影響排放。",
+  acts:[{l:"查看車輛",c:"gho",fn:"drillVehicle('DTC')"},{l:"一鍵預約進廠",c:"pri",fn:"act('已替 3 台車向最近和泰保修廠預約進廠。','ok')"}]},
+];
+const todoData=[
+ `陳大文 連續 5.2h｜王建國 4.8h｜蔡英傑 5.5h（皆超 4h）。<br><b>決策：</b>先請就近休息，並派最近替班交接（莊承翰 9km／賴冠廷 6km／高志明 12km）。`,
+ `台中港線 +21%、烏日線 +23% 偏離規劃路線。<br><b>決策：</b>套用路線方案 A（改走 64 快速道路，里程 -14%）並通知調度。`,
+ `ABC-1301 蔡英傑(東) 估超 12%｜ABC-1302 鄭家豪(東) 估超 5%｜ABC-2201 陳大文(中) 估超 3%。<br><b>決策：</b>重新分配或改派大車，並安排裝載前過磅確認。`,
+ `未完成 5 人：周俊宏、李明哲、鄭家豪、許文雄、劉怡君。<br><b>決策：</b>推播補點檢，30 分未完成則暫停派工。`,
+ `#A2305 鴻海土城 延誤 50 分｜#A2302 全聯北倉 延誤 35 分。<br><b>決策：</b>主動致歉＋補償，並標記責任趟次檢討。`,
+ `ABC-1401 P2002(DPF)｜ABC-1502 P244B｜ABC-2202 U3FFF。<br><b>決策：</b>3 台一鍵預約進廠，DPF 相關優先處理。`,
+];
+function renderTodos(){
+  const rank={bad:3,warn:2,info:1},uname={bad:"緊急",warn:"待辦",info:"留意"};
+  const sorted=todos.map((t,i)=>({t,i})).sort((a,b)=>rank[b.t.sev]-rank[a.t.sev]);
+  document.getElementById("todoNum").textContent=todos.length+" 件";
+  document.getElementById("todoList").innerHTML="";
+  sorted.forEach(({t,i})=>{const b=t.acts.map(a=>`<button class="btn ${a.c} sm" onclick="${a.fn}">${a.l}</button>`).join("");
+    document.getElementById("todoList").appendChild(el(`<div class="todo ${t.sev}" style="flex-direction:column;align-items:stretch">
+      <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+        <div class="meta"><div class="cat">${t.cat}<span class="upill u-${t.sev}">${uname[t.sev]}</span></div><div class="tt">${t.tt}</div><div class="dt">${t.dt}</div></div>
+        <div class="acts"><button class="btn gho sm" onclick="toggleTodo(${i})"><span id="ta_${i}">▸</span> 展開看數據</button>${b}</div></div>
+      <div class="tdata" id="tp_${i}" style="display:none">${todoData[i]||''}</div></div>`));});
+}
+function toggleTodo(i){const p=document.getElementById("tp_"+i),a=document.getElementById("ta_"+i),o=p.style.display==="none";p.style.display=o?"block":"none";a.textContent=o?"▾":"▸";}
+function toggleStaff(){const p=document.getElementById("staffPanel"),a=document.getElementById("staffArr"),o=p.style.display==="none";p.style.display=o?"block":"none";a.textContent=o?"▾":"▸";}
+
+/* ---------- 2. AI advice ---------- */
+const advice=[
+ {f:"<b>王建國</b>（北區 ABC-1101）連續 3 週急煞偏高",why:"急減速較全隊平均高 64%，多集中市區下班尖峰。",rec:"建議：主管電話提醒 → AI 語音關懷 → 指派安全駕駛訓練。",
+  acts:[{l:"📞 AI 撥打電話",c:"pri",fn:"voiceCall('王建國','call')"},{l:"發送語音提醒",c:"gho",fn:"voiceCall('王建國','voice')"},{l:"建立教育任務",c:"gho",fn:"act('已替王建國建立安全駕駛訓練任務。','ok')"}]},
+ {f:"<b>陳大文</b>（中區 ABC-2201）超速＋未繫安全帶雙高",why:"近月超速 412 次、未繫 318 次，安全分僅 42。",rec:"建議：立即電話約談 → 限期改善 → 安排訓練。",
+  acts:[{l:"📞 AI 撥打電話",c:"pri",fn:"voiceCall('陳大文','call')"},{l:"發送語音提醒",c:"gho",fn:"voiceCall('陳大文','voice')"},{l:"建立教育任務",c:"gho",fn:"act('已建立安全訓練任務。','ok')"}]},
+ {f:"<b>北區車隊</b>怠速 19% 為全隊最高",why:"每月多燒約 6 萬油錢，集中於早班等候時段。",rec:"建議：發訊息給負責人設怠速目標 → 推播省油教練。",
+  acts:[{l:"發訊息給負責人",c:"pri",fn:"msgLead('A')"},{l:"啟動省油教練",c:"gho",fn:"act('已替北區駕駛啟動 AI 省油教練。','ok')"}]},
+];
+function renderAdvice(){document.getElementById("adviceList").innerHTML="";
+  advice.forEach(a=>{const b=a.acts.map(x=>`<button class="btn ${x.c} sm" onclick="${x.fn}">${x.l}</button>`).join("");
+    document.getElementById("adviceList").appendChild(el(`<div class="adv"><div class="f">系統發現：${a.f}</div><div class="why">${a.why}</div><div class="rec">${a.rec}</div><div class="acts">${b}</div></div>`));});}
+
+/* ---------- 6. region compare ---------- */
+function lvl(s){return s<55?["紅","var(--bad)"]:s<70?["黃","var(--warn)"]:["綠","var(--good)"];}
+function driverLines(r){
+  return r.drivers.map((d,i)=>{const[lv,col]=lvl(d.s);const n=notify[r.id+'_'+i]||0;
+    const nc=n>=2?"var(--bad)":n===1?"var(--warn)":"var(--mut2)";
+    return `<div class="drvline"><span class="dot" style="background:${col}"></span><b>${d.n}</b> <span class="mt2">· ${d.c} · ${d.i}</span>
+      <span class="lvpill" style="color:${col};border-color:${col}">${lv} ${d.s}</span>
+      <span class="ntag" style="color:${nc}">已通知 ${n} 次</span>
+      <button class="btn ${n>=2?'dng':'gho'} sm" style="margin-left:auto" onclick="event.stopPropagation();notifyDriver('${r.id}',${i})">${n>=2?'通知並約談':'通知'}</button></div>`;}).join("");
+}
+function renderRegionTable(){
+  const sorted=regions.slice().sort((a,b)=>b.anomaly-a.anomaly);
+  document.getElementById("regBody").innerHTML=sorted.map(r=>{
+    const ac=r.anomaly>=8?"var(--bad)":r.anomaly>=5?"var(--warn)":"var(--good)";
+    const oc=r.onTime>=95?"var(--good)":r.onTime>=90?"var(--warn)":"var(--bad)";
+    return `<tr class="click" onclick="toggleReg('${r.id}')">
+      <td class="n"><span class="dotcell"><span class="exptri" id="rt_${r.id}">▸</span><span class="dot" style="background:${r.color}"></span>${r.name}</span></td>
+      <td>${r.drivers.length}</td>
+      <td class="n" style="color:${scoreColor(r.safety.at(-1))}">${r.safety.at(-1)}</td>
+      <td class="n" style="color:${ac}">${r.anomaly}%</td>
+      <td class="n" style="color:${oc}">${r.onTime}%</td>
+      <td class="mini">展開 ›</td></tr>
+    <tr class="regdet" id="rd_${r.id}" style="display:none"><td colspan="6" style="background:var(--bg2);padding:4px 12px"><div class="drvbox" id="db_${r.id}">${driverLines(r)}</div></td></tr>`;}).join("");
+}
+function toggleReg(id){const d=document.getElementById("rd_"+id),t=document.getElementById("rt_"+id),o=d.style.display==="none";d.style.display=o?"table-row":"none";t.textContent=o?"▾":"▸";}
+function notifyDriver(id,i){notify[id+'_'+i]=(notify[id+'_'+i]||0)+1;const r=regions.find(x=>x.id===id),d=r.drivers[i],n=notify[id+'_'+i];
+  document.getElementById("db_"+id).innerHTML=driverLines(r);
+  toast('已通知駕駛',`已通知 ${r.name}區 ${d.n}（第 ${n} 次）。`+(n>=2?' 已達 2 次，建議約談。':''),n>=2?'dn':'wn');}
+
+/* ---------- staffing: orders vs drivers ---------- */
+function renderStaffing(){
+  const rows=regions.map(r=>{const o=ordersByRegion[r.id],dn=r.drivers.length,per=Math.round(o/dn),load=per/TARGET_PER_DRIVER;
+    const need=Math.max(0,Math.ceil(o/TARGET_PER_DRIVER)-dn),sur=Math.max(0,dn-Math.ceil(o/TARGET_PER_DRIVER));
+    return {r,o,dn,per,load,need,sur};});
+  rows.sort((a,b)=>b.load-a.load);
+  let totalNeed=0;
+  document.getElementById("staffBody").innerHTML=rows.map(x=>{
+    let badge,col;
+    if(x.need>0){badge=`建議招募 +${x.need} 人`;col="var(--bad)";totalNeed+=x.need;}
+    else if(x.sur>0){badge=`人力寬裕，可支援`;col="var(--good)";}
+    else{badge="配置適中";col="var(--mut)";}
+    const lc=x.load>=1.15?"var(--bad)":x.load>=0.95?"var(--warn)":"var(--good)";
+    return `<tr><td class="n"><span class="dotcell"><span class="dot" style="background:${x.r.color}"></span>${x.r.name}</span></td>
+      <td class="n">${x.o}</td><td>${x.dn}</td><td class="n" style="color:${lc}">${x.per} 單</td>
+      <td class="n" style="color:${lc}">${Math.round(x.load*100)}%</td>
+      <td class="n" style="color:${col}">${badge}</td></tr>`;}).join("");
+  const hi=rows[0];
+  document.getElementById("staffInsight").innerHTML=`以每人月承載 ${TARGET_PER_DRIVER} 單為基準：<b style="color:#e8edf7">${hi.r.name}</b> 人均 ${hi.per} 單、負荷 ${Math.round(hi.load*100)}% 最吃緊。全隊建議優先招募 <b style="color:var(--bad)">${totalNeed} 名</b>駕駛（集中高負荷區），低負荷區可調度支援、不需擴編。`;
+}
+
+/* ---------- voice / call (realistic demo) ---------- */
+function voiceCall(name,mode){
+  const isCall=mode==='call';
+  showModal(`<h3>${isCall?'AI 撥打電話':'AI 語音關懷提醒'} — ${name}</h3>
+    <p>AI 生成的關懷話術（將以 TTS 合成語音播放）：</p>
+    <div class="plan rec"><div class="pd">「${name} 您好，我是車隊安全助理。系統發現您近期急煞偏高，提醒您保持安全車距、提早減速；若有車況或路況問題，回覆即可，行車平安！」</div></div>
+    <p style="margin-top:11px;font-size:12px;color:var(--mut2)">正式版串接：文字→語音（TTS：Google／Azure／中華電信）＋ 語音外撥（Twilio／中華電信 IVR）或 LINE 語音訊息，並自動記錄接聽／回覆狀態。</p>
+    <div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" id="callBtn" onclick="simCall('${name}',${isCall})">${isCall?'模擬撥打':'模擬發送'}</button></div>`);
+}
+function simCall(name,isCall){const b=document.getElementById('callBtn');b.disabled=true;b.textContent=isCall?'撥號中…📞':'發送中…';
+  setTimeout(()=>{closeOv();toast(isCall?'通話完成':'語音已送出',isCall?`${name} 已接聽，AI 已宣讀提醒並留存錄音摘要。`:`已透過 LINE 語音／電話留言送達 ${name}，待回覆追蹤。`,'ok');},1500);}
+
+/* ---------- line chart ---------- */
+function lineChart(series,opts){
+  const W=560,H=220,pl=40,pr=14,pt=12,pb=24;const all=series.flatMap(s=>s.vals);
+  let mn=opts.min!=null?opts.min:Math.min(...all),mx=opts.max!=null?opts.max:Math.max(...all);if(mn===mx){mn-=1;mx+=1;}const pad=(mx-mn)*.12;mn-=pad;mx+=pad;
+  const x=i=>pl+(W-pl-pr)*(i/(MONTHS.length-1)),y=v=>pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));
+  let g="";for(let k=0;k<=3;k++){const gv=mn+(mx-mn)*k/3,gy=y(gv);g+=`<line x1="${pl}" y1="${gy}" x2="${W-pr}" y2="${gy}" stroke="#223052"/><text x="${pl-6}" y="${gy+4}" text-anchor="end">${Math.round(gv)}</text>`;}
+  MONTHS.forEach((m,i)=>{if(i%2===0||i===MONTHS.length-1)g+=`<text x="${x(i)}" y="${H-7}" text-anchor="middle">${m}</text>`;});
+  let ln="";series.forEach(s=>{const p=s.vals.map((v,i)=>`${x(i)},${y(v)}`).join(" ");ln+=`<polyline points="${p}" fill="none" stroke="${s.color}" stroke-width="${s.bold?3:1.5}" opacity="${s.bold?1:.45}" stroke-linejoin="round"/>`;if(s.bold)s.vals.forEach((v,i)=>ln+=`<circle cx="${x(i)}" cy="${y(v)}" r="${i===s.vals.length-1?4:2.4}" fill="${s.color}"/>`);
+    if(s.label)s.vals.forEach((v,i)=>{const dv=i>0?v-s.vals[i-1]:0;const dc=dv>0?"#f4a0a0":dv<0?"#86e0bf":"#9fb0d0";ln+=`<text x="${x(i)}" y="${Math.max(11,y(v)-9)}" text-anchor="middle" font-size="9" fill="#dbe7ff">${v}</text>`;if(i>0)ln+=`<text x="${x(i)}" y="${Math.max(20,y(v)-1)}" text-anchor="middle" font-size="7.5" fill="${dc}">${dv>0?'+':''}${dv}</text>`;});});
+  return `<svg class="lc" viewBox="0 0 ${W} ${H}">${g}${ln}</svg>`;
+}
+const metrics=[
+ {key:"safety",name:"平均安全分",unit:"分",data:aggSafety,min:40,max:90,
+  cause:{t:"為什麼安全分持續下滑？",rs:["新增 3 名新進駕駛仍在適應期","新增市區配送路線，停等與急煞增加","車流量上升、尖峰壅塞"],act:[{l:"安排新人陪駕",c:"pri",fn:"act('已替新駕駛安排陪駕與適應追蹤。','ok')"},{l:"批次寄信低分",c:"gho",fn:"openBatchMail()"}]}},
+ {key:"brake",name:"急煞事件",unit:"次",data:aggBrake,
+  cause:{t:"為什麼本週急煞 +18%？",rs:["新進駕駛（北區2、東區1）適應期","新增市區配送路線（台中港線）","車流量較上週增加、尖峰壅塞"],act:[{l:"查看新駕駛",c:"gho",fn:"drillDrivers(['A2','A3','F2'],'新進駕駛')"},{l:"路線優化方案",c:"pri",fn:"openRoutePlan()"}]}},
+ {key:"speed",name:"超速事件",unit:"次",data:[1900,2050,2150,2250,2350,2480,2580,2650,2700,2780,2850],
+  cause:{t:"為什麼超速上升？",rs:["交期壓力大、趕場趕點","部分路段限速偏低易超標","夜班為趕時間超速"],act:[{l:"超速熱點地圖",c:"gho",fn:"act('已產出超速熱點路段地圖。','ok')"},{l:"批次寄信",c:"pri",fn:"openBatchMail()"}]}},
+ {key:"idle",name:"怠速佔比",unit:"%",data:[11,11.5,12,12.5,13,13.5,13.8,14,14,14.2,14],
+  cause:{t:"為什麼怠速偏高（14%）？",rs:["客戶端裝卸貨等候時間變長","夏季維持車內冷氣空轉","早班場站等待、調度未排開"],act:[{l:"發訊息請各車隊調整",c:"pri",fn:"openIdleMessage()"},{l:"設怠速目標",c:"gho",fn:"act('已設定全隊怠速目標 ≤8%。','ok')"}]}},
+ {key:"overload",name:"引擎過載",unit:"次",data:[1300,1400,1500,1600,1700,1780,1850,1920,1980,2030,2080],
+  cause:{t:"為什麼引擎過載（疑超載）增加？",rs:["旺季貨量上升","裝載規劃未依車型容量","派車車型偏小、未裝載前過磅"],act:[{l:"處理超載方案",c:"pri",fn:"openOverloadFix()"},{l:"暫停高過載派工",c:"warnb",fn:"act('已暫停高過載車輛接單。','wn')"}]}},
+ {key:"seatbelt",name:"未繫安全帶",unit:"次",data:[1000,1060,1120,1180,1230,1270,1300,1320,1340,1360,1373],
+  cause:{t:"為什麼未繫安全帶偏高？",rs:["短程多趟次、上下車頻繁未繫","新進駕駛習慣未養成","部分駕駛心態輕忽"],act:[{l:"安排安全訓練",c:"pri",fn:"act('已替未繫累犯排定安全訓練。','ok')"},{l:"列入績效",c:"gho",fn:"act('已將未繫納入駕駛績效。','ok')"}]}},
+ {key:"fuel",name:"百公里油耗",unit:"L",data:[31,31.2,31.4,31.5,31.7,31.8,31.9,32,32,32.1,31.9],
+  cause:{t:"為什麼油耗上升？",rs:["怠速比上升、空轉燒油","急加速/急煞增加","繞行里程與載重增加"],act:[{l:"啟動省油教練",c:"pri",fn:"act('已啟動 AI 省油教練。','ok')"},{l:"路線優化",c:"gho",fn:"openRoutePlan()"}]}},
+];
+const factMap={
+ safety:"下滑集中在中區/北區，與該區急煞、超速上升同步",
+ brake:"急煞集中在 3 台車、市區尖峰(17–19時)、特定路段",
+ speed:"超速多發生在夜間與特定快速道路路段",
+ idle:"怠速高峰落在早班場站與客戶端等候時段",
+ overload:"過載集中在東區 3 台車、特定重貨趟次",
+ seatbelt:"未繫多為短程多停的市區配送車",
+ fuel:"高油耗車與高怠速、急加速車高度重疊",
+};
+function renderMetricTabs(){document.getElementById("metricTabs").innerHTML=metrics.map(m=>`<div class="regchip ${curMetric===m.key?'on':''}" onclick="setMetric('${m.key}')">${m.name}</div>`).join("");}
+function setMetric(k){curMetric=k;renderMetricTabs();renderTrend();}
+function renderTrend(){const m=metrics.find(x=>x.key===curMetric);
+  const series=regions.map(r=>({vals:regionSeries(m,r),color:r.color}));
+  series.push({vals:m.data,color:"#2bd1c4",bold:true,label:true});
+  document.getElementById("chart_metric").innerHTML=lineChart(series,{min:m.min,max:m.max});
+  document.getElementById("m_legend").innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:16px;height:3px;border-radius:3px;background:#2bd1c4;display:inline-block"></i>全隊平均</span>`+
+    regions.map(r=>`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:14px;height:3px;border-radius:3px;background:${r.color};display:inline-block"></i>${r.name}</span>`).join("");
+  document.getElementById("m_ttl").textContent=m.name;
+  document.getElementById("m_sub").textContent="各區 + 全隊 · 2025/01–11";
+  const now=m.data.at(-1),prev=m.data.at(-2),nn=document.getElementById("m_now");
+  const up=now>prev,betterUp=m.key==="safety",good=up===betterUp,delta=prev?Math.abs((now-prev)/prev*100):0;
+  nn.innerHTML=`全隊 <span style="color:${m.key==="safety"?scoreColor(now):"var(--bad)"}">${now.toLocaleString()} ${m.unit}</span> <span style="font-size:13px;font-weight:700;color:${good?"var(--good)":"var(--bad)"}">${up?"▲":"▼"} ${delta.toFixed(1)}% 較上月</span>`;
+  const c=m.cause;document.getElementById("m_cause").innerHTML=`<div class="h">${c.t}</div>
+    <div style="font-size:12.5px;color:#cdd7ec;margin:2px 0 9px">📊 資料顯示（事實）：${factMap[m.key]}。</div>
+    <div style="font-size:12px;color:var(--mut2);margin-bottom:2px">🤔 AI 推測原因（需與現場驗證）：</div>
+    <ul>${c.rs.map(r=>`<li>${r}</li>`).join("")}</ul><div class="acts">${c.act.map(a=>`<button class="btn ${a.c} sm" onclick="${a.fn}">${a.l}</button>`).join("")}</div>`;
+}
+
+/* ---------- bar ranking + solutions ---------- */
+const dims=[
+ {key:"safety",name:"綜合安全分",high:true,unit:"分",val:r=>r.safety.at(-1),hint:"分數越高越好"},
+ {key:"speed",name:"急煞次數",high:false,unit:"次",val:r=>r.brake.at(-1),hint:"越少越好"},
+ {key:"idle",name:"怠速佔比",high:false,unit:"%",val:r=>r.idlePct,hint:"越低越省油"},
+ {key:"overload",name:"引擎過載",high:false,unit:"次",val:r=>r.overload,hint:"越少越好（疑超載）"},
+ {key:"seatbelt",name:"未繫安全帶",high:false,unit:"次",val:r=>r.seatbelt,hint:"越少越好"},
+ {key:"fuel",name:"百公里油耗",high:false,unit:"L",val:r=>r.fuel,hint:"越低越省"},
+];
+const dimSolData={
+ safety:{t:"綜合安全分偏低，怎麼解？",pts:["低分車隊寄信限期改善、累犯約談","高風險駕駛安排安全教育訓練","安全分納入績效獎懲"],btn:[{l:"批次寄信",c:"pri",fn:"openBatchMail()"},{l:"安排訓練",c:"gho",fn:"act('已替高風險駕駛排定安全訓練。','ok')"}]},
+ speed:{t:"急煞次數過高，怎麼解？",pts:["市區下班尖峰預警＋路線調整","急煞排行推播給負責人","結合路線找急煞熱點加強"],btn:[{l:"產生路線方案",c:"pri",fn:"openRoutePlan()"},{l:"批次寄信",c:"gho",fn:"openBatchMail()"}]},
+ idle:{t:"怠速佔比過高，怎麼解？",pts:["設怠速上限 ≤8%＋每日追蹤排行","怠速超 3 分鐘即時提醒熄火","發訊息請各車隊負責人限期調整","納入省油績效獎懲"],btn:[{l:"發訊息請各車隊調整",c:"pri",fn:"openIdleMessage()"},{l:"設定怠速目標",c:"gho",fn:"act('已設定全隊怠速目標 ≤8%。','ok')"}]},
+ overload:{t:"引擎過載（疑超載），怎麼解？",pts:["重新分配貨物到其他車輛","更換較大車型承載","增加配送批次","調整派車規則並裝載前過磅"],btn:[{l:"處理超載方案",c:"pri",fn:"openOverloadFix()"},{l:"暫停高過載派工",c:"warnb",fn:"act('已暫停高過載車輛接單。','wn')"}]},
+ seatbelt:{t:"未繫安全帶，怎麼解？",pts:["未繫即時車內語音提醒（DMS）","每日未繫排行推播負責人","列入安全分與獎懲、累犯約談"],btn:[{l:"安排安全訓練",c:"pri",fn:"act('已替未繫累犯排定訓練。','ok')"},{l:"列入績效",c:"gho",fn:"act('已將未繫納入駕駛績效。','ok')"}]},
+ fuel:{t:"百公里油耗偏高，怎麼解？",pts:["AI 省油教練：急加速/怠速/超速個人化建議","油耗排行＋向南區標竿學習","高油耗車檢查胎壓/空濾/載重","路線最佳化減里程"],btn:[{l:"啟動省油教練",c:"pri",fn:"act('已替高油耗駕駛啟動省油教練。','ok')"},{l:"發起省油競賽",c:"gho",fn:"act('已發起全隊省油競賽。','ok')"}]},
+};
+function renderDimSel(){document.getElementById("dimsel").innerHTML=dims.map(d=>`<div class="regchip ${curDim===d.key?'on':''}" onclick="setDim('${d.key}')">${d.name}</div>`).join("");}
+function setDim(k){curDim=k;renderDimSel();renderBars();renderDimSol();}
+function renderBars(){const d=dims.find(x=>x.key===curDim);const arr=regions.map(r=>({name:r.name+"車隊",v:d.val(r)}));
+  arr.sort((a,b)=>d.high?b.v-a.v:a.v-b.v);const max=Math.max(...arr.map(a=>a.v)),n=arr.length;
+  document.getElementById("barList").innerHTML=arr.map((a,i)=>{const cls=i<3?"good":i>=n-3?"bad":"mid";const rk=i===0?"🥇":i===1?"🥈":i===2?"🥉":i>=n-3?"🔻":"";
+    return `<div class="bar-row"><div class="bar-name"><span class="rk">${rk}</span>${a.name}</div><div class="bar-track"><div class="bar-fill ${cls}" style="width:${Math.max(6,a.v/max*100)}%"></div></div><div class="bar-val">${a.v.toLocaleString()} ${d.unit}</div></div>`;}).join("");
+  document.getElementById("dimhint").textContent="· "+d.name+"（"+d.hint+"）";}
+function renderDimSol(){const s=dimSolData[curDim];document.getElementById("dimSol").innerHTML=`<div class="h">如何解決：${s.t}</div><ul>${s.pts.map(p=>`<li>${p}</li>`).join("")}</ul><div class="acts">${s.btn.map(b=>`<button class="btn ${b.c} sm" onclick="${b.fn}">${b.l}</button>`).join("")}</div>`;}
+
+/* ---------- drill modals ---------- */
+function drillDrivers(codes,title){const rows=codes.map(cd=>{const{r,d}=dref(cd);
+  return `<div class="mrow"><div><div class="nm">${d.n} <span class="mt">· ${r.name}區 · ${d.c} · 安全分 ${d.s}</span></div><div class="mt">${d.i}</div></div>
+    <div class="ma"><button class="btn pri sm" onclick="act('已通知 ${d.n}。','ok')">通知</button><button class="btn gho sm" onclick="voiceCall('${d.n}','voice')">語音提醒</button><button class="btn gho sm" onclick="act('已替 ${d.n} 建立教育任務。','ok')">指派訓練</button></div></div>`;}).join("");
+  showModal(`<h3>${title||'駕駛明細'}</h3><p>共 ${codes.length} 位，可直接處理。</p>${rows}<div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已批次通知全部駕駛。','ok');closeOv()">全部通知</button></div>`);}
+function drillRegion(id){const r=regions.find(x=>x.id===id);const rows=r.drivers.map((d,i)=>`<div class="mrow"><div><div class="nm">${d.n} <span class="mt">· ${d.c} · 安全分 ${d.s}</span></div><div class="mt">${d.i}</div></div><div class="ma"><button class="btn gho sm" onclick="act('已通知 ${d.n}。','ok')">通知</button></div></div>`).join("");
+  showModal(`<h3>${r.name}車隊明細</h3><p>負責人 ${r.lead} · ${r.phone} · 異常率 ${r.anomaly}% · 準時率 ${r.onTime}%</p>${rows}
+    <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn warnb" onclick="msgLead('${id}')">發訊息給負責人</button><button class="btn pri" onclick="openFleetMail('${id}')">寄信限期改善</button></div>`);}
+function drillVehicle(code){const isDtc=code==='DTC';
+  showModal(`<h3>${isDtc?'待修車輛（3 台）':'車輛 '+code}</h3>
+    <p>${isDtc?'DTC 故障碼 P2002 / P244B（DPF 柴油濾清器相關）。':'東區 ABC-1301 · 駕駛 蔡英傑 · 引擎過載 287 次，疑似超載。'}</p>
+    <div class="mrow"><div><div class="nm">${isDtc?'ABC-1401 劉怡君':'ABC-1301 蔡英傑'}</div><div class="mt">${isDtc?'DTC P2002 · 建議進廠':'引擎過載 / 疑超載'}</div></div>
+      <div class="ma">${isDtc?`<button class="btn pri sm" onclick="act('已預約進廠。','ok')">預約進廠</button>`:`<button class="btn pri sm" onclick="closeOv();openOverloadFix()">處理超載</button>`}</div></div>
+    <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button></div>`);}
+function drillComplaints(){showModal(`<h3>客訴明細（2 件）</h3><p>南區 · 到貨延誤</p>
+  <div class="mrow"><div><div class="nm">#A2305 鴻海 土城</div><div class="mt">延誤 50 分 · 原因：超載稽查</div></div><div class="ma"><button class="btn pri sm" onclick="act('已回覆貨主並致歉。','ok')">回覆</button></div></div>
+  <div class="mrow"><div><div class="nm">#A2302 全聯 北區倉</div><div class="mt">延誤 35 分 · 原因：塞車繞行</div></div><div class="ma"><button class="btn pri sm" onclick="act('已回覆貨主並致歉。','ok')">回覆</button></div></div>
+  <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已指派客服專員跟進 2 件客訴。','ok');closeOv()">指派處理</button></div>`);}
+
+/* ---------- 疲勞駕駛：派員交接 ---------- */
+function openHandover(){
+  const hd=[
+   {n:"陳大文",r:"中區",h:"5.2h",loc:"國道3號 龍井段",sub:"莊承翰",dist:"9 km／約 13 分",pt:"龍井服務區"},
+   {n:"王建國",r:"北區",h:"4.8h",loc:"國道1號 楊梅段",sub:"賴冠廷",dist:"6 km／約 9 分",pt:"楊梅休息站"},
+   {n:"蔡英傑",r:"東區",h:"5.5h",loc:"台9線 蘇澳",sub:"高志明",dist:"12 km／約 18 分",pt:"蘇澳轉運站"},
+  ];
+  const rows=hd.map(x=>`<div class="mrow"><div><div class="nm">${x.n} <span class="mt">· ${x.r} · 連續 ${x.h} · 目前 ${x.loc}</span></div>
+    <div class="mt">建議替班：<b style="color:var(--accent)">${x.sub}</b>（${x.dist}）· 交接點 ${x.pt}</div></div>
+    <div class="ma"><button class="btn pri sm" onclick="act('已派 ${x.sub} 前往 ${x.pt} 與 ${x.n} 交接，並通知雙方與調度。','ok')">派他交接</button></div></div>`).join("");
+  showModal(`<h3>派員交接 — 疲勞駕駛</h3><p>系統已依各車目前位置，找出最近可調度的替班司機與交接點，當場安排換手。</p>${rows}
+    <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已一鍵安排 3 位疲勞駕駛全部交接換手。','ok');closeOv()">全部安排交接</button></div>`);
+}
+
+/* ---------- 3. overload fix ---------- */
+function openOverloadFix(){
+  const sus=[{c:"ABC-1301",d:"蔡英傑",r:"東區",ev:287,pct:12},{c:"ABC-1302",d:"鄭家豪",r:"東區",ev:96,pct:5},{c:"ABC-2201",d:"陳大文",r:"中區",ev:73,pct:3}];
+  const list=sus.map(s=>`<div class="mrow"><div><div class="nm">${s.c} · ${s.d} <span class="mt">· ${s.r} · 過載 ${s.ev} 次</span></div><div class="mt">估超出核定載重約 ${s.pct}%</div></div><div class="ma"><span class="stpill ${s.pct>=10?'st-risk':'st-soon'}">${s.pct>=10?'高風險':'臨界'}</span></div></div>`).join("");
+  showModal(`<h3>疑似超載車輛（${sus.length} 輛）</h3>
+    <p>ABC-1301 最嚴重。建議同步安排過磅確認，再選解法執行：</p>
+    ${list}
+    <div style="font-size:12.5px;color:var(--mut);margin:15px 0 6px;font-weight:700">處理方式（可直接執行）</div>
+    <div class="mrow"><div><div class="nm">重新分配貨物</div><div class="mt">超出部分改派同區餘裕車輛</div></div><div class="ma"><button class="btn pri sm" onclick="act('已重新分配貨物到 ABC-1303，載重回到安全範圍。','ok');closeOv()">執行</button></div></div>
+    <div class="mrow"><div><div class="nm">更換較大車型</div><div class="mt">改派 500/700 系承載</div></div><div class="ma"><button class="btn gho sm" onclick="act('已改派 700 系承載此趟。','ok');closeOv()">執行</button></div></div>
+    <div class="mrow"><div><div class="nm">增加配送批次</div><div class="mt">拆成 2 趟配送</div></div><div class="ma"><button class="btn gho sm" onclick="act('已調整為 2 批次配送。','ok');closeOv()">執行</button></div></div>
+    <div class="mrow"><div><div class="nm">調整派車規則 + 過磅</div><div class="mt">依貨量自動配對車型、裝載前過磅稽核</div></div><div class="ma"><button class="btn gho sm" onclick="act('已更新派車規則並啟用裝載前過磅。','ok');closeOv()">套用</button></div></div>
+    <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button></div>`);}
+
+/* ---------- 4. route plans A/B/C ---------- */
+function openRoutePlan(){showModal(`<h3>路線優化方案 — 中區繞行 +22%</h3>
+  <p>AI 已產生 3 個方案，含影響評估，主管做決策即可：</p>
+  <div class="plan rec"><div class="ph">方案 A <span class="rb">推薦</span></div><div class="pd">改走 64 快速道路避開市區 → 里程 -14%、預估準時率 +6%、油耗 -9%。</div></div>
+  <div class="plan"><div class="ph">方案 B</div><div class="pd">調整配送順序（先南後北）→ 里程 -8%、準時率 +3%，不需改主幹道。</div></div>
+  <div class="plan"><div class="ph">方案 C</div><div class="pd">尖峰改派 2 車分流 → 準時率 +9%，但成本略增。</div></div>
+  <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn gho" onclick="act('已將 3 方案發送給調度評估。','ok');closeOv()">發送給調度</button><button class="btn pri" onclick="act('已一鍵套用方案 A，並通知中區駕駛。','ok');closeOv()">一鍵套用方案 A</button></div>`);}
+
+/* ---------- mail / message ---------- */
+function openFleetMail(id){const f=regions.find(r=>r.id===id);const rows=f.drivers.map((d,di)=>`<label class="mrow" style="cursor:pointer"><input type="checkbox" checked data-i="${di}" style="width:17px;height:17px;accent-color:var(--accent)"><div><div class="nm">${d.n} <span class="mt">· ${f.name}區 · ${d.c} · 安全分 ${d.s}</span></div><div class="mt">${d.i}</div></div></label>`).join("");
+  showModal(`<h3>寄信限期改善 — ${f.name}車隊</h3><p>以下為 ${f.name}區 駕駛（預設全選），確認後寄出 7 天限期改善通知。</p>${rows}<div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="confirmFleetMail('${id}')">確認寄信</button></div>`);}
+function confirmFleetMail(id){const f=regions.find(r=>r.id===id);let n=0;modal.querySelectorAll('input').forEach(c=>{if(c.checked){notify[id+'_'+c.dataset.i]=(notify[id+'_'+c.dataset.i]||0)+1;n++;}});warnState[id]=(warnState[id]||0)+1;closeOv();const db=document.getElementById("db_"+id);if(db)db.innerHTML=driverLines(f);
+  toast('已寄出改善通知',`已寄信給 ${f.name}區 ${n} 位駕駛（第 ${warnState[id]} 次）。`,'wn');}
+function openBatchMail(){const t=regions.filter(r=>r.safety.at(-1)<65);let html="",total=0;
+  t.forEach(f=>{f.drivers.forEach((d,di)=>{total++;html+=`<label class="mrow" style="cursor:pointer"><input type="checkbox" checked style="width:17px;height:17px;accent-color:var(--accent)"><div><div class="nm">${d.n} <span class="mt">· ${f.name}區 · ${d.c}</span></div><div class="mt">${d.i}</div></div></label>`;});});
+  showModal(`<h3>批次寄信 — 限期改善</h3><p>安全分 < 65 的 ${t.length} 個車隊、共 ${total} 位駕駛：</p>${html}<div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="act('已批次寄信 ${total} 位駕駛。','wn');closeOv()">確認批次寄信</button></div>`);}
+function openIdleMessage(){const s=regions.slice().sort((a,b)=>b.idlePct-a.idlePct);const rows=s.map(f=>`<label class="mrow" style="cursor:pointer"><input type="checkbox" ${f.idlePct>8?'checked':''} data-f="${f.id}" style="width:17px;height:17px;accent-color:var(--accent)"><div><div class="nm">${f.name}車隊 <span class="mt">· ${f.lead}</span></div><div class="mt">怠速 <b style="color:${f.idlePct>=14?'var(--bad)':f.idlePct>=10?'var(--warn)':'var(--good)'}">${f.idlePct}%</b> → 目標 ≤8%</div></div></label>`).join("");
+  showModal(`<h3>發訊息請各車隊調整怠速</h3><p>一鍵發訊息給各負責人，14 天內把怠速降到 8% 以下（預設只勾超標）。</p>${rows}<div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="confirmIdle()">確認發訊息</button></div>`);}
+function confirmIdle(){let names=[];modal.querySelectorAll('input').forEach(c=>{if(c.checked)names.push(regions.find(r=>r.id===c.dataset.f).name);});closeOv();
+  toast('怠速調整訊息已發送',`已通知 ${names.length} 個車隊（${names.join('、')}）負責人限期改善。`,'ok');}
+function msgLead(id){const f=regions.find(r=>r.id===id);closeOv&&closeOv();toast('訊息已送出',`已通知 ${f.name}負責人 ${f.lead}（${f.phone}）。`,'ok');}
+
+/* ---------- 7. shipper view (Uber 式即時追蹤) ---------- */
+const shippers=[
+ {id:"tsmc",name:"台積電 中科廠",contact:"王採購",orders:[
+   {id:"#A2301",to:"台積電 中科廠",from:"台中港倉",driver:"林佳穎",car:"ABC-1501 · HINO 500",etaMin:14,progress:.62,status:"運送中",cur:"國道一號 大雅段",risk:false},
+   {id:"#A2307",to:"台積電 南科廠",from:"高雄倉",driver:"莊承翰",car:"ABC-1503 · HINO 700",etaMin:42,progress:.30,status:"運送中",cur:"國道三號 善化段",risk:false}]},
+ {id:"pxmart",name:"全聯 北區倉",contact:"林倉管",orders:[
+   {id:"#A2302",to:"全聯 北區倉",from:"楊梅物流中心",driver:"王建國",car:"ABC-1101 · HINO 300",etaMin:35,progress:.40,status:"延誤風險",cur:"中壢市區壅塞",risk:true}]},
+ {id:"carrefour",name:"家樂福 南區",contact:"陳收貨",orders:[
+   {id:"#A2303",to:"家樂福 南區",from:"台南倉",driver:"高志明",car:"ABC-1502 · HINO 500",etaMin:5,progress:.90,status:"即將到達",cur:"距目的地 1.2 km",risk:false}]},
+];
+let curShipper="tsmc",curOrder=null,animTimer=null;
+function myOrders(){return shippers.find(x=>x.id===curShipper).orders.slice().sort((a,b)=>(b.risk-a.risk)||(a.etaMin-b.etaMin));}
+function renderLogin(){const s=shippers.find(x=>x.id===curShipper);
+  document.getElementById("loginBar").innerHTML=`👤 已登入：<b>${s.name}</b> · ${s.contact}<span class="sw">切換身分（Demo）${shippers.map(x=>`<span class="swc ${curShipper===x.id?'on':''}" onclick="selShipper('${x.id}')">${x.name}</span>`).join("")}</span>`;}
+function selShipper(id){curShipper=id;curOrder=null;renderShipperView();}
+function renderShipperView(){renderLogin();const list=myOrders();if(!curOrder||!list.find(o=>o.id===curOrder))curOrder=list[0].id;renderOrderTabs();renderTrack();}
+function renderOrderTabs(){document.getElementById("orderTabs").innerHTML=myOrders().map(o=>`<div class="regchip ${curOrder===o.id?'on':''}" onclick="selectOrder('${o.id}')">${o.id} · ${o.to}${o.risk?' ⚠️':''}</div>`).join("");}
+function selectOrder(id){curOrder=id;renderOrderTabs();renderTrack();}
+function mapSVG(o){return `<svg viewBox="0 0 600 280" style="width:100%;height:auto;display:block">
+   <rect width="600" height="280" fill="#0b1226"/>
+   <line x1="0" y1="205" x2="600" y2="120" stroke="#142039" stroke-width="2"/><line x1="130" y1="280" x2="330" y2="0" stroke="#142039" stroke-width="2"/><line x1="380" y1="280" x2="520" y2="0" stroke="#142039" stroke-width="2"/>
+   <path d="M44 240 Q 150 130 250 175 T 440 95 T 558 52" fill="none" stroke="#1d2b4d" stroke-width="13" stroke-linecap="round"/>
+   <path id="routeP" d="M44 240 Q 150 130 250 175 T 440 95 T 558 52" fill="none" stroke="#2bd1c4" stroke-width="4" stroke-linecap="round" opacity=".92"/>
+   <circle cx="44" cy="240" r="7" fill="#fff"/><text x="44" y="264" fill="#93a2c4" font-size="12" text-anchor="middle">${o.from}</text>
+   <circle cx="558" cy="52" r="11" fill="#f87171"/><text x="558" y="57" font-size="13" text-anchor="middle">📍</text><text x="558" y="32" fill="#93a2c4" font-size="12" text-anchor="middle">${o.to}</text>
+   <g id="truckG"><circle r="15" fill="#2bd1c4"/><text y="6" font-size="17" text-anchor="middle">🚛</text></g>
+  </svg>`;}
+function positionTruck(p){const path=document.getElementById("routeP");if(!path)return;const pt=path.getPointAtLength(path.getTotalLength()*Math.min(p,1));const g=document.getElementById("truckG");if(g)g.setAttribute("transform",`translate(${pt.x},${pt.y})`);}
+function startAnim(o){if(animTimer)clearInterval(animTimer);let p=o.progress;
+  animTimer=setInterval(()=>{if(p>=0.985){clearInterval(animTimer);return;}p+=0.006;positionTruck(p);
+    const eta=Math.max(0,Math.round(o.etaMin*(1-p)/(1-o.progress)));const eb=document.getElementById("etaBig");if(eb)eb.textContent=eta;},1200);}
+function renderTrack(){
+  const o=myOrders().find(x=>x.id===curOrder)||myOrders()[0];
+  const steps=["已取貨","運送中","即將到達","已送達"];const cur=o.progress>=1?3:o.progress>=.85?2:o.progress>0?1:0;
+  const tl=steps.map((s,i)=>`<div class="tstep ${i<cur?'done':i===cur?'cur':''}"><div class="d"></div><div class="t">${s}</div></div>`).join("");
+  document.getElementById("trackCard").innerHTML=`<div class="card" style="padding:18px 20px">
+    <div class="eta-hero"><span class="big" id="etaBig">${o.etaMin}</span><span class="lbl">分鐘後到達</span>
+      <span class="stpill ${o.risk?'st-risk':o.progress>=.85?'st-soon':'st-go'}" style="margin-left:auto">${o.status}</span></div>
+    <div style="font-size:13px;color:var(--mut)">${o.from} → <b style="color:var(--txt)">${o.to}</b> ｜ 目前：${o.cur}</div>
+    <div class="mapwrap">${mapSVG(o)}</div>
+    <div class="tline">${tl}</div>
+    <div class="drvbar"><div class="av">🧑‍✈️</div><div><div style="font-weight:700;font-size:13.5px">司機 ${o.driver}</div><div style="font-size:11.5px;color:var(--mut)">${o.car}</div></div>
+      <div style="margin-left:auto;display:flex;gap:7px;flex-wrap:wrap"><button class="btn gho sm" onclick="act('已撥打司機 ${o.driver} 電話。','ok')">聯絡司機</button><button class="btn pri sm" onclick="act('已複製即時追蹤連結，可分享給收貨方。','ok')">分享追蹤連結</button></div></div>
+    ${o.risk?`<div class="cause" style="margin-top:12px;border-left-color:var(--bad)"><div class="h">⚠️ 預計延誤約 35 分</div><ul><li>原因：中壢市區交通壅塞</li><li>系統已自動改走替代路線並更新 ETA</li></ul><div class="acts"><button class="btn pri sm" onclick="act('已開啟延誤即時通知。','wn')">接收延誤通知</button></div></div>`:''}
+   </div>`;
+  positionTruck(o.progress);startAnim(o);
+}
+
+/* ---------- 車隊負責人視角 ---------- */
+let curLead="B";const fatigueSet=new Set(["B0","A0","F0"]);
+function driverLines2(r){return r.drivers.map((d,i)=>{const[lv,col]=lvl(d.s);const n=notify[r.id+'_'+i]||0;const nc=n>=2?"var(--bad)":n===1?"var(--warn)":"var(--mut2)";const fat=fatigueSet.has(r.id+i);
+  return `<div class="drvline"><span class="dot" style="background:${col}"></span><b>${d.n}</b> <span class="mt2">· ${d.c} · ${d.i}${fat?' · ⚠️疲勞':''}</span>
+   <span class="lvpill" style="color:${col};border-color:${col}">${lv} ${d.s}</span><span class="ntag" style="color:${nc}">已通知 ${n} 次</span>
+   <span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap"><button class="btn ${n>=2?'dng':'gho'} sm" onclick="notifyDriverL('${r.id}',${i})">${n>=2?'約談':'通知'}</button><button class="btn gho sm" onclick="voiceCall('${d.n}','voice')">語音</button>${fat?`<button class="btn warnb sm" onclick="openHandover()">派交接</button>`:''}</span></div>`;}).join("");}
+function notifyDriverL(id,i){notify[id+'_'+i]=(notify[id+'_'+i]||0)+1;const r=regions.find(x=>x.id===id);document.getElementById("leadDrv").innerHTML=driverLines2(r);const n=notify[id+'_'+i];toast('已通知駕駛',`已通知 ${r.drivers[i].n}（第 ${n} 次）。`+(n>=2?' 已達 2 次，建議約談。':''),n>=2?'dn':'wn');}
+function renderLeadSel(){document.getElementById("leadSel").innerHTML=regions.map(r=>`<div class="regchip ${curLead===r.id?'on':''}" onclick="selLead('${r.id}')"><span class="dot" style="background:${r.color}"></span>${r.name}・${r.lead}</div>`).join("");}
+function selLead(id){curLead=id;renderLead();}
+function renderLead(){renderLeadSel();const r=regions.find(x=>x.id===curLead),sc=r.safety.at(-1);
+  const pts=[];r.drivers.forEach(d=>{if(d.s<55)pts.push(`<b style="color:#fff">${d.n}</b>（安全分 ${d.s}・紅）建議今日約談`);});
+  r.drivers.forEach(d=>{if(d.i.includes('超載'))pts.push(`${d.n} ${d.c} 疑似超載，需處理`);if(d.i.includes('疲勞'))pts.push(`${d.n} 疲勞風險，安排休息/交接`);if(d.i.includes('點檢'))pts.push(`${d.n} 未完成出車前點檢`);});
+  if(!pts.length)pts.push('本區狀況良好，無急件 👍');
+  const ac=r.anomaly>=8?'var(--bad)':r.anomaly>=5?'var(--warn)':'var(--good)';
+  document.getElementById("leadBody").innerHTML=`
+   <div class="kpis" style="margin-bottom:15px">
+     <div class="kpi"><div class="k">我的安全分</div><div class="v" style="color:${scoreColor(sc)}">${sc}</div><div class="s">全隊平均 ${aggSafety.at(-1)}</div></div>
+     <div class="kpi"><div class="k">異常率</div><div class="v" style="color:${ac}">${r.anomaly}%</div><div class="s">越低越好</div></div>
+     <div class="kpi"><div class="k">準時率</div><div class="v" style="color:${r.onTime>=95?'var(--good)':'var(--warn)'}">${r.onTime}%</div><div class="s">${r.name}區</div></div>
+     <div class="kpi"><div class="k">駕駛數</div><div class="v">${r.drivers.length}</div><div class="s">人均單量 ${Math.round(ordersByRegion[r.id]/r.drivers.length)}</div></div>
+   </div>
+   <div class="sh"><h2 style="font-size:16px">今日重點</h2></div>
+   <div class="cause" style="border-left-color:var(--bad);margin-bottom:15px"><ul>${pts.map(p=>`<li>${p}</li>`).join("")}</ul>
+     <div class="acts"><button class="btn pri sm" onclick="openFleetMail('${r.id}')">對全區寄信限期改善</button><button class="btn gho sm" onclick="act('已替本區高風險駕駛排安全訓練。','ok')">安排安全訓練</button><button class="btn gho sm" onclick="msgLead('${r.id}')">回報上級</button></div></div>
+   <div class="sh"><h2 style="font-size:16px">我的駕駛</h2><span class="tag">紅黃綠 · 已通知次數 · 可直接通知/語音/交接</span></div>
+   <div class="card" style="padding:6px 10px"><div class="drvbox" id="leadDrv">${driverLines2(r)}</div></div>`;
+}
+
+/* ---------- 司機視角 ---------- */
+const drvList=["B0","A0","E0"];let curDrv="B0";
+function renderDrvSel(){document.getElementById("driverSel").innerHTML=drvList.map(cd=>{const{r,d}=dref(cd);return `<div class="regchip ${curDrv===cd?'on':''}" onclick="selDrv('${cd}')">${d.n}（${r.name}）</div>`;}).join("");}
+function selDrv(cd){curDrv=cd;renderDriver();}
+function renderDriver(){renderDrvSel();const{r,d}=dref(curDrv);const[lv,col]=lvl(d.s);
+  const al=[];
+  if(d.i.includes('疲勞'))al.push({t:"⚠️ 疲勞警示",m:"偵測到疲勞徵兆，請就近休息或等待交接，行車安全第一。",b:[{l:"我要休息",c:"pri",fn:"act('已回報就近休息，調度將安排交接。','ok')"}]});
+  if(d.i.includes('超速'))al.push({t:"超速提醒",m:"近期多次超速，請依路段限速行駛。",b:[{l:"我知道了",c:"gho",fn:"act('已確認超速提醒。','ok')"}]});
+  if(d.i.includes('未繫'))al.push({t:"未繫安全帶",m:"請全程繫好安全帶。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
+  if(d.i.includes('點檢'))al.push({t:"出車前點檢未完成",m:"請先完成車況點檢再出車。",b:[{l:"前往點檢",c:"pri",fn:"act('已開啟出車前點檢表。','ok')"}]});
+  if(d.i.includes('分心'))al.push({t:"分心提醒",m:"行車中請勿使用手機、保持專注。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
+  if(d.i.includes('急')||d.i.includes('煞'))al.push({t:"急煞/急減速偏高",m:"近期急煞偏多，請提早減速、保持安全車距。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
+  if(d.i.includes('怠速'))al.push({t:"怠速提醒",m:"怠速時間偏高，等候時請熄火，省油又減碳。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
+  if(d.i.includes('超載')||d.i.includes('過載'))al.push({t:"疑似超載提醒",m:"載重可能超出核定，請配合過磅與裝載調整。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
+  if(!al.length)al.push({t:"表現良好 👍",m:"本月無重大事件，繼續保持，安全獎金穩穩入袋！",b:[]});
+  const sorted=[...r.drivers].sort((x,y)=>y.s-x.s),rank=sorted.findIndex(x=>x.c===d.c)+1;
+  const alerts=al.map(a=>`<div class="adv"><div class="f">${a.t}</div><div class="why">${a.m}</div>${a.b.length?`<div class="acts">${a.b.map(x=>`<button class="btn ${x.c} sm" onclick="${x.fn}">${x.l}</button>`).join("")}</div>`:''}</div>`).join("");
+  document.getElementById("driverBody").innerHTML=`
+   <div class="kpis" style="margin-bottom:15px">
+     <div class="kpi"><div class="k">我的安全分</div><div class="v" style="color:${col}">${d.s}</div><div class="s">${lv}燈 · ${r.name}排第 ${rank}/${r.drivers.length}</div></div>
+     <div class="kpi"><div class="k">本月趟次</div><div class="v">${18+(d.s%7)}</div><div class="s">準時 ${Math.min(99,80+Math.round(d.s/5))}%</div></div>
+     <div class="kpi"><div class="k">安全獎金</div><div class="v" style="color:${d.s>=70?'var(--good)':'var(--mut2)'}">${d.s>=70?'NT$1,200':'—'}</div><div class="s">${d.s>=70?'本月達標 🎉':'安全分達 70 可領'}</div></div>
+   </div>
+   <div class="sh"><h2 style="font-size:16px">今日任務</h2></div>
+   <div class="card" style="margin-bottom:15px"><div style="font-weight:800;font-size:14.5px">台中港倉 → 台積電 中科廠</div>
+     <div style="font-size:12.5px;color:var(--mut);margin-top:3px">下一站 ETA 約 14 分 · 國道一號 大雅段 · 卸貨點 B12</div>
+     <div class="acts" style="margin-top:11px"><button class="btn pri sm" onclick="act('已開啟導航。','ok')">開始導航</button><button class="btn gho sm" onclick="act('已回報抵達卸貨點。','ok')">回報抵達</button></div></div>
+   <div class="sh"><h2 style="font-size:16px">我的提醒</h2></div>
+   <div class="advice">${alerts}</div>`;
+}
+
+/* ---------- utils ---------- */
+function showModal(h){modal.innerHTML=h;ov.classList.add("on");}
+function toast(t,m,k){const x=el(`<div class="toast ${k||''}"><b>${t}</b>${m||''}</div>`);document.getElementById('toasts').appendChild(x);setTimeout(()=>{x.style.opacity=0;x.style.transform='translateY(12px)';setTimeout(()=>x.remove(),300)},4200);}
+function act(m,k){toast('已執行',m,k||'ok');}
+function closeOv(){ov.classList.remove('on');}
+ov.addEventListener('click',e=>{if(e.target===ov)closeOv();});
+
+renderTodos();renderAdvice();renderRegionTable();renderStaffing();renderMetricTabs();renderTrend();renderDimSel();renderBars();renderDimSol();renderShipperView();
+</script>
+</body>
+</html>
