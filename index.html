@@ -124,6 +124,11 @@
   .tstep .t{font-size:11.5px;color:var(--mut2)}.tstep.cur .t,.tstep.done .t{color:var(--txt)}
   .drvbar{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;flex-wrap:wrap}
   .drvbar .av{width:40px;height:40px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:18px}
+  .rolepick{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;max-width:780px;margin:0 auto}
+  .rolecard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 20px;text-align:center;cursor:pointer;transition:.18s;box-shadow:var(--sh)}
+  .rolecard:hover{transform:translateY(-4px);border-color:var(--accent)}
+  .rolecard .ic{font-size:42px;margin-bottom:10px}
+  .rolecard b{display:block;font-size:18px;font-weight:850}.rolecard span{font-size:12.5px;color:var(--mut)}
   .hidden{display:none}
   #toasts{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;flex-direction:column;gap:9px;max-width:90vw}
   .toast{background:var(--card2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:11px;padding:12px 15px;font-size:13.5px;box-shadow:var(--sh);animation:slin .25s;max-width:370px}
@@ -151,18 +156,27 @@
   <div class="hd">
     <div class="logo">🚛</div>
     <div><h1>HINO AI 車隊軍師<small>商用車頭家的智慧夥伴 · 火箭隊</small></h1></div>
-    <div class="tabs">
-      <button class="tab on" id="tab_fleet" onclick="switchView('fleet')">車隊管理</button>
-      <button class="tab" id="tab_lead" onclick="switchView('lead')">車隊負責人</button>
-      <button class="tab" id="tab_driver" onclick="switchView('driver')">司機</button>
-      <button class="tab" id="tab_shipper" onclick="switchView('shipper')">貨主</button>
-    </div>
+    <button class="tab" id="switchBtn" onclick="switchView('home')" style="display:none;margin-left:auto">← 切換身分</button>
   </div>
 </header>
 
 <div class="wrap">
+<!-- ===================== 選擇身分 ===================== -->
+<div id="view_home">
+  <section style="margin-top:48px">
+    <div style="text-align:center;margin-bottom:6px"><h2 style="font-size:25px">請選擇您的身分</h2></div>
+    <p style="text-align:center;color:var(--mut);margin-bottom:26px;font-size:13.5px">登入後僅顯示與您角色相關的內容</p>
+    <div class="rolepick">
+      <div class="rolecard" onclick="switchView('fleet')"><div class="ic">🧭</div><b>車隊管理</b><span>老闆 / 總管</span></div>
+      <div class="rolecard" onclick="switchView('lead')"><div class="ic">🧑‍💼</div><b>車隊負責人</b><span>區域主管</span></div>
+      <div class="rolecard" onclick="switchView('driver')"><div class="ic">🚚</div><b>司機</b><span>駕駛端</span></div>
+      <div class="rolecard" onclick="switchView('shipper')"><div class="ic">📦</div><b>貨主</b><span>貨件追蹤</span></div>
+    </div>
+  </section>
+</div>
+
 <!-- ===================== 車隊管理 ===================== -->
-<div id="view_fleet">
+<div id="view_fleet" class="hidden">
 
   <!-- 1. 待處理事項中心 (HERO) -->
   <section id="todo">
@@ -312,9 +326,9 @@ function scoreColor(s){return s<55?"var(--bad)":s<70?"var(--warn)":"var(--good)"
 
 /* ---------- view switch ---------- */
 function switchView(v){
-  ['fleet','lead','driver','shipper'].forEach(x=>{
-    document.getElementById("view_"+x).classList.toggle("hidden",v!==x);
-    document.getElementById("tab_"+x).classList.toggle("on",v===x);});
+  document.getElementById("view_home").classList.toggle("hidden",v!=="home");
+  ['fleet','lead','driver','shipper'].forEach(x=>document.getElementById("view_"+x).classList.toggle("hidden",v!==x));
+  document.getElementById("switchBtn").style.display=v==="home"?"none":"inline-flex";
   if(v==="shipper")renderShipperView();else if(animTimer)clearInterval(animTimer);
   if(v==="lead")renderLead();
   if(v==="driver")renderDriver();
@@ -474,7 +488,7 @@ function renderMetricTabs(){document.getElementById("metricTabs").innerHTML=metr
 function setMetric(k){curMetric=k;renderMetricTabs();renderTrend();}
 function renderTrend(){const m=metrics.find(x=>x.key===curMetric);
   const series=regions.map(r=>({vals:regionSeries(m,r),color:r.color}));
-  series.push({vals:m.data,color:"#2bd1c4",bold:true,label:true});
+  series.push({vals:m.data,color:"#2bd1c4",bold:true});
   document.getElementById("chart_metric").innerHTML=lineChart(series,{min:m.min,max:m.max});
   document.getElementById("m_legend").innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:16px;height:3px;border-radius:3px;background:#2bd1c4;display:inline-block"></i>全隊平均</span>`+
     regions.map(r=>`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:14px;height:3px;border-radius:3px;background:${r.color};display:inline-block"></i>${r.name}</span>`).join("");
@@ -698,7 +712,7 @@ function act(m,k){toast('已執行',m,k||'ok');}
 function closeOv(){ov.classList.remove('on');}
 ov.addEventListener('click',e=>{if(e.target===ov)closeOv();});
 
-renderTodos();renderAdvice();renderRegionTable();renderStaffing();renderMetricTabs();renderTrend();renderDimSel();renderBars();renderDimSol();renderShipperView();
+renderTodos();renderAdvice();renderRegionTable();renderStaffing();renderMetricTabs();renderTrend();renderDimSel();renderBars();renderDimSol();renderShipperView();switchView('home');
 </script>
 </body>
 </html>
