@@ -5,272 +5,272 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>HINO iTRAQ AI 車隊軍師 — App</title>
 <style>
-  :root{
-    --bg:#eef2f4;--bg2:#f4f8f9;--card:#ffffff;--card2:#eef3f4;--line:#dbe3e6;
-    --txt:#1c2b31;--mut:#5d7480;--mut2:#8ca0a9;--accent:#7bb42e;--teal:#14414f;
-    --grad:linear-gradient(135deg,#9aca3c,#7bb42e);--good:#43a047;--warn:#e8961b;--bad:#e5484d;--info:#7e57c2;
-    --badbg:#fdeded;--warnbg:#fcf3e2;--goodbg:#eaf6ea;--infobg:#f0eafb;--r:14px;--sh:0 3px 14px rgba(20,65,79,.09);
-    --appw:430px;--barh:60px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,sans-serif;background:#d3dbde;color:var(--txt);line-height:1.55;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
-  /* ---------- phone frame ---------- */
-  .app{position:relative;width:100%;max-width:var(--appw);min-height:100vh;margin:0 auto;background:var(--bg);
-       box-shadow:0 10px 60px rgba(12,30,38,.28);overflow:hidden;display:flex;flex-direction:column}
-  @media(min-width:470px){
-    body{padding:22px 0}
-    .app{min-height:calc(100vh - 44px);border-radius:34px;overflow:hidden;border:1px solid #c3cdd1}
-  }
-  /* ---------- app bar ---------- */
-  .appbar{position:sticky;top:0;z-index:30;background:var(--teal);border-bottom:3px solid var(--accent);
-          padding:11px 14px;display:flex;align-items:center;gap:11px;min-height:56px}
-  .logo{height:32px;border-radius:8px;background:var(--accent);color:var(--teal);display:grid;place-items:center;
-        font-size:14px;font-weight:900;letter-spacing:.5px;padding:0 10px;flex:0 0 auto}
-  .whoami{flex:1;min-width:0}
-  .whoami .nm{font-size:14px;font-weight:850;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .whoami .rl{font-size:11px;color:#a9c6bf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .barbtn{font:inherit;font-size:12px;font-weight:700;color:#dcecc9;background:rgba(255,255,255,.12);
-          border:1px solid rgba(255,255,255,.2);padding:6px 11px;border-radius:9px;cursor:pointer;flex:0 0 auto}
-  /* ---------- scroll body ---------- */
-  .screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--barh) + 22px)}
-  section{margin-top:20px;scroll-margin-top:70px}
-  section:first-child{margin-top:4px}
-  .sh{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
-  .sh h2{font-size:17px;font-weight:850}
-  .sh h2.sm{font-size:15px}
-  .sh .tag{font-size:11px;color:var(--mut)}
-  .sh .num{font-size:11px;font-weight:800;color:#fff;background:var(--bad);border-radius:20px;padding:2px 9px}
-  .subt{font-size:12px;color:var(--mut2);margin-bottom:11px}
-  /* ---------- generic card ---------- */
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;box-shadow:var(--sh)}
-  .card+.card{margin-top:10px}
-  /* ---------- TODO action center ---------- */
-  .todos{display:flex;flex-direction:column;gap:10px}
-  .todo{background:var(--card);border:1px solid var(--line);border-left-width:4px;border-radius:var(--r);
-        padding:13px 14px;box-shadow:var(--sh);display:flex;flex-direction:column}
-  .todo.bad{border-left-color:var(--bad)}.todo.warn{border-left-color:var(--warn)}.todo.info{border-left-color:var(--info)}
-  .todo .cat{font-size:10.5px;font-weight:800;letter-spacing:.4px;color:var(--mut);text-transform:uppercase;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-  .todo .tt{font-size:15px;font-weight:800;margin:4px 0 4px}
-  .todo .dt{font-size:12.5px;color:var(--mut)}
-  .todo .acts{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:11px}
-  .tdata{border-top:1px solid var(--line);margin-top:11px;padding-top:11px;font-size:12.5px;color:var(--mut);line-height:1.75}
-  .tdata b{color:var(--accent)}
-  /* ---------- buttons (touch-friendly) ---------- */
-  .btn{font:inherit;font-size:13px;font-weight:700;border:none;border-radius:10px;padding:10px 14px;cursor:pointer;
-       transition:.15s;white-space:nowrap;min-height:40px;display:inline-flex;align-items:center;justify-content:center}
-  .btn:active{transform:translateY(1px)}
-  .btn.pri{background:var(--grad);color:#04121f}.btn.gho{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
-  .btn.dng{background:var(--bad);color:#fff}.btn.warnb{background:var(--warn);color:#fff}.btn.gd{background:var(--good);color:#fff}
-  .btn.sm{padding:8px 12px;font-size:12px;min-height:36px}
-  .btn.block{width:100%}
-  .btn:disabled{opacity:.45;cursor:not-allowed}
-  /* ---------- AI advice ---------- */
-  .advice{display:flex;flex-direction:column;gap:10px}
-  .adv{background:#f4f9ec;border:1px solid #d8e7c0;border-radius:var(--r);padding:14px 15px;box-shadow:var(--sh)}
-  .adv .f{font-size:14px;font-weight:800;margin-bottom:4px}.adv .f b{color:#4e7d1f}
-  .adv .why{font-size:12.5px;color:var(--mut);margin-bottom:8px}
-  .adv .rec{font-size:12.5px;color:var(--txt);margin-bottom:10px}
-  .adv .acts{display:flex;gap:7px;flex-wrap:wrap}
-  /* ---------- list-item (mobile replacement for table rows) ---------- */
-  .litem{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh)}
-  .litem+.litem{margin-top:9px}
-  .litem .lh{display:flex;align-items:center;gap:9px}
-  .litem .lh .nm{font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:7px}
-  .litem .lh .chev{margin-left:auto;color:var(--accent);font-size:13px}
-  .litem .stats{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:9px;font-size:12px;color:var(--mut)}
-  .litem .stats b{font-weight:800}
-  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;display:inline-block}
-  .regdet{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:none;flex-direction:column;gap:2px}
-  .regdet.on{display:flex}
-  /* ---------- driver line ---------- */
-  .drvline{display:flex;align-items:center;gap:8px;padding:9px 8px;border-radius:10px;flex-wrap:wrap;font-size:12.5px;background:var(--bg2);border:1px solid var(--line)}
-  .drvline+.drvline{margin-top:6px}
-  .drvline .who{display:flex;align-items:center;gap:7px;flex:1 1 100%}
-  .drvline .who b{font-size:13px}
-  .drvline .mt2{font-size:11px;color:var(--mut);flex:1 1 100%;padding-left:17px}
-  .drvline .row2{display:flex;align-items:center;gap:7px;flex-wrap:wrap;width:100%;padding-left:17px}
-  .lvpill{font-size:11px;font-weight:800;border:1px solid;border-radius:20px;padding:1px 9px}
-  .ntag{font-size:11px;font-weight:700}
-  .upill{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px}
-  .u-bad{background:var(--badbg);color:var(--bad)}.u-warn{background:var(--warnbg);color:var(--warn)}.u-info{background:var(--infobg);color:var(--info)}
-  .quickacts{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-  /* ---------- trend chart ---------- */
-  .chartcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 6px;box-shadow:var(--sh)}
-  .chartcard .ch-h{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;flex-wrap:wrap}
-  .chartcard .ttl{font-weight:800;font-size:14px}.chartcard .now{font-size:15px;font-weight:850;margin-left:auto}.chartcard .sub{font-size:11px;color:var(--mut)}
-  svg.lc{width:100%;height:auto;display:block}.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
-  .regsel{display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:2px 0 12px;padding-bottom:4px;scrollbar-width:none}
-  .regsel::-webkit-scrollbar{display:none}
-  .regchip{font-size:12.5px;font-weight:700;color:var(--mut);background:var(--card);border:1px solid var(--line);
-           padding:8px 13px;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto}
-  .regchip.on{color:#04121f;background:var(--grad);border-color:transparent}.regchip .dot{width:8px;height:8px}
-  .cause{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--r);padding:14px 15px;box-shadow:var(--sh)}
-  .cause .h{font-weight:800;font-size:14px;margin-bottom:6px}
-  .cause ul{margin:4px 0 11px 18px;font-size:12.5px;color:var(--mut)}.cause li{margin:3px 0}
-  .cause .acts{display:flex;gap:8px;flex-wrap:wrap}
-  /* ---------- bar ranking ---------- */
-  .bars{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;box-shadow:var(--sh)}
-  .bar-row{display:grid;grid-template-columns:88px 1fr 62px;align-items:center;gap:9px;padding:6px 0}
-  .bar-name{font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .bar-track{height:16px;background:var(--bg2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
-  .bar-fill{height:100%;border-radius:6px 0 0 6px;transition:width .5s}
-  .bar-fill.good{background:linear-gradient(90deg,#43a047,#7bb42e)}.bar-fill.bad{background:linear-gradient(90deg,#c62828,#e5484d)}.bar-fill.mid{background:linear-gradient(90deg,#c6ced3,#9fb0b8)}
-  .bar-val{font-size:12px;font-weight:800;text-align:right}.rk{width:16px;text-align:center}
-  .bar-leg{font-size:11.5px;color:var(--mut);margin-top:9px;display:flex;gap:12px;flex-wrap:wrap}.bar-leg b.g{color:var(--good)}.bar-leg b.r{color:var(--bad)}
-  .dimsol{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;margin-top:12px;box-shadow:var(--sh)}
-  .dimsol .h{font-weight:800;font-size:14px}.dimsol ul{margin:9px 0 11px 18px;font-size:12.5px;color:var(--mut)}.dimsol li{margin:4px 0}
-  .dimsol .acts{display:flex;gap:8px;flex-wrap:wrap}
-  /* ---------- kpi ---------- */
-  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;box-shadow:var(--sh)}
-  .kpi .k{font-size:11.5px;color:var(--mut)}.kpi .v{font-size:24px;font-weight:850;margin-top:3px}.kpi .s{font-size:11px;margin-top:2px;color:var(--mut2)}
-  /* ---------- staffing panel ---------- */
-  .staffrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:12.5px}
-  .staffrow:last-child{border-bottom:none}
-  .staffrow .nm{font-weight:800;display:flex;align-items:center;gap:6px;width:74px}
-  .staffrow .mid{flex:1;color:var(--mut)}
-  .staffrow .bd{font-weight:800;text-align:right}
-  /* ---------- shipper view ---------- */
-  .eta-hero{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:5px}
-  .eta-hero .big{font-size:40px;font-weight:850;color:var(--accent);line-height:1}
-  .eta-hero .lbl{font-size:13px;color:var(--mut)}
-  .mapwrap{border:1px solid var(--line);border-radius:13px;overflow:hidden;margin:13px 0}
-  #truckG text{transition:none}
-  .tline{display:flex;justify-content:space-between;margin:6px 0 14px;position:relative}
-  .tline::before{content:"";position:absolute;top:8px;left:8%;right:8%;height:2px;background:var(--line)}
-  .tstep{display:flex;flex-direction:column;align-items:center;gap:6px;z-index:1;flex:1}
-  .tstep .d{width:16px;height:16px;border-radius:50%;background:var(--card2);border:2px solid var(--line)}
-  .tstep.done .d{background:var(--good);border-color:var(--good)}
-  .tstep.cur .d{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 5px rgba(123,180,46,.28)}
-  .tstep .t{font-size:11px;color:var(--mut2)}.tstep.cur .t,.tstep.done .t{color:var(--txt)}
-  .drvbar{display:flex;align-items:center;gap:11px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 13px;flex-wrap:wrap}
-  .drvbar .av{width:38px;height:38px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:17px}
-  .shipcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh)}
-  .shipcard+.shipcard{margin-top:9px}
-  .shipcard .top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-  .shipcard .id{font-weight:800;font-size:14px}
-  .shipcard .cust{font-size:12.5px;color:var(--mut);margin-top:3px}
-  .shipcard .acts{display:flex;gap:7px;margin-top:10px}
-  .stpill{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;white-space:nowrap}
-  .st-go{background:var(--infobg);color:var(--info)}.st-soon{background:var(--goodbg);color:var(--good)}.st-risk{background:var(--badbg);color:var(--bad)}.st-done{background:#e7edef;color:var(--mut)}
-  /* ---------- welcome / role picker ---------- */
-  .welcome{padding:26px 18px 30px}
-  .wtitle{text-align:center;margin-bottom:22px}
-  .wtitle .big{font-size:32px;font-weight:850;color:var(--good)}
-  .wtitle .sub{font-size:13px;color:var(--mut2);margin-top:4px}
-  .wpick .lbl{font-weight:850;font-size:18px;margin-bottom:3px}
-  .wpick .desc{color:var(--mut2);margin-bottom:16px;font-size:13px;display:flex;align-items:center;gap:7px}
-  .wpick .q{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--good);color:#fff;font-size:11px;font-weight:800}
-  .idcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 16px;margin-bottom:12px;cursor:pointer;box-shadow:var(--sh);transition:.15s;position:relative}
-  .idcard:hover,.idcard:active{border-color:var(--accent);transform:translateY(-2px)}
-  .idcard .ih{font-weight:850;font-size:16px;margin-bottom:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .idcard .idesc{font-size:12.5px;color:var(--mut);line-height:1.7}
-  .newbadge{display:inline-block;font-size:10px;font-weight:800;color:var(--teal);background:var(--accent);border-radius:20px;padding:1px 8px;vertical-align:middle}
-  .idcard .nb{position:absolute;top:14px;right:14px}
-  .verhint{text-align:center;color:var(--mut2);font-size:11.5px;margin-top:18px}
-  /* ---------- login page ---------- */
-  .loginpg{padding:24px 20px}
-  .loginpg .back{font-size:13px;color:var(--mut);background:none;border:none;cursor:pointer;padding:6px 0;margin-bottom:8px;display:inline-flex;align-items:center;gap:4px}
-  .loginpg .ic{font-size:44px;text-align:center;margin:8px 0 6px}
-  .loginpg h2{text-align:center;font-size:21px;font-weight:850;margin-bottom:4px}
-  .loginpg .rsub{text-align:center;font-size:12.5px;color:var(--mut2);margin-bottom:22px}
-  .field{margin-bottom:14px}
-  .field label{display:block;font-size:12px;font-weight:700;color:var(--mut);margin-bottom:6px}
-  .field input{width:100%;font:inherit;font-size:15px;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--txt)}
-  .field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(123,180,46,.15)}
-  .demohint{background:var(--goodbg);border:1px dashed var(--accent);border-radius:12px;padding:12px 14px;font-size:12.5px;color:#3c5b1c;margin:6px 0 18px;line-height:1.7}
-  .demohint b{color:#2e4d0f}
-  .demohint .fill{margin-top:9px}
-  /* ---------- bottom tab bar ---------- */
-  .tabbar{position:sticky;bottom:0;z-index:40;display:flex;background:#fff;border-top:1px solid var(--line);
-          box-shadow:0 -2px 14px rgba(20,65,79,.07);height:var(--barh);flex:0 0 auto}
-  .tabbar button{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-                 font:inherit;color:var(--mut2);padding:6px 2px}
-  .tabbar button .i{font-size:20px;line-height:1}
-  .tabbar button .l{font-size:10.5px;font-weight:700}
-  .tabbar button.on{color:var(--accent)}
-  .tabbar button.on .l{color:var(--teal)}
-  /* ---------- tour ---------- */
-  #tourMask{position:absolute;inset:0;z-index:80;display:none}#tourMask.on{display:block}
-  #tourHole{position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(15,35,45,.72);pointer-events:none;transition:top .25s,left .25s,width .25s,height .25s}
-  #tourTip{position:absolute;max-width:290px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 16px;box-shadow:0 12px 44px rgba(0,0,0,.32);z-index:81}
-  #tourTip .tt{font-weight:850;font-size:14px;margin-bottom:5px}
-  #tourTip .tx{font-size:12.5px;color:var(--mut);margin-bottom:13px;line-height:1.6}
-  #tourTip .tb{display:flex;gap:8px;justify-content:space-between;align-items:center}#tourTip .step{font-size:11px;color:var(--mut2)}
-  .hidden{display:none!important}
-  /* ---------- toasts (inside frame) ---------- */
-  #toasts{position:absolute;left:12px;right:12px;bottom:calc(var(--barh) + 12px);z-index:60;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-  .toast{background:var(--card2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:11px;padding:11px 14px;font-size:12.5px;box-shadow:var(--sh);animation:slin .25s}
-  .toast.ok{border-left-color:var(--good)}.toast.dn{border-left-color:var(--bad)}.toast.wn{border-left-color:var(--warn)}.toast b{display:block;margin-bottom:2px}
-  @keyframes slin{from{opacity:0;transform:translateY(12px)}to{opacity:1}}
-  /* ---------- modal (inside frame) ---------- */
-  .ov{position:absolute;inset:0;background:rgba(18,42,52,.5);z-index:70;display:none;place-items:end center;padding:0}
-  .ov.on{display:grid}
-  .modal{background:var(--card);border-top-left-radius:20px;border-top-right-radius:20px;padding:20px 18px calc(20px + env(safe-area-inset-bottom));
-         width:100%;box-shadow:var(--sh);max-height:88%;overflow:auto;animation:sheetup .25s}
-  @keyframes sheetup{from{transform:translateY(30px);opacity:.4}to{transform:translateY(0);opacity:1}}
-  .modal h3{font-size:17px;margin-bottom:6px}.modal p{font-size:12.5px;color:var(--mut);margin-bottom:13px}
-  .modal .mb{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
-  .modal .mb .btn{flex:1}
-  .mrow{display:flex;align-items:center;gap:10px;padding:11px 4px;border-radius:10px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-  .mrow:last-child{border-bottom:none}.mrow .nm{font-size:13px;font-weight:700}.mrow .mt{font-size:11.5px;color:var(--mut)}
-  .mrow .ma{width:100%;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-  .mrow input[type=checkbox]{width:19px;height:19px;accent-color:var(--accent);flex:0 0 auto}
-  .plan{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
-  .plan.rec{border-color:var(--accent);background:#f2f8e7}
-  .plan .ph{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:5px}
-  .plan .rb{font-size:10.5px;font-weight:800;color:#04121f;background:var(--accent);padding:2px 8px;border-radius:20px}
-  .plan .pd{font-size:12px;color:var(--mut)}
-  .grip{width:40px;height:4px;background:var(--line);border-radius:4px;margin:0 auto 14px}
-  .foot{margin-top:24px;text-align:center;color:var(--mut2);font-size:11px;padding-bottom:6px}
+ :root{
+ --bg:#eef2f4;--bg2:#f4f8f9;--card:#ffffff;--card2:#eef3f4;--line:#dbe3e6;
+ --txt:#1c2b31;--mut:#5d7480;--mut2:#8ca0a9;--accent:#7bb42e;--teal:#14414f;
+ --grad:linear-gradient(135deg,#9aca3c,#7bb42e);--good:#43a047;--warn:#e8961b;--bad:#e5484d;--info:#7e57c2;
+ --badbg:#fdeded;--warnbg:#fcf3e2;--goodbg:#eaf6ea;--infobg:#f0eafb;--r:14px;--sh:0 3px 14px rgba(20,65,79,.09);
+ --appw:430px;--barh:60px;
+ }
+ *{box-sizing:border-box;margin:0;padding:0}
+ html,body{height:100%}
+ body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,sans-serif;background:#d3dbde;color:var(--txt);line-height:1.55;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+ /* ---------- phone frame ---------- */
+ .app{position:relative;width:100%;max-width:var(--appw);min-height:100vh;margin:0 auto;background:var(--bg);
+ box-shadow:0 10px 60px rgba(12,30,38,.28);overflow:hidden;display:flex;flex-direction:column}
+ @media(min-width:470px){
+ body{padding:22px 0}
+ .app{min-height:calc(100vh - 44px);border-radius:34px;overflow:hidden;border:1px solid #c3cdd1}
+ }
+ /* ---------- app bar ---------- */
+ .appbar{position:sticky;top:0;z-index:30;background:var(--teal);border-bottom:3px solid var(--accent);
+ padding:11px 14px;display:flex;align-items:center;gap:11px;min-height:56px}
+ .logo{height:32px;border-radius:8px;background:var(--accent);color:var(--teal);display:grid;place-items:center;
+ font-size:14px;font-weight:900;letter-spacing:.5px;padding:0 10px;flex:0 0 auto}
+ .whoami{flex:1;min-width:0}
+ .whoami .nm{font-size:14px;font-weight:850;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .whoami .rl{font-size:11px;color:#a9c6bf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .barbtn{font:inherit;font-size:12px;font-weight:700;color:#dcecc9;background:rgba(255,255,255,.12);
+ border:1px solid rgba(255,255,255,.2);padding:6px 11px;border-radius:9px;cursor:pointer;flex:0 0 auto}
+ /* ---------- scroll body ---------- */
+ .screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--barh) + 22px)}
+ section{margin-top:20px;scroll-margin-top:70px}
+ section:first-child{margin-top:4px}
+ .sh{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+ .sh h2{font-size:17px;font-weight:850}
+ .sh h2.sm{font-size:15px}
+ .sh .tag{font-size:11px;color:var(--mut)}
+ .sh .num{font-size:11px;font-weight:800;color:#fff;background:var(--bad);border-radius:20px;padding:2px 9px}
+ .subt{font-size:12px;color:var(--mut2);margin-bottom:11px}
+ /* ---------- generic card ---------- */
+ .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;box-shadow:var(--sh)}
+ .card+.card{margin-top:10px}
+ /* ---------- TODO action center ---------- */
+ .todos{display:flex;flex-direction:column;gap:10px}
+ .todo{background:var(--card);border:1px solid var(--line);border-left-width:4px;border-radius:var(--r);
+ padding:13px 14px;box-shadow:var(--sh);display:flex;flex-direction:column}
+ .todo.bad{border-left-color:var(--bad)}.todo.warn{border-left-color:var(--warn)}.todo.info{border-left-color:var(--info)}
+ .todo .cat{font-size:10.5px;font-weight:800;letter-spacing:.4px;color:var(--mut);text-transform:uppercase;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+ .todo .tt{font-size:15px;font-weight:800;margin:4px 0 4px}
+ .todo .dt{font-size:12.5px;color:var(--mut)}
+ .todo .acts{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:11px}
+ .tdata{border-top:1px solid var(--line);margin-top:11px;padding-top:11px;font-size:12.5px;color:var(--mut);line-height:1.75}
+ .tdata b{color:var(--accent)}
+ /* ---------- buttons (touch-friendly) ---------- */
+ .btn{font:inherit;font-size:13px;font-weight:700;border:none;border-radius:10px;padding:10px 14px;cursor:pointer;
+ transition:.15s;white-space:nowrap;min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+ .btn:active{transform:translateY(1px)}
+ .btn.pri{background:var(--grad);color:#04121f}.btn.gho{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+ .btn.dng{background:var(--bad);color:#fff}.btn.warnb{background:var(--warn);color:#fff}.btn.gd{background:var(--good);color:#fff}
+ .btn.sm{padding:8px 12px;font-size:12px;min-height:36px}
+ .btn.block{width:100%}
+ .btn:disabled{opacity:.45;cursor:not-allowed}
+ /* ---------- AI advice ---------- */
+ .advice{display:flex;flex-direction:column;gap:10px}
+ .adv{background:#f4f9ec;border:1px solid #d8e7c0;border-radius:var(--r);padding:14px 15px;box-shadow:var(--sh)}
+ .adv .f{font-size:14px;font-weight:800;margin-bottom:4px}.adv .f b{color:#4e7d1f}
+ .adv .why{font-size:12.5px;color:var(--mut);margin-bottom:8px}
+ .adv .rec{font-size:12.5px;color:var(--txt);margin-bottom:10px}
+ .adv .acts{display:flex;gap:7px;flex-wrap:wrap}
+ /* ---------- list-item (mobile replacement for table rows) ---------- */
+ .litem{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh)}
+ .litem+.litem{margin-top:9px}
+ .litem .lh{display:flex;align-items:center;gap:9px}
+ .litem .lh .nm{font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:7px}
+ .litem .lh .chev{margin-left:auto;color:var(--accent);font-size:13px}
+ .litem .stats{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:9px;font-size:12px;color:var(--mut)}
+ .litem .stats b{font-weight:800}
+ .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;display:inline-block}
+ .regdet{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:none;flex-direction:column;gap:2px}
+ .regdet.on{display:flex}
+ /* ---------- driver line ---------- */
+ .drvline{display:flex;align-items:center;gap:8px;padding:9px 8px;border-radius:10px;flex-wrap:wrap;font-size:12.5px;background:var(--bg2);border:1px solid var(--line)}
+ .drvline+.drvline{margin-top:6px}
+ .drvline .who{display:flex;align-items:center;gap:7px;flex:1 1 100%}
+ .drvline .who b{font-size:13px}
+ .drvline .mt2{font-size:11px;color:var(--mut);flex:1 1 100%;padding-left:17px}
+ .drvline .row2{display:flex;align-items:center;gap:7px;flex-wrap:wrap;width:100%;padding-left:17px}
+ .lvpill{font-size:11px;font-weight:800;border:1px solid;border-radius:20px;padding:1px 9px}
+ .ntag{font-size:11px;font-weight:700}
+ .upill{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px}
+ .u-bad{background:var(--badbg);color:var(--bad)}.u-warn{background:var(--warnbg);color:var(--warn)}.u-info{background:var(--infobg);color:var(--info)}
+ .quickacts{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+ /* ---------- trend chart ---------- */
+ .chartcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 6px;box-shadow:var(--sh)}
+ .chartcard .ch-h{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+ .chartcard .ttl{font-weight:800;font-size:14px}.chartcard .now{font-size:15px;font-weight:850;margin-left:auto}.chartcard .sub{font-size:11px;color:var(--mut)}
+ svg.lc{width:100%;height:auto;display:block}.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
+ .regsel{display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:2px 0 12px;padding-bottom:4px;scrollbar-width:none}
+ .regsel::-webkit-scrollbar{display:none}
+ .regchip{font-size:12.5px;font-weight:700;color:var(--mut);background:var(--card);border:1px solid var(--line);
+ padding:8px 13px;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto}
+ .regchip.on{color:#04121f;background:var(--grad);border-color:transparent}.regchip .dot{width:8px;height:8px}
+ .cause{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:var(--r);padding:14px 15px;box-shadow:var(--sh)}
+ .cause .h{font-weight:800;font-size:14px;margin-bottom:6px}
+ .cause ul{margin:4px 0 11px 18px;font-size:12.5px;color:var(--mut)}.cause li{margin:3px 0}
+ .cause .acts{display:flex;gap:8px;flex-wrap:wrap}
+ /* ---------- bar ranking ---------- */
+ .bars{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;box-shadow:var(--sh)}
+ .bar-row{display:grid;grid-template-columns:88px 1fr 62px;align-items:center;gap:9px;padding:6px 0}
+ .bar-name{font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .bar-track{height:16px;background:var(--bg2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+ .bar-fill{height:100%;border-radius:6px 0 0 6px;transition:width .5s}
+ .bar-fill.good{background:linear-gradient(90deg,#43a047,#7bb42e)}.bar-fill.bad{background:linear-gradient(90deg,#c62828,#e5484d)}.bar-fill.mid{background:linear-gradient(90deg,#c6ced3,#9fb0b8)}
+ .bar-val{font-size:12px;font-weight:800;text-align:right}.rk{width:16px;text-align:center}
+ .bar-leg{font-size:11.5px;color:var(--mut);margin-top:9px;display:flex;gap:12px;flex-wrap:wrap}.bar-leg b.g{color:var(--good)}.bar-leg b.r{color:var(--bad)}
+ .dimsol{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;margin-top:12px;box-shadow:var(--sh)}
+ .dimsol .h{font-weight:800;font-size:14px}.dimsol ul{margin:9px 0 11px 18px;font-size:12.5px;color:var(--mut)}.dimsol li{margin:4px 0}
+ .dimsol .acts{display:flex;gap:8px;flex-wrap:wrap}
+ /* ---------- kpi ---------- */
+ .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;box-shadow:var(--sh)}
+ .kpi .k{font-size:11.5px;color:var(--mut)}.kpi .v{font-size:24px;font-weight:850;margin-top:3px}.kpi .s{font-size:11px;margin-top:2px;color:var(--mut2)}
+ /* ---------- staffing panel ---------- */
+ .staffrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+ .staffrow:last-child{border-bottom:none}
+ .staffrow .nm{font-weight:800;display:flex;align-items:center;gap:6px;width:74px}
+ .staffrow .mid{flex:1;color:var(--mut)}
+ .staffrow .bd{font-weight:800;text-align:right}
+ /* ---------- shipper view ---------- */
+ .eta-hero{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:5px}
+ .eta-hero .big{font-size:40px;font-weight:850;color:var(--accent);line-height:1}
+ .eta-hero .lbl{font-size:13px;color:var(--mut)}
+ .mapwrap{border:1px solid var(--line);border-radius:13px;overflow:hidden;margin:13px 0}
+ #truckG text{transition:none}
+ .tline{display:flex;justify-content:space-between;margin:6px 0 14px;position:relative}
+ .tline::before{content:"";position:absolute;top:8px;left:8%;right:8%;height:2px;background:var(--line)}
+ .tstep{display:flex;flex-direction:column;align-items:center;gap:6px;z-index:1;flex:1}
+ .tstep .d{width:16px;height:16px;border-radius:50%;background:var(--card2);border:2px solid var(--line)}
+ .tstep.done .d{background:var(--good);border-color:var(--good)}
+ .tstep.cur .d{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 5px rgba(123,180,46,.28)}
+ .tstep .t{font-size:11px;color:var(--mut2)}.tstep.cur .t,.tstep.done .t{color:var(--txt)}
+ .drvbar{display:flex;align-items:center;gap:11px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 13px;flex-wrap:wrap}
+ .drvbar .av{width:38px;height:38px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:17px}
+ .shipcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh)}
+ .shipcard+.shipcard{margin-top:9px}
+ .shipcard .top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+ .shipcard .id{font-weight:800;font-size:14px}
+ .shipcard .cust{font-size:12.5px;color:var(--mut);margin-top:3px}
+ .shipcard .acts{display:flex;gap:7px;margin-top:10px}
+ .stpill{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;white-space:nowrap}
+ .st-go{background:var(--infobg);color:var(--info)}.st-soon{background:var(--goodbg);color:var(--good)}.st-risk{background:var(--badbg);color:var(--bad)}.st-done{background:#e7edef;color:var(--mut)}
+ /* ---------- welcome / role picker ---------- */
+ .welcome{padding:26px 18px 30px}
+ .wtitle{text-align:center;margin-bottom:22px}
+ .wtitle .big{font-size:32px;font-weight:850;color:var(--good)}
+ .wtitle .sub{font-size:13px;color:var(--mut2);margin-top:4px}
+ .wpick .lbl{font-weight:850;font-size:18px;margin-bottom:3px}
+ .wpick .desc{color:var(--mut2);margin-bottom:16px;font-size:13px;display:flex;align-items:center;gap:7px}
+ .wpick .q{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--good);color:#fff;font-size:11px;font-weight:800}
+ .idcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 16px;margin-bottom:12px;cursor:pointer;box-shadow:var(--sh);transition:.15s;position:relative}
+ .idcard:hover,.idcard:active{border-color:var(--accent);transform:translateY(-2px)}
+ .idcard .ih{font-weight:850;font-size:16px;margin-bottom:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+ .idcard .idesc{font-size:12.5px;color:var(--mut);line-height:1.7}
+ .newbadge{display:inline-block;font-size:10px;font-weight:800;color:var(--teal);background:var(--accent);border-radius:20px;padding:1px 8px;vertical-align:middle}
+ .idcard .nb{position:absolute;top:14px;right:14px}
+ .verhint{text-align:center;color:var(--mut2);font-size:11.5px;margin-top:18px}
+ /* ---------- login page ---------- */
+ .loginpg{padding:24px 20px}
+ .loginpg .back{font-size:13px;color:var(--mut);background:none;border:none;cursor:pointer;padding:6px 0;margin-bottom:8px;display:inline-flex;align-items:center;gap:4px}
+ .loginpg .ic{font-size:44px;text-align:center;margin:8px 0 6px}
+ .loginpg h2{text-align:center;font-size:21px;font-weight:850;margin-bottom:4px}
+ .loginpg .rsub{text-align:center;font-size:12.5px;color:var(--mut2);margin-bottom:22px}
+ .field{margin-bottom:14px}
+ .field label{display:block;font-size:12px;font-weight:700;color:var(--mut);margin-bottom:6px}
+ .field input{width:100%;font:inherit;font-size:15px;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--txt)}
+ .field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(123,180,46,.15)}
+ .demohint{background:var(--goodbg);border:1px dashed var(--accent);border-radius:12px;padding:12px 14px;font-size:12.5px;color:#3c5b1c;margin:6px 0 18px;line-height:1.7}
+ .demohint b{color:#2e4d0f}
+ .demohint .fill{margin-top:9px}
+ /* ---------- bottom tab bar ---------- */
+ .tabbar{position:sticky;bottom:0;z-index:40;display:flex;background:#fff;border-top:1px solid var(--line);
+ box-shadow:0 -2px 14px rgba(20,65,79,.07);height:var(--barh);flex:0 0 auto}
+ .tabbar button{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+ font:inherit;color:var(--mut2);padding:6px 2px}
+ .tabbar button .i{font-size:20px;line-height:1}
+ .tabbar button .l{font-size:10.5px;font-weight:700}
+ .tabbar button.on{color:var(--accent)}
+ .tabbar button.on .l{color:var(--teal)}
+ /* ---------- tour ---------- */
+ #tourMask{position:absolute;inset:0;z-index:80;display:none}#tourMask.on{display:block}
+ #tourHole{position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(15,35,45,.72);pointer-events:none;transition:top .25s,left .25s,width .25s,height .25s}
+ #tourTip{position:absolute;max-width:290px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 16px;box-shadow:0 12px 44px rgba(0,0,0,.32);z-index:81}
+ #tourTip .tt{font-weight:850;font-size:14px;margin-bottom:5px}
+ #tourTip .tx{font-size:12.5px;color:var(--mut);margin-bottom:13px;line-height:1.6}
+ #tourTip .tb{display:flex;gap:8px;justify-content:space-between;align-items:center}#tourTip .step{font-size:11px;color:var(--mut2)}
+ .hidden{display:none!important}
+ /* ---------- toasts (inside frame) ---------- */
+ #toasts{position:absolute;left:12px;right:12px;bottom:calc(var(--barh) + 12px);z-index:60;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+ .toast{background:var(--card2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:11px;padding:11px 14px;font-size:12.5px;box-shadow:var(--sh);animation:slin .25s}
+ .toast.ok{border-left-color:var(--good)}.toast.dn{border-left-color:var(--bad)}.toast.wn{border-left-color:var(--warn)}.toast b{display:block;margin-bottom:2px}
+ @keyframes slin{from{opacity:0;transform:translateY(12px)}to{opacity:1}}
+ /* ---------- modal (inside frame) ---------- */
+ .ov{position:absolute;inset:0;background:rgba(18,42,52,.5);z-index:70;display:none;place-items:end center;padding:0}
+ .ov.on{display:grid}
+ .modal{background:var(--card);border-top-left-radius:20px;border-top-right-radius:20px;padding:20px 18px calc(20px + env(safe-area-inset-bottom));
+ width:100%;box-shadow:var(--sh);max-height:88%;overflow:auto;animation:sheetup .25s}
+ @keyframes sheetup{from{transform:translateY(30px);opacity:.4}to{transform:translateY(0);opacity:1}}
+ .modal h3{font-size:17px;margin-bottom:6px}.modal p{font-size:12.5px;color:var(--mut);margin-bottom:13px}
+ .modal .mb{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+ .modal .mb .btn{flex:1}
+ .mrow{display:flex;align-items:center;gap:10px;padding:11px 4px;border-radius:10px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+ .mrow:last-child{border-bottom:none}.mrow .nm{font-size:13px;font-weight:700}.mrow .mt{font-size:11.5px;color:var(--mut)}
+ .mrow .ma{width:100%;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+ .mrow input[type=checkbox]{width:19px;height:19px;accent-color:var(--accent);flex:0 0 auto}
+ .plan{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+ .plan.rec{border-color:var(--accent);background:#f2f8e7}
+ .plan .ph{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:5px}
+ .plan .rb{font-size:10.5px;font-weight:800;color:#04121f;background:var(--accent);padding:2px 8px;border-radius:20px}
+ .plan .pd{font-size:12px;color:var(--mut)}
+ .grip{width:40px;height:4px;background:var(--line);border-radius:4px;margin:0 auto 14px}
+ .foot{margin-top:24px;text-align:center;color:var(--mut2);font-size:11px;padding-bottom:6px}
 </style>
 </head>
 <body>
 <div class="app" id="app">
-  <!-- ===== app bar ===== -->
-  <div class="appbar" id="appbar" style="display:none">
-    <div class="logo">iTRAQ</div>
-    <div class="whoami"><div class="nm" id="waName">—</div><div class="rl" id="waRole">—</div></div>
-    <button class="barbtn" onclick="logout()">登出</button>
-  </div>
+ <!-- ===== app bar ===== -->
+ <div class="appbar" id="appbar" style="display:none">
+ <div class="logo">iTRAQ</div>
+ <div class="whoami"><div class="nm" id="waName">—</div><div class="rl" id="waRole">—</div></div>
+ <button class="barbtn" onclick="logout()">登出</button>
+ </div>
 
-  <!-- ===== screen container ===== -->
-  <div class="screen" id="screen"></div>
+ <!-- ===== screen container ===== -->
+ <div class="screen" id="screen"></div>
 
-  <!-- ===== bottom tab bar ===== -->
-  <nav class="tabbar" id="tabbar" style="display:none"></nav>
+ <!-- ===== bottom tab bar ===== -->
+ <nav class="tabbar" id="tabbar" style="display:none"></nav>
 
-  <!-- overlays live inside frame -->
-  <div id="tourMask"><div id="tourHole"></div><div id="tourTip"></div></div>
-  <div id="toasts"></div>
-  <div class="ov" id="ov"><div class="modal" id="modal"></div></div>
+ <!-- overlays live inside frame -->
+ <div id="tourMask"><div id="tourHole"></div><div id="tourTip"></div></div>
+ <div id="toasts"></div>
+ <div class="ov" id="ov"><div class="modal" id="modal"></div></div>
 </div>
 
 <script>
 /* =====================================================================
-   DATA MODEL (reused from desktop reference)
+ DATA MODEL (reused from desktop reference)
 ===================================================================== */
 const MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月'];
 const regions=[
  {id:"B",name:"中區",lead:"陳國華",phone:"0912-345-678",color:"#f87171",idlePct:16,overload:180,seatbelt:318,fuel:34,anomaly:12.4,onTime:88,
-  safety:[63,61,60,58,57,55,54,52,51,50,49],brake:[180,200,230,250,270,290,300,320,330,350,360],
-  drivers:[{n:"陳大文",c:"ABC-2201",s:42,i:"超速 / 未繫安全帶"},{n:"林俊男",c:"ABC-2202",s:51,i:"急減速頻繁"},{n:"黃志偉",c:"ABC-2203",s:54,i:"超速熱點"}]},
+ safety:[63,61,60,58,57,55,54,52,51,50,49],brake:[180,200,230,250,270,290,300,320,330,350,360],
+ drivers:[{n:"陳大文",c:"ABC-2201",s:42,i:"超速 / 未繫安全帶"},{n:"林俊男",c:"ABC-2202",s:51,i:"急減速頻繁"},{n:"黃志偉",c:"ABC-2203",s:54,i:"超速熱點"}]},
  {id:"A",name:"北區",lead:"林志明",phone:"0922-111-222",color:"#fb923c",idlePct:19,overload:120,seatbelt:150,fuel:33,anomaly:9.1,onTime:91,
-  safety:[70,69,67,66,64,63,62,61,60,59,58],brake:[120,130,140,150,160,170,180,190,200,210,220],
-  drivers:[{n:"王建國",c:"ABC-1101",s:52,i:"連3週急煞偏高 / 怠速19%"},{n:"張文豪",c:"ABC-1102",s:57,i:"分心駕駛"},{n:"李明哲",c:"ABC-1103",s:61,i:"未完成點檢"},{n:"周俊宏",c:"ABC-1104",s:62,i:"新進·未完成點檢"}]},
+ safety:[70,69,67,66,64,63,62,61,60,59,58],brake:[120,130,140,150,160,170,180,190,200,210,220],
+ drivers:[{n:"王建國",c:"ABC-1101",s:52,i:"連3週急煞偏高 / 怠速19%"},{n:"張文豪",c:"ABC-1102",s:57,i:"分心駕駛"},{n:"李明哲",c:"ABC-1103",s:61,i:"未完成點檢"},{n:"周俊宏",c:"ABC-1104",s:62,i:"新進·未完成點檢"}]},
  {id:"F",name:"東區",lead:"吳俊傑",phone:"0933-444-555",color:"#fbbf24",idlePct:14,overload:287,seatbelt:90,fuel:32,anomaly:8.0,onTime:93,
-  safety:[72,71,70,69,68,66,65,64,63,62,62],brake:[90,95,100,105,110,115,120,125,130,135,140],
-  drivers:[{n:"蔡英傑",c:"ABC-1301",s:58,i:"疑超載 / 引擎過載"},{n:"鄭家豪",c:"ABC-1302",s:63,i:"未完成點檢"},{n:"許文雄",c:"ABC-1303",s:65,i:"新進·急加速"}]},
+ safety:[72,71,70,69,68,66,65,64,63,62,62],brake:[90,95,100,105,110,115,120,125,130,135,140],
+ drivers:[{n:"蔡英傑",c:"ABC-1301",s:58,i:"疑超載 / 引擎過載"},{n:"鄭家豪",c:"ABC-1302",s:63,i:"未完成點檢"},{n:"許文雄",c:"ABC-1303",s:65,i:"新進·急加速"}]},
  {id:"D",name:"桃竹",lead:"張美玲",phone:"0955-666-777",color:"#a78bfa",idlePct:12,overload:95,seatbelt:60,fuel:31,anomaly:5.2,onTime:96,
-  safety:[74,73,72,71,70,69,69,68,68,67,67],brake:[70,72,74,76,78,80,82,84,86,88,90],
-  drivers:[{n:"劉怡君",c:"ABC-1401",s:64,i:"DTC 故障碼 / 未完成點檢"},{n:"楊大為",c:"ABC-1402",s:68,i:"怠速"},{n:"陳冠宇",c:"ABC-1403",s:69,i:"超速"}]},
+ safety:[74,73,72,71,70,69,69,68,68,67,67],brake:[70,72,74,76,78,80,82,84,86,88,90],
+ drivers:[{n:"劉怡君",c:"ABC-1401",s:64,i:"DTC 故障碼 / 未完成點檢"},{n:"楊大為",c:"ABC-1402",s:68,i:"怠速"},{n:"陳冠宇",c:"ABC-1403",s:69,i:"超速"}]},
  {id:"E",name:"高雄",lead:"李建宏",phone:"0966-888-999",color:"#34d399",idlePct:10,overload:70,seatbelt:40,fuel:30,anomaly:3.8,onTime:97,
-  safety:[76,76,75,75,75,74,74,74,74,74,74],brake:[50,50,52,52,54,54,56,56,58,58,60],
-  drivers:[{n:"林佳穎",c:"ABC-1501",s:72,i:"穩定"},{n:"高志明",c:"ABC-1502",s:74,i:"穩定"},{n:"莊承翰",c:"ABC-1503",s:76,i:"良好"}]},
+ safety:[76,76,75,75,75,74,74,74,74,74,74],brake:[50,50,52,52,54,54,56,56,58,58,60],
+ drivers:[{n:"林佳穎",c:"ABC-1501",s:72,i:"穩定"},{n:"高志明",c:"ABC-1502",s:74,i:"穩定"},{n:"莊承翰",c:"ABC-1503",s:76,i:"良好"}]},
  {id:"C",name:"南區",lead:"王大明",phone:"0977-000-111",color:"#38bdf8",idlePct:8,overload:45,seatbelt:25,fuel:29,anomaly:3.0,onTime:98,
-  safety:[80,80,81,81,81,81,82,81,82,82,81],brake:[30,32,30,34,32,36,34,38,36,40,38],
-  drivers:[{n:"王大年",c:"ABC-1601",s:79,i:"優良"},{n:"蘇曉婷",c:"ABC-1602",s:81,i:"優良"},{n:"何柏翰",c:"ABC-1603",s:82,i:"全隊最佳"},{n:"賴冠廷",c:"ABC-1604",s:83,i:"優良"}]},
+ safety:[80,80,81,81,81,81,82,81,82,82,81],brake:[30,32,30,34,32,36,34,38,36,40,38],
+ drivers:[{n:"王大年",c:"ABC-1601",s:79,i:"優良"},{n:"蘇曉婷",c:"ABC-1602",s:81,i:"優良"},{n:"何柏翰",c:"ABC-1603",s:82,i:"全隊最佳"},{n:"賴冠廷",c:"ABC-1604",s:83,i:"優良"}]},
 ];
 const aggSafety=MONTHS.map((_,i)=>Math.round(regions.reduce((a,r)=>a+r.safety[i],0)/regions.length));
 const aggBrake=MONTHS.map((_,i)=>regions.reduce((a,r)=>a+r.brake[i],0));
@@ -280,11 +280,11 @@ const ordersByRegion={B:720,A:980,F:560,D:540,E:600,C:760};const TARGET_PER_DRIV
 const speedByRegion={B:730,A:440,F:275,D:195,E:124,C:88};
 const metricCfg={speed:{type:'sum',rv:r=>speedByRegion[r.id]},idle:{type:'avg',rv:r=>r.idlePct},overload:{type:'sum',rv:r=>r.overload},seatbelt:{type:'sum',rv:r=>r.seatbelt},fuel:{type:'avg',rv:r=>r.fuel}};
 function regionSeries(m,r){
-  if(m.key==='safety')return r.safety;
-  if(m.key==='brake')return r.brake;
-  const cfg=metricCfg[m.key],sc=cfg.rv(r);
-  if(cfg.type==='sum'){const sum=regions.reduce((a,x)=>a+cfg.rv(x),0);return m.data.map(v=>Math.round(v*sc/sum));}
-  const avg=regions.reduce((a,x)=>a+cfg.rv(x),0)/regions.length;return m.data.map(v=>+(v+sc-avg).toFixed(1));
+ if(m.key==='safety')return r.safety;
+ if(m.key==='brake')return r.brake;
+ const cfg=metricCfg[m.key],sc=cfg.rv(r);
+ if(cfg.type==='sum'){const sum=regions.reduce((a,x)=>a+cfg.rv(x),0);return m.data.map(v=>Math.round(v*sc/sum));}
+ const avg=regions.reduce((a,x)=>a+cfg.rv(x),0)/regions.length;return m.data.map(v=>+(v+sc-avg).toFixed(1));
 }
 function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
 function dref(code){const r=regions.find(x=>x.id===code[0]);return {r,d:r.drivers[+code.slice(1)]};}
@@ -292,173 +292,173 @@ function scoreColor(s){return s<55?"var(--bad)":s<70?"var(--warn)":"var(--good)"
 function lvl(s){return s<55?["紅","var(--bad)"]:s<70?["黃","var(--warn)"]:["綠","var(--good)"];}
 
 /* =====================================================================
-   IDENTITY / ACCOUNTS  (login decides who you are)
-   — no in-app person/region/company switchers —
+ IDENTITY / ACCOUNTS (login decides who you are)
+ — no in-app person/region/company switchers —
 ===================================================================== */
 // role meta
 const ROLES={
-  fleet:  {ic:"⚙️", label:"車隊管理", color:"#2e9e4f", sub:"老闆／總管，看全隊",
-           desc:"註冊：iTRAQ 系統網站註冊車隊管理帳號<br>登入：輸入手機號碼或電子信箱"},
-  lead:   {ic:"🧭", label:"總負責人", color:"#0d9488", sub:"區域負責人，只看自己那一區",
-           desc:"註冊：由車隊管理者建立區域負責人帳號<br>登入：手機號碼登入 APP、只看負責區", isNew:true},
-  driver: {ic:"👥", label:"車隊駕駛", color:"#4a6cf0", sub:"司機，只看自己",
-           desc:"註冊：由車隊管理者建立車隊駕駛帳號<br>登入：一律採用手機號碼登入 APP"},
-  personal:{ic:"👤", label:"個人用戶", color:"#e0862a", sub:"個人車主，看自己的車與行程",
-           desc:"登入：一律採用手機號碼登入 APP"},
-  shipper:{ic:"📦", label:"貨主", color:"#2e9e4f", sub:"貨件追蹤（B2B2B）",
-           desc:"登入：手機號碼登入 APP · 即時追蹤貨件位置與 ETA<br><b style=\"color:var(--good)\">本團隊 B2B2B 新增身份</b>（iTRAQ 原本沒有）", isNew:true},
+ fleet: {ic:"", label:"車隊管理", color:"#2e9e4f", sub:"老闆／總管，看全隊",
+ desc:"註冊：iTRAQ 系統網站註冊車隊管理帳號<br>登入：輸入手機號碼或電子信箱"},
+ lead: {ic:"", label:"總負責人", color:"#0d9488", sub:"區域負責人，只看自己那一區",
+ desc:"註冊：由車隊管理者建立區域負責人帳號<br>登入：手機號碼登入 APP、只看負責區", isNew:true},
+ driver: {ic:"", label:"車隊駕駛", color:"#4a6cf0", sub:"司機，只看自己",
+ desc:"註冊：由車隊管理者建立車隊駕駛帳號<br>登入：一律採用手機號碼登入 APP"},
+ personal:{ic:"", label:"個人用戶", color:"#e0862a", sub:"個人車主，看自己的車與行程",
+ desc:"登入：一律採用手機號碼登入 APP"},
+ shipper:{ic:"", label:"貨主", color:"#2e9e4f", sub:"貨件追蹤（B2B2B）",
+ desc:"登入：手機號碼登入 APP · 即時追蹤貨件位置與 ETA<br><b style=\"color:var(--good)\">本團隊 B2B2B 新增身份</b>（iTRAQ 原本沒有）", isNew:true},
 };
 // each demo account maps to EXACTLY one person / region / company
 const ACCOUNTS={
-  fleet:   {phone:"0900-000-001", name:"王大明", roleName:"車隊管理", scope:"全隊總管"},
-  lead:    {phone:"0912-345-678", name:"陳國華", roleName:"總負責人", region:"B", scope:"中區負責人"},
-  driver:  {phone:"0900-110-101", name:"王建國", roleName:"車隊駕駛", drvCode:"A0", scope:"北區司機"},
-  personal:{phone:"0900-220-202", name:"李承恩", roleName:"個人用戶", drvCode:"D2", scope:"個人車主"},
-  shipper: {phone:"0900-880-808", name:"王採購", roleName:"貨主", shipperId:"tsmc", scope:"台積電"},
+ fleet: {phone:"0900-000-001", name:"王大明", roleName:"車隊管理", scope:"全隊總管"},
+ lead: {phone:"0912-345-678", name:"陳國華", roleName:"總負責人", region:"B", scope:"中區負責人"},
+ driver: {phone:"0900-110-101", name:"王建國", roleName:"車隊駕駛", drvCode:"A0", scope:"北區司機"},
+ personal:{phone:"0900-220-202", name:"李承恩", roleName:"個人用戶", drvCode:"D2", scope:"個人車主"},
+ shipper: {phone:"0900-880-808", name:"王採購", roleName:"貨主", shipperId:"tsmc", scope:"台積電"},
 };
 let SESSION=null; // {role, acc}
 
 /* =====================================================================
-   NAV: screens + tab bars per identity
+ NAV: screens + tab bars per identity
 ===================================================================== */
 const screen=document.getElementById('screen');
 const tabbar=document.getElementById('tabbar');
 const appbar=document.getElementById('appbar');
 
 const TABS={
-  fleet:[
-    {id:"todo",   i:"📋", l:"待辦", render:renderFleetTodo},
-    {id:"analytic",i:"📈", l:"分析", render:renderFleetAnalytics},
-    {id:"team",   i:"🚚", l:"車隊", render:renderFleetTeam},
-    {id:"me",     i:"👤", l:"我的", render:renderFleetMe},
-  ],
-  lead:[
-    {id:"kpi",    i:"📊", l:"本區", render:renderLeadKpi},
-    {id:"focus",  i:"🎯", l:"重點", render:renderLeadFocus},
-    {id:"drivers",i:"👥", l:"駕駛", render:renderLeadDrivers},
-  ],
-  driver:[
-    {id:"home",   i:"🏠", l:"首頁", render:renderDriverHome},
-    {id:"task",   i:"🧭", l:"任務", render:renderDriverTask},
-    {id:"alert",  i:"🔔", l:"提醒", render:renderDriverAlerts},
-  ],
-  personal:[
-    {id:"home",   i:"🏠", l:"首頁", render:renderDriverHome},
-    {id:"task",   i:"🧭", l:"行程", render:renderDriverTask},
-    {id:"alert",  i:"🔔", l:"提醒", render:renderDriverAlerts},
-  ],
-  shipper:[
-    {id:"track",  i:"📍", l:"追蹤", render:renderShipperTrack},
-    {id:"orders", i:"📦", l:"我的貨件", render:renderShipperOrders},
-  ],
+ fleet:[
+ {id:"todo", i:"", l:"待辦", render:renderFleetTodo},
+ {id:"analytic",i:"", l:"分析", render:renderFleetAnalytics},
+ {id:"team", i:"", l:"車隊", render:renderFleetTeam},
+ {id:"me", i:"", l:"我的", render:renderFleetMe},
+ ],
+ lead:[
+ {id:"kpi", i:"", l:"本區", render:renderLeadKpi},
+ {id:"focus", i:"", l:"重點", render:renderLeadFocus},
+ {id:"drivers",i:"", l:"駕駛", render:renderLeadDrivers},
+ ],
+ driver:[
+ {id:"home", i:"", l:"首頁", render:renderDriverHome},
+ {id:"task", i:"", l:"任務", render:renderDriverTask},
+ {id:"alert", i:"", l:"提醒", render:renderDriverAlerts},
+ ],
+ personal:[
+ {id:"home", i:"", l:"首頁", render:renderDriverHome},
+ {id:"task", i:"", l:"行程", render:renderDriverTask},
+ {id:"alert", i:"", l:"提醒", render:renderDriverAlerts},
+ ],
+ shipper:[
+ {id:"track", i:"", l:"追蹤", render:renderShipperTrack},
+ {id:"orders", i:"", l:"我的貨件", render:renderShipperOrders},
+ ],
 };
 let curTab=null;
 
 function login(role){
-  SESSION={role, acc:ACCOUNTS[role]};
-  appbar.style.display="flex";
-  document.getElementById('waName').textContent=SESSION.acc.name;
-  document.getElementById('waRole').textContent=SESSION.acc.roleName+" · "+SESSION.acc.scope;
-  buildTabs();
-  const first=TABS[role][0];
-  gotoTab(first.id);
-  // onboarding spotlight for the AI-heavy fleet role, on first visit
-  if(role==='fleet'){try{if(!localStorage.getItem('hinoMTourDone'))setTimeout(startTour,600);}catch(e){setTimeout(startTour,600);}}
+ SESSION={role, acc:ACCOUNTS[role]};
+ appbar.style.display="flex";
+ document.getElementById('waName').textContent=SESSION.acc.name;
+ document.getElementById('waRole').textContent=SESSION.acc.roleName+" · "+SESSION.acc.scope;
+ buildTabs();
+ const first=TABS[role][0];
+ gotoTab(first.id);
+ // onboarding spotlight for the AI-heavy fleet role, on first visit
+ if(role==='fleet'){try{if(!localStorage.getItem('hinoMTourDone'))setTimeout(startTour,600);}catch(e){setTimeout(startTour,600);}}
 }
 function logout(){
-  SESSION=null;curTab=null;
-  appbar.style.display="none";tabbar.style.display="none";
-  if(animTimer)clearInterval(animTimer);
-  renderWelcome();
+ SESSION=null;curTab=null;
+ appbar.style.display="none";tabbar.style.display="none";
+ if(animTimer)clearInterval(animTimer);
+ renderWelcome();
 }
 function buildTabs(){
-  const list=TABS[SESSION.role];
-  tabbar.style.display="flex";
-  tabbar.innerHTML=list.map(t=>`<button data-tab="${t.id}" onclick="gotoTab('${t.id}')"><span class="i">${t.i}</span><span class="l">${t.l}</span></button>`).join("");
+ const list=TABS[SESSION.role];
+ tabbar.style.display="flex";
+ tabbar.innerHTML=list.map(t=>`<button data-tab="${t.id}" onclick="gotoTab('${t.id}')"><span class="i">${t.i}</span><span class="l">${t.l}</span></button>`).join("");
 }
 function gotoTab(id){
-  curTab=id;
-  if(animTimer)clearInterval(animTimer);
-  const t=TABS[SESSION.role].find(x=>x.id===id);
-  t.render();
-  tabbar.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
-  screen.scrollTo({top:0,behavior:'smooth'});
+ curTab=id;
+ if(animTimer)clearInterval(animTimer);
+ const t=TABS[SESSION.role].find(x=>x.id===id);
+ t.render();
+ tabbar.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
+ screen.scrollTo({top:0,behavior:'smooth'});
 }
 
 /* =====================================================================
-   WELCOME + ROLE PICKER  +  LOGIN PAGE
+ WELCOME + ROLE PICKER + LOGIN PAGE
 ===================================================================== */
 function renderWelcome(){
-  appbar.style.display="none";tabbar.style.display="none";
-  const cards=Object.entries(ROLES).map(([key,r],idx)=>`
-    <div class="idcard" onclick="renderLoginPage('${key}')">
-      ${r.isNew?'<span class="newbadge nb">✨ 新增</span>':''}
-      <div class="ih" style="color:${r.color}">${r.ic} ${r.label}${key==='shipper'?'（貨件追蹤）':''}<span style="font-size:11px;font-weight:600;color:var(--mut2)"> · ${r.sub}</span></div>
-      <div class="idesc">${r.desc}</div>
-    </div>`).join("");
-  screen.innerHTML=`
-    <div class="welcome">
-      <div class="wtitle">
-        <div class="big">歡迎使用</div>
-        <div class="sub">iTRAQ GenAI 智慧層 · 火箭隊</div>
-      </div>
-      <div class="wpick">
-        <div class="lbl">請選擇身份</div>
-        <div class="desc">根據身份提供差異化服務 <span class="q">?</span></div>
-        ${cards}
-      </div>
-      <div class="verhint">軟體版本 1.5.2(1) · HINO × GenAI Demo · 登入後由帳號決定看到誰的資料</div>
-    </div>`;
-  screen.scrollTo({top:0});
+ appbar.style.display="none";tabbar.style.display="none";
+ const cards=Object.entries(ROLES).map(([key,r],idx)=>`
+ <div class="idcard" onclick="renderLoginPage('${key}')">
+ ${r.isNew?'<span class="newbadge nb">新增</span>':''}
+ <div class="ih" style="color:${r.color}">${r.ic} ${r.label}${key==='shipper'?'（貨件追蹤）':''}<span style="font-size:11px;font-weight:600;color:var(--mut2)">· ${r.sub}</span></div>
+ <div class="idesc">${r.desc}</div>
+ </div>`).join("");
+ screen.innerHTML=`
+ <div class="welcome">
+ <div class="wtitle">
+ <div class="big">歡迎使用</div>
+ <div class="sub">iTRAQ GenAI 智慧層 · 火箭隊</div>
+ </div>
+ <div class="wpick">
+ <div class="lbl">請選擇身份</div>
+ <div class="desc">根據身份提供差異化服務 <span class="q">?</span></div>
+ ${cards}
+ </div>
+ <div class="verhint">軟體版本 1.5.2(1) · HINO × GenAI Demo · 登入後由帳號決定看到誰的資料</div>
+ </div>`;
+ screen.scrollTo({top:0});
 }
 
 function renderLoginPage(role){
-  const r=ROLES[role],acc=ACCOUNTS[role];
-  screen.innerHTML=`
-    <div class="loginpg">
-      <button class="back" onclick="renderWelcome()">← 返回選擇身份</button>
-      <div class="ic">${r.ic}</div>
-      <h2 style="color:${r.color}">${r.label} 登入</h2>
-      <div class="rsub">${r.sub}${r.isNew?' · ✨ 新增身份':''}</div>
-      <div class="field">
-        <label>手機號碼 / 帳號</label>
-        <input id="loginInput" type="text" inputmode="tel" placeholder="請輸入手機號碼或電子信箱" autocomplete="off">
-      </div>
-      <div class="demohint">
-        🔑 <b>評審 Demo 帳號</b>（點下方按鈕自動帶入）<br>
-        帳號：<b>${acc.phone}</b><br>
-        身份：${acc.name}（${acc.scope}）
-        <div class="fill"><button class="btn gho sm block" onclick="document.getElementById('loginInput').value='${acc.phone}'">帶入 Demo 帳號</button></div>
-      </div>
-      <button class="btn pri block" onclick="doLogin('${role}')">登入</button>
-      <div class="verhint">登入後只會顯示「${acc.name}」的資料，無法在 App 內切換成其他人。</div>
-    </div>`;
-  screen.scrollTo({top:0});
-  setTimeout(()=>{const i=document.getElementById('loginInput');if(i)i.focus();},120);
+ const r=ROLES[role],acc=ACCOUNTS[role];
+ screen.innerHTML=`
+ <div class="loginpg">
+ <button class="back" onclick="renderWelcome()">← 返回選擇身份</button>
+ <div class="ic">${r.ic}</div>
+ <h2 style="color:${r.color}">${r.label} 登入</h2>
+ <div class="rsub">${r.sub}${r.isNew?' · 新增身份':''}</div>
+ <div class="field">
+ <label>手機號碼 / 帳號</label>
+ <input id="loginInput" type="text" inputmode="tel" placeholder="請輸入手機號碼或電子信箱" autocomplete="off">
+ </div>
+ <div class="demohint">
+ <b>評審 Demo 帳號</b>（點下方按鈕自動帶入）<br>
+ 帳號：<b>${acc.phone}</b><br>
+ 身份：${acc.name}（${acc.scope}）
+ <div class="fill"><button class="btn gho sm block" onclick="document.getElementById('loginInput').value='${acc.phone}'">帶入 Demo 帳號</button></div>
+ </div>
+ <button class="btn pri block" onclick="doLogin('${role}')">登入</button>
+ <div class="verhint">登入後只會顯示「${acc.name}」的資料，無法在 App 內切換成其他人。</div>
+ </div>`;
+ screen.scrollTo({top:0});
+ setTimeout(()=>{const i=document.getElementById('loginInput');if(i)i.focus();},120);
 }
 function doLogin(role){
-  const v=(document.getElementById('loginInput').value||'').trim();
-  if(!v){toast('請先輸入帳號','輸入手機號碼或點「帶入 Demo 帳號」。','wn');return;}
-  login(role);
+ const v=(document.getElementById('loginInput').value||'').trim();
+ if(!v){toast('請先輸入帳號','輸入手機號碼或點「帶入 Demo 帳號」。','wn');return;}
+ login(role);
 }
 
 /* =====================================================================
-   ROLE: 車隊管理 (fleet — 王大明, 全隊)  4 tabs
+ ROLE: 車隊管理 (fleet — 王大明, 全隊) 4 tabs
 ===================================================================== */
 /* ---- shared TODO data ---- */
 const todos=[
- {sev:"bad",cat:"駕駛異常",tt:"3 位駕駛有疲勞駕駛風險",dt:"⚡ 即時偵測（行駛中），可立即介入。中區 陳大文、北區 王建國、東區 蔡英傑。",
-  acts:[{l:"查看駕駛",c:"gho",fn:"drillDrivers(['B0','A0','F0'],'疲勞風險駕駛')"},{l:"立即通知休息",c:"gho",fn:"act('已通知 3 位駕駛就近休息。','wn')"},{l:"🔄 派員交接",c:"pri",fn:"openHandover()"}]},
- {sev:"warn",cat:"路線異常",tt:"中區 2 條路線繞行率過高（+22%）",dt:"⚡ 即時偵測（行駛中）：台中港線、烏日線 已偏離規劃路線多繞 22%，可當下調整、不必等事後。",
-  acts:[{l:"查看路線",c:"gho",fn:"openRoutePlan()"},{l:"產生優化方案",c:"pri",fn:"openRoutePlan()"}]},
+ {sev:"bad",cat:"駕駛異常",tt:"3 位駕駛有疲勞駕駛風險",dt:" 即時偵測（行駛中），可立即介入。中區 陳大文、北區 王建國、東區 蔡英傑。",
+ acts:[{l:"查看駕駛",c:"gho",fn:"drillDrivers(['B0','A0','F0'],'疲勞風險駕駛')"},{l:"立即通知休息",c:"gho",fn:"act('已通知 3 位駕駛就近休息。','wn')"},{l:" 派員交接",c:"pri",fn:"openHandover()"}]},
+ {sev:"warn",cat:"路線異常",tt:"中區 2 條路線繞行率過高（+22%）",dt:" 即時偵測（行駛中）：台中港線、烏日線 已偏離規劃路線多繞 22%，可當下調整、不必等事後。",
+ acts:[{l:"查看路線",c:"gho",fn:"openRoutePlan()"},{l:"產生優化方案",c:"pri",fn:"openRoutePlan()"}]},
  {sev:"bad",cat:"車輛異常",tt:"3 輛車疑似超載（東區 ABC-1301 最嚴重）",dt:"ABC-1301 蔡英傑 過載 287 次、估超核定載重 12%（疑似，建議過磅確認）。",
-  acts:[{l:"查看明細",c:"gho",fn:"openOverloadFix()"},{l:"處理超載",c:"pri",fn:"openOverloadFix()"}]},
+ acts:[{l:"查看明細",c:"gho",fn:"openOverloadFix()"},{l:"處理超載",c:"pri",fn:"openOverloadFix()"}]},
  {sev:"warn",cat:"點檢異常",tt:"5 位駕駛未完成今日點檢",dt:"出車前車況點檢未完成：北區 2、東區 1、桃竹 1、東區 1。",
-  acts:[{l:"查看駕駛",c:"gho",fn:"drillDrivers(['A2','A3','F1','D0'],'未完成點檢')"},{l:"立即通知補點檢",c:"pri",fn:"act('已推播 5 位駕駛補完出車前點檢。','wn')"}]},
+ acts:[{l:"查看駕駛",c:"gho",fn:"drillDrivers(['A2','A3','F1','D0'],'未完成點檢')"},{l:"立即通知補點檢",c:"pri",fn:"act('已推播 5 位駕駛補完出車前點檢。','wn')"}]},
  {sev:"warn",cat:"客訴異常",tt:"2 件到貨延誤客訴（南區）",dt:"貨主反映昨日 2 筆延誤，需回覆並指派處理。",
-  acts:[{l:"查看客訴",c:"gho",fn:"drillComplaints()"},{l:"回覆貨主",c:"pri",fn:"act('已回覆貨主並致歉，附補償方案。','ok')"}]},
+ acts:[{l:"查看客訴",c:"gho",fn:"drillComplaints()"},{l:"回覆貨主",c:"pri",fn:"act('已回覆貨主並致歉，附補償方案。','ok')"}]},
  {sev:"info",cat:"工程/維修",tt:"3 台車 DTC 故障（含 DPF P2002）",dt:"柴油濾清器相關故障碼，恐拋錨並影響排放。",
-  acts:[{l:"查看車輛",c:"gho",fn:"drillVehicle('DTC')"},{l:"一鍵預約進廠",c:"pri",fn:"act('已替 3 台車向最近和泰保修廠預約進廠。','ok')"}]},
+ acts:[{l:"查看車輛",c:"gho",fn:"drillVehicle('DTC')"},{l:"一鍵預約進廠",c:"pri",fn:"act('已替 3 台車向最近和泰保修廠預約進廠。','ok')"}]},
 ];
 const todoData=[
  `陳大文 連續 5.2h｜王建國 4.8h｜蔡英傑 5.5h（皆超 4h）。<br><b>決策：</b>先請就近休息，並派最近替班交接（莊承翰 9km／賴冠廷 6km／高志明 12km）。`,
@@ -470,54 +470,54 @@ const todoData=[
 ];
 const advice=[
  {f:"<b>王建國</b>（北區 ABC-1101）連續 3 週急煞偏高",why:"急減速較全隊平均高 64%，多集中市區下班尖峰。",rec:"建議：主管電話提醒 → AI 語音關懷 → 指派安全駕駛訓練。",
-  acts:[{l:"📞 AI 撥打電話",c:"pri",fn:"voiceCall('王建國','call')"},{l:"發送語音提醒",c:"gho",fn:"voiceCall('王建國','voice')"},{l:"建立教育任務",c:"gho",fn:"act('已替王建國建立安全駕駛訓練任務。','ok')"}]},
+ acts:[{l:" AI 撥打電話",c:"pri",fn:"voiceCall('王建國','call')"},{l:"發送語音提醒",c:"gho",fn:"voiceCall('王建國','voice')"},{l:"建立教育任務",c:"gho",fn:"act('已替王建國建立安全駕駛訓練任務。','ok')"}]},
  {f:"<b>陳大文</b>（中區 ABC-2201）超速＋未繫安全帶雙高",why:"近月超速 412 次、未繫 318 次，安全分僅 42。",rec:"建議：立即電話約談 → 限期改善 → 安排訓練。",
-  acts:[{l:"📞 AI 撥打電話",c:"pri",fn:"voiceCall('陳大文','call')"},{l:"發送語音提醒",c:"gho",fn:"voiceCall('陳大文','voice')"},{l:"建立教育任務",c:"gho",fn:"act('已建立安全訓練任務。','ok')"}]},
+ acts:[{l:" AI 撥打電話",c:"pri",fn:"voiceCall('陳大文','call')"},{l:"發送語音提醒",c:"gho",fn:"voiceCall('陳大文','voice')"},{l:"建立教育任務",c:"gho",fn:"act('已建立安全訓練任務。','ok')"}]},
  {f:"<b>北區車隊</b>怠速 19% 為全隊最高",why:"每月多燒約 6 萬油錢，集中於早班等候時段。",rec:"建議：發訊息給負責人設怠速目標 → 推播省油教練。",
-  acts:[{l:"發訊息給負責人",c:"pri",fn:"msgLead('A')"},{l:"啟動省油教練",c:"gho",fn:"act('已替北區駕駛啟動 AI 省油教練。','ok')"}]},
+ acts:[{l:"發訊息給負責人",c:"pri",fn:"msgLead('A')"},{l:"啟動省油教練",c:"gho",fn:"act('已替北區駕駛啟動 AI 省油教練。','ok')"}]},
 ];
 
 function renderFleetTodo(){
-  const rank={bad:3,warn:2,info:1},uname={bad:"緊急",warn:"待辦",info:"留意"};
-  const sorted=todos.map((t,i)=>({t,i})).sort((a,b)=>rank[b.t.sev]-rank[a.t.sev]);
-  const todoHtml=sorted.map(({t,i})=>{const b=t.acts.map(a=>`<button class="btn ${a.c} sm" onclick="${a.fn}">${a.l}</button>`).join("");
-    return `<div class="todo ${t.sev}">
-      <div class="cat">${t.cat}<span class="upill u-${t.sev}">${uname[t.sev]}</span></div>
-      <div class="tt">${t.tt}</div><div class="dt">${t.dt}</div>
-      <div class="acts"><button class="btn gho sm" onclick="toggleTodo(${i})"><span id="ta_${i}">▸</span> 看數據</button>${b}</div>
-      <div class="tdata" id="tp_${i}" style="display:none">${todoData[i]||''}</div></div>`;}).join("");
-  const adv=advice.map(a=>{const b=a.acts.map(x=>`<button class="btn ${x.c} sm" onclick="${x.fn}">${x.l}</button>`).join("");
-    return `<div class="adv"><div class="f">系統發現：${a.f}</div><div class="why">${a.why}</div><div class="rec">${a.rec}</div><div class="acts">${b}</div></div>`;}).join("");
-  screen.innerHTML=`
-    <section id="todo">
-      <div class="sh"><h2>今日需處理</h2><span class="newbadge">✨ 新增</span><span class="num">${todos.length} 件</span></div>
-      <div class="subt">依緊急程度排序，每件都能一鍵處理</div>
-      <div class="todos">${todoHtml}</div>
-    </section>
-    <section id="advice">
-      <div class="sh"><h2 class="sm">AI 建議（可直接執行）</h2><span class="newbadge">✨ 新增</span></div>
-      <div class="advice">${adv}</div>
-    </section>
-    <div class="foot">HINO AI 車隊軍師 · 行動皆為原型模擬</div>`;
+ const rank={bad:3,warn:2,info:1},uname={bad:"緊急",warn:"待辦",info:"留意"};
+ const sorted=todos.map((t,i)=>({t,i})).sort((a,b)=>rank[b.t.sev]-rank[a.t.sev]);
+ const todoHtml=sorted.map(({t,i})=>{const b=t.acts.map(a=>`<button class="btn ${a.c} sm" onclick="${a.fn}">${a.l}</button>`).join("");
+ return `<div class="todo ${t.sev}">
+ <div class="cat">${t.cat}<span class="upill u-${t.sev}">${uname[t.sev]}</span></div>
+ <div class="tt">${t.tt}</div><div class="dt">${t.dt}</div>
+ <div class="acts"><button class="btn gho sm" onclick="toggleTodo(${i})"><span id="ta_${i}">▸</span>看數據</button>${b}</div>
+ <div class="tdata" id="tp_${i}" style="display:none">${todoData[i]||''}</div></div>`;}).join("");
+ const adv=advice.map(a=>{const b=a.acts.map(x=>`<button class="btn ${x.c} sm" onclick="${x.fn}">${x.l}</button>`).join("");
+ return `<div class="adv"><div class="f">系統發現：${a.f}</div><div class="why">${a.why}</div><div class="rec">${a.rec}</div><div class="acts">${b}</div></div>`;}).join("");
+ screen.innerHTML=`
+ <section id="todo">
+ <div class="sh"><h2>今日需處理</h2><span class="newbadge">新增</span><span class="num">${todos.length} 件</span></div>
+ <div class="subt">依緊急程度排序，每件都能一鍵處理</div>
+ <div class="todos">${todoHtml}</div>
+ </section>
+ <section id="advice">
+ <div class="sh"><h2 class="sm">AI 建議（可直接執行）</h2><span class="newbadge">新增</span></div>
+ <div class="advice">${adv}</div>
+ </section>
+ <div class="foot">HINO AI 車隊軍師 · 行動皆為原型模擬</div>`;
 }
 function toggleTodo(i){const p=document.getElementById("tp_"+i),a=document.getElementById("ta_"+i),o=p.style.display==="none";p.style.display=o?"block":"none";a.textContent=o?"▾":"▸";}
 
 /* ---- fleet analytics tab: trend+cause + ranking ---- */
 const metrics=[
  {key:"safety",name:"平均安全分",unit:"分",data:aggSafety,min:40,max:90,
-  cause:{t:"為什麼安全分持續下滑？",rs:["新增 3 名新進駕駛仍在適應期","新增市區配送路線，停等與急煞增加","車流量上升、尖峰壅塞"],act:[{l:"安排新人陪駕",c:"pri",fn:"act('已替新駕駛安排陪駕與適應追蹤。','ok')"},{l:"批次寄信低分",c:"gho",fn:"openBatchMail()"}]}},
+ cause:{t:"為什麼安全分持續下滑？",rs:["新增 3 名新進駕駛仍在適應期","新增市區配送路線，停等與急煞增加","車流量上升、尖峰壅塞"],act:[{l:"安排新人陪駕",c:"pri",fn:"act('已替新駕駛安排陪駕與適應追蹤。','ok')"},{l:"批次寄信低分",c:"gho",fn:"openBatchMail()"}]}},
  {key:"brake",name:"急煞事件",unit:"次",data:aggBrake,
-  cause:{t:"為什麼本週急煞 +18%？",rs:["新進駕駛（北區2、東區1）適應期","新增市區配送路線（台中港線）","車流量較上週增加、尖峰壅塞"],act:[{l:"查看新駕駛",c:"gho",fn:"drillDrivers(['A2','A3','F2'],'新進駕駛')"},{l:"路線優化方案",c:"pri",fn:"openRoutePlan()"}]}},
+ cause:{t:"為什麼本週急煞 +18%？",rs:["新進駕駛（北區2、東區1）適應期","新增市區配送路線（台中港線）","車流量較上週增加、尖峰壅塞"],act:[{l:"查看新駕駛",c:"gho",fn:"drillDrivers(['A2','A3','F2'],'新進駕駛')"},{l:"路線優化方案",c:"pri",fn:"openRoutePlan()"}]}},
  {key:"speed",name:"超速事件",unit:"次",data:[1900,2050,2150,2250,2350,2480,2580,2650,2700,2780,2850],
-  cause:{t:"為什麼超速上升？",rs:["交期壓力大、趕場趕點","部分路段限速偏低易超標","夜班為趕時間超速"],act:[{l:"超速熱點地圖",c:"gho",fn:"act('已產出超速熱點路段地圖。','ok')"},{l:"批次寄信",c:"pri",fn:"openBatchMail()"}]}},
+ cause:{t:"為什麼超速上升？",rs:["交期壓力大、趕場趕點","部分路段限速偏低易超標","夜班為趕時間超速"],act:[{l:"超速熱點地圖",c:"gho",fn:"act('已產出超速熱點路段地圖。','ok')"},{l:"批次寄信",c:"pri",fn:"openBatchMail()"}]}},
  {key:"idle",name:"怠速佔比",unit:"%",data:[11,11.5,12,12.5,13,13.5,13.8,14,14,14.2,14],
-  cause:{t:"為什麼怠速偏高（14%）？",rs:["客戶端裝卸貨等候時間變長","夏季維持車內冷氣空轉","早班場站等待、調度未排開"],act:[{l:"發訊息請各車隊調整",c:"pri",fn:"openIdleMessage()"},{l:"設怠速目標",c:"gho",fn:"act('已設定全隊怠速目標 ≤8%。','ok')"}]}},
+ cause:{t:"為什麼怠速偏高（14%）？",rs:["客戶端裝卸貨等候時間變長","夏季維持車內冷氣空轉","早班場站等待、調度未排開"],act:[{l:"發訊息請各車隊調整",c:"pri",fn:"openIdleMessage()"},{l:"設怠速目標",c:"gho",fn:"act('已設定全隊怠速目標 ≤8%。','ok')"}]}},
  {key:"overload",name:"引擎過載",unit:"次",data:[1300,1400,1500,1600,1700,1780,1850,1920,1980,2030,2080],
-  cause:{t:"為什麼引擎過載（疑超載）增加？",rs:["旺季貨量上升","裝載規劃未依車型容量","派車車型偏小、未裝載前過磅"],act:[{l:"處理超載方案",c:"pri",fn:"openOverloadFix()"},{l:"暫停高過載派工",c:"warnb",fn:"act('已暫停高過載車輛接單。','wn')"}]}},
+ cause:{t:"為什麼引擎過載（疑超載）增加？",rs:["旺季貨量上升","裝載規劃未依車型容量","派車車型偏小、未裝載前過磅"],act:[{l:"處理超載方案",c:"pri",fn:"openOverloadFix()"},{l:"暫停高過載派工",c:"warnb",fn:"act('已暫停高過載車輛接單。','wn')"}]}},
  {key:"seatbelt",name:"未繫安全帶",unit:"次",data:[1000,1060,1120,1180,1230,1270,1300,1320,1340,1360,1373],
-  cause:{t:"為什麼未繫安全帶偏高？",rs:["短程多趟次、上下車頻繁未繫","新進駕駛習慣未養成","部分駕駛心態輕忽"],act:[{l:"安排安全訓練",c:"pri",fn:"act('已替未繫累犯排定安全訓練。','ok')"},{l:"列入績效",c:"gho",fn:"act('已將未繫納入駕駛績效。','ok')"}]}},
+ cause:{t:"為什麼未繫安全帶偏高？",rs:["短程多趟次、上下車頻繁未繫","新進駕駛習慣未養成","部分駕駛心態輕忽"],act:[{l:"安排安全訓練",c:"pri",fn:"act('已替未繫累犯排定安全訓練。','ok')"},{l:"列入績效",c:"gho",fn:"act('已將未繫納入駕駛績效。','ok')"}]}},
  {key:"fuel",name:"百公里油耗",unit:"L",data:[31,31.2,31.4,31.5,31.7,31.8,31.9,32,32,32.1,31.9],
-  cause:{t:"為什麼油耗上升？",rs:["怠速比上升、空轉燒油","急加速/急煞增加","繞行里程與載重增加"],act:[{l:"啟動省油教練",c:"pri",fn:"act('已啟動 AI 省油教練。','ok')"},{l:"路線優化",c:"gho",fn:"openRoutePlan()"}]}},
+ cause:{t:"為什麼油耗上升？",rs:["怠速比上升、空轉燒油","急加速/急煞增加","繞行里程與載重增加"],act:[{l:"啟動省油教練",c:"pri",fn:"act('已啟動 AI 省油教練。','ok')"},{l:"路線優化",c:"gho",fn:"openRoutePlan()"}]}},
 ];
 const factMap={
  safety:"下滑集中在中區/北區，與該區急煞、超速上升同步",
@@ -545,505 +545,505 @@ const dimSolData={
  fuel:{t:"百公里油耗偏高，怎麼解？",pts:["AI 省油教練：急加速/怠速/超速個人化建議","油耗排行＋向南區標竿學習","高油耗車檢查胎壓/空濾/載重","路線最佳化減里程"],btn:[{l:"啟動省油教練",c:"pri",fn:"act('已替高油耗駕駛啟動省油教練。','ok')"},{l:"發起省油競賽",c:"gho",fn:"act('已發起全隊省油競賽。','ok')"}]},
 };
 function lineChart(series,opts){
-  const W=560,H=220,pl=40,pr=14,pt=12,pb=24;const all=series.flatMap(s=>s.vals);
-  let mn=opts.min!=null?opts.min:Math.min(...all),mx=opts.max!=null?opts.max:Math.max(...all);if(mn===mx){mn-=1;mx+=1;}const pad=(mx-mn)*.12;mn-=pad;mx+=pad;
-  const x=i=>pl+(W-pl-pr)*(i/(MONTHS.length-1)),y=v=>pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));
-  let g="";for(let k=0;k<=3;k++){const gv=mn+(mx-mn)*k/3,gy=y(gv);g+=`<line x1="${pl}" y1="${gy}" x2="${W-pr}" y2="${gy}" stroke="#e4ebed"/><text x="${pl-6}" y="${gy+4}" text-anchor="end">${Math.round(gv)}</text>`;}
-  MONTHS.forEach((m,i)=>{if(i%2===0||i===MONTHS.length-1)g+=`<text x="${x(i)}" y="${H-7}" text-anchor="middle">${m}</text>`;});
-  let ln="";series.forEach(s=>{const p=s.vals.map((v,i)=>`${x(i)},${y(v)}`).join(" ");ln+=`<polyline points="${p}" fill="none" stroke="${s.color}" stroke-width="${s.bold?3:1.5}" opacity="${s.bold?1:.45}" stroke-linejoin="round"/>`;if(s.bold)s.vals.forEach((v,i)=>ln+=`<circle cx="${x(i)}" cy="${y(v)}" r="${i===s.vals.length-1?4:2.4}" fill="${s.color}"/>`);});
-  return `<svg class="lc" viewBox="0 0 ${W} ${H}">${g}${ln}</svg>`;
+ const W=560,H=220,pl=40,pr=14,pt=12,pb=24;const all=series.flatMap(s=>s.vals);
+ let mn=opts.min!=null?opts.min:Math.min(...all),mx=opts.max!=null?opts.max:Math.max(...all);if(mn===mx){mn-=1;mx+=1;}const pad=(mx-mn)*.12;mn-=pad;mx+=pad;
+ const x=i=>pl+(W-pl-pr)*(i/(MONTHS.length-1)),y=v=>pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));
+ let g="";for(let k=0;k<=3;k++){const gv=mn+(mx-mn)*k/3,gy=y(gv);g+=`<line x1="${pl}" y1="${gy}" x2="${W-pr}" y2="${gy}" stroke="#e4ebed"/><text x="${pl-6}" y="${gy+4}" text-anchor="end">${Math.round(gv)}</text>`;}
+ MONTHS.forEach((m,i)=>{if(i%2===0||i===MONTHS.length-1)g+=`<text x="${x(i)}" y="${H-7}" text-anchor="middle">${m}</text>`;});
+ let ln="";series.forEach(s=>{const p=s.vals.map((v,i)=>`${x(i)},${y(v)}`).join(" ");ln+=`<polyline points="${p}" fill="none" stroke="${s.color}" stroke-width="${s.bold?3:1.5}" opacity="${s.bold?1:.45}" stroke-linejoin="round"/>`;if(s.bold)s.vals.forEach((v,i)=>ln+=`<circle cx="${x(i)}" cy="${y(v)}" r="${i===s.vals.length-1?4:2.4}" fill="${s.color}"/>`);});
+ return `<svg class="lc" viewBox="0 0 ${W} ${H}">${g}${ln}</svg>`;
 }
 function renderFleetAnalytics(){
-  screen.innerHTML=`
-    <section id="trend">
-      <div class="sh"><h2>趨勢與原因</h2><span class="newbadge">✨ 新增</span></div>
-      <div class="subt">切換面向看全隊趨勢與 AI 推測成因</div>
-      <div class="regsel" id="metricTabs"></div>
-      <div class="chartcard"><div class="ch-h"><span class="ttl" id="m_ttl"></span><span class="sub" id="m_sub"></span></div>
-        <div id="m_now" style="font-size:14px;font-weight:800;margin:2px 0 4px"></div>
-        <div id="chart_metric"></div>
-        <div id="m_legend" style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--mut);padding:8px 2px 2px"></div></div>
-      <div class="cause" id="m_cause" style="margin-top:12px"></div>
-    </section>
-    <section id="rank">
-      <div class="sh"><h2 class="sm">車隊排行</h2><span class="tag">前三綠／後三紅</span></div>
-      <div class="regsel" id="dimsel"></div>
-      <div class="bars"><div id="barList"></div>
-        <div class="bar-leg"><span><b class="g">■</b> 前三名</span><span><b class="r">■</b> 後三名</span><span id="dimhint"></span></div></div>
-      <div class="dimsol" id="dimSol"></div>
-    </section>
-    <div class="foot">各區 + 全隊趨勢 · 2025/01–11</div>`;
-  renderMetricTabs();renderTrend();renderDimSel();renderBars();renderDimSol();
+ screen.innerHTML=`
+ <section id="trend">
+ <div class="sh"><h2>趨勢與原因</h2><span class="newbadge">新增</span></div>
+ <div class="subt">切換面向看全隊趨勢與 AI 推測成因</div>
+ <div class="regsel" id="metricTabs"></div>
+ <div class="chartcard"><div class="ch-h"><span class="ttl" id="m_ttl"></span><span class="sub" id="m_sub"></span></div>
+ <div id="m_now" style="font-size:14px;font-weight:800;margin:2px 0 4px"></div>
+ <div id="chart_metric"></div>
+ <div id="m_legend" style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--mut);padding:8px 2px 2px"></div></div>
+ <div class="cause" id="m_cause" style="margin-top:12px"></div>
+ </section>
+ <section id="rank">
+ <div class="sh"><h2 class="sm">車隊排行</h2><span class="tag">前三綠／後三紅</span></div>
+ <div class="regsel" id="dimsel"></div>
+ <div class="bars"><div id="barList"></div>
+ <div class="bar-leg"><span><b class="g">■</b>前三名</span><span><b class="r">■</b>後三名</span><span id="dimhint"></span></div></div>
+ <div class="dimsol" id="dimSol"></div>
+ </section>
+ <div class="foot">各區 + 全隊趨勢 · 2025/01–11</div>`;
+ renderMetricTabs();renderTrend();renderDimSel();renderBars();renderDimSol();
 }
 function renderMetricTabs(){document.getElementById("metricTabs").innerHTML=metrics.map(m=>`<div class="regchip ${curMetric===m.key?'on':''}" onclick="setMetric('${m.key}')">${m.name}</div>`).join("");}
 function setMetric(k){curMetric=k;renderMetricTabs();renderTrend();}
 function renderTrend(){const m=metrics.find(x=>x.key===curMetric);
-  const series=regions.map(r=>({vals:regionSeries(m,r),color:r.color}));
-  series.push({vals:m.data,color:"#7bb42e",bold:true});
-  document.getElementById("chart_metric").innerHTML=lineChart(series,{min:m.min,max:m.max});
-  document.getElementById("m_legend").innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:16px;height:3px;border-radius:3px;background:#7bb42e;display:inline-block"></i>全隊平均</span>`+
-    regions.map(r=>`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:14px;height:3px;border-radius:3px;background:${r.color};display:inline-block"></i>${r.name}</span>`).join("");
-  document.getElementById("m_ttl").textContent=m.name;
-  document.getElementById("m_sub").textContent="各區 + 全隊";
-  const now=m.data.at(-1),prev=m.data.at(-2);
-  const up=now>prev,betterUp=m.key==="safety",good=up===betterUp,delta=prev?Math.abs((now-prev)/prev*100):0;
-  document.getElementById("m_now").innerHTML=`全隊 <span style="color:${m.key==="safety"?scoreColor(now):"var(--bad)"}">${now.toLocaleString()} ${m.unit}</span> <span style="font-size:12px;font-weight:700;color:${good?"var(--good)":"var(--bad)"}">${up?"▲":"▼"} ${delta.toFixed(1)}% 較上月</span>`;
-  const c=m.cause;document.getElementById("m_cause").innerHTML=`<div class="h">${c.t}</div>
-    <div style="font-size:12px;color:#35505a;margin:2px 0 9px">📊 資料顯示（事實）：${factMap[m.key]}。</div>
-    <div style="font-size:11.5px;color:var(--mut2);margin-bottom:2px">🤔 AI 推測原因（需與現場驗證）：</div>
-    <ul>${c.rs.map(r=>`<li>${r}</li>`).join("")}</ul><div class="acts">${c.act.map(a=>`<button class="btn ${a.c} sm" onclick="${a.fn}">${a.l}</button>`).join("")}</div>`;
+ const series=regions.map(r=>({vals:regionSeries(m,r),color:r.color}));
+ series.push({vals:m.data,color:"#7bb42e",bold:true});
+ document.getElementById("chart_metric").innerHTML=lineChart(series,{min:m.min,max:m.max});
+ document.getElementById("m_legend").innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:16px;height:3px;border-radius:3px;background:#7bb42e;display:inline-block"></i>全隊平均</span>`+
+ regions.map(r=>`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:14px;height:3px;border-radius:3px;background:${r.color};display:inline-block"></i>${r.name}</span>`).join("");
+ document.getElementById("m_ttl").textContent=m.name;
+ document.getElementById("m_sub").textContent="各區 + 全隊";
+ const now=m.data.at(-1),prev=m.data.at(-2);
+ const up=now>prev,betterUp=m.key==="safety",good=up===betterUp,delta=prev?Math.abs((now-prev)/prev*100):0;
+ document.getElementById("m_now").innerHTML=`全隊 <span style="color:${m.key==="safety"?scoreColor(now):"var(--bad)"}">${now.toLocaleString()} ${m.unit}</span><span style="font-size:12px;font-weight:700;color:${good?"var(--good)":"var(--bad)"}">${up?"▲":"▼"} ${delta.toFixed(1)}% 較上月</span>`;
+ const c=m.cause;document.getElementById("m_cause").innerHTML=`<div class="h">${c.t}</div>
+ <div style="font-size:12px;color:#35505a;margin:2px 0 9px">資料顯示（事實）：${factMap[m.key]}。</div>
+ <div style="font-size:11.5px;color:var(--mut2);margin-bottom:2px">AI 推測原因（需與現場驗證）：</div>
+ <ul>${c.rs.map(r=>`<li>${r}</li>`).join("")}</ul><div class="acts">${c.act.map(a=>`<button class="btn ${a.c} sm" onclick="${a.fn}">${a.l}</button>`).join("")}</div>`;
 }
 function renderDimSel(){document.getElementById("dimsel").innerHTML=dims.map(d=>`<div class="regchip ${curDim===d.key?'on':''}" onclick="setDim('${d.key}')">${d.name}</div>`).join("");}
 function setDim(k){curDim=k;renderDimSel();renderBars();renderDimSol();}
 function renderBars(){const d=dims.find(x=>x.key===curDim);const arr=regions.map(r=>({name:r.name+"車隊",v:d.val(r)}));
-  arr.sort((a,b)=>d.high?b.v-a.v:a.v-b.v);const max=Math.max(...arr.map(a=>a.v)),n=arr.length;
-  document.getElementById("barList").innerHTML=arr.map((a,i)=>{const cls=i<3?"good":i>=n-3?"bad":"mid";const rk=i===0?"🥇":i===1?"🥈":i===2?"🥉":i>=n-3?"🔻":"";
-    return `<div class="bar-row"><div class="bar-name"><span class="rk">${rk}</span>${a.name}</div><div class="bar-track"><div class="bar-fill ${cls}" style="width:${Math.max(6,a.v/max*100)}%"></div></div><div class="bar-val">${a.v.toLocaleString()}${d.unit}</div></div>`;}).join("");
-  document.getElementById("dimhint").textContent="· "+d.hint;}
+ arr.sort((a,b)=>d.high?b.v-a.v:a.v-b.v);const max=Math.max(...arr.map(a=>a.v)),n=arr.length;
+ document.getElementById("barList").innerHTML=arr.map((a,i)=>{const cls=i<3?"good":i>=n-3?"bad":"mid";const rk=i===0?"":i===1?"":i===2?"":i>=n-3?"":"";
+ return `<div class="bar-row"><div class="bar-name"><span class="rk">${rk}</span>${a.name}</div><div class="bar-track"><div class="bar-fill ${cls}" style="width:${Math.max(6,a.v/max*100)}%"></div></div><div class="bar-val">${a.v.toLocaleString()}${d.unit}</div></div>`;}).join("");
+ document.getElementById("dimhint").textContent="· "+d.hint;}
 function renderDimSol(){const s=dimSolData[curDim];document.getElementById("dimSol").innerHTML=`<div class="h">如何解決：${s.t}</div><ul>${s.pts.map(p=>`<li>${p}</li>`).join("")}</ul><div class="acts">${s.btn.map(b=>`<button class="btn ${b.c} sm" onclick="${b.fn}">${b.l}</button>`).join("")}</div>`;}
 
 /* ---- fleet team tab: region compare cards + drilldown drivers ---- */
 function driverLines(r){
-  return r.drivers.map((d,i)=>{const[lv,col]=lvl(d.s);const n=notify[r.id+'_'+i]||0;
-    const nc=n>=2?"var(--bad)":n===1?"var(--warn)":"var(--mut2)";
-    return `<div class="drvline">
-      <div class="who"><span class="dot" style="background:${col}"></span><b>${d.n}</b>
-        <span class="lvpill" style="color:${col};border-color:${col};margin-left:auto">${lv} ${d.s}</span></div>
-      <div class="mt2">${d.c} · ${d.i}</div>
-      <div class="row2"><span class="ntag" style="color:${nc}">已通知 ${n} 次</span>
-        <button class="btn ${n>=2?'dng':'gho'} sm" style="margin-left:auto" onclick="event.stopPropagation();notifyDriver('${r.id}',${i})">${n>=2?'通知並約談':'通知'}</button></div>
-    </div>`;}).join("");
+ return r.drivers.map((d,i)=>{const[lv,col]=lvl(d.s);const n=notify[r.id+'_'+i]||0;
+ const nc=n>=2?"var(--bad)":n===1?"var(--warn)":"var(--mut2)";
+ return `<div class="drvline">
+ <div class="who"><span class="dot" style="background:${col}"></span><b>${d.n}</b>
+ <span class="lvpill" style="color:${col};border-color:${col};margin-left:auto">${lv} ${d.s}</span></div>
+ <div class="mt2">${d.c} · ${d.i}</div>
+ <div class="row2"><span class="ntag" style="color:${nc}">已通知 ${n} 次</span>
+ <button class="btn ${n>=2?'dng':'gho'} sm" style="margin-left:auto" onclick="event.stopPropagation();notifyDriver('${r.id}',${i})">${n>=2?'通知並約談':'通知'}</button></div>
+ </div>`;}).join("");
 }
 function renderFleetTeam(){
-  const sorted=regions.slice().sort((a,b)=>b.anomaly-a.anomaly);
-  const cards=sorted.map(r=>{
-    const ac=r.anomaly>=8?"var(--bad)":r.anomaly>=5?"var(--warn)":"var(--good)";
-    const oc=r.onTime>=95?"var(--good)":r.onTime>=90?"var(--warn)":"var(--bad)";
-    return `<div class="litem">
-      <div class="lh" onclick="toggleReg('${r.id}')">
-        <span class="dot" style="background:${r.color}"></span>
-        <span class="nm">${r.name}車隊</span>
-        <span class="chev" id="rt_${r.id}">展開 ▸</span></div>
-      <div class="stats">
-        <span>駕駛 <b>${r.drivers.length}</b></span>
-        <span>安全分 <b style="color:${scoreColor(r.safety.at(-1))}">${r.safety.at(-1)}</b></span>
-        <span>異常率 <b style="color:${ac}">${r.anomaly}%</b></span>
-        <span>準時率 <b style="color:${oc}">${r.onTime}%</b></span></div>
-      <div class="regdet" id="rd_${r.id}"><div id="db_${r.id}">${driverLines(r)}</div></div>
-    </div>`;}).join("");
-  screen.innerHTML=`
-    <section id="region">
-      <div class="sh"><h2>區域比較</h2></div>
-      <div class="subt">依異常率排序 · 點卡片看該區駕駛紅黃綠與已通知次數</div>
-      ${cards}
-      <div class="quickacts">
-        <button class="btn pri block" onclick="openBatchMail()">批次寄信低分車隊</button>
-        <button class="btn gho block" onclick="openIdleMessage()">發訊息請各車隊降怠速</button>
-        <button class="btn gho block" onclick="act('已產出全隊 ESG 碳排報告（GHG 格式）。','ok')">產出 ESG 報告</button>
-      </div>
-    </section>
-    <section id="staffing">
-      <div class="sh"><h2 class="sm">人力配置與招募</h2><span class="newbadge">✨ 新增</span></div>
-      <div class="subt">單量 vs 駕駛數 · 決定招新比例</div>
-      <div class="card">
-        <div style="font-weight:800;font-size:14.5px">建議招募 2 名駕駛（北區 +1、中區 +1）</div>
-        <div class="dt" id="staffInsight" style="font-size:12.5px;color:var(--mut);margin-top:5px"></div>
-        <div class="acts" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px">
-          <button class="btn gho sm" onclick="toggleStaff()"><span id="staffArr">▸</span> 看數據</button>
-          <button class="btn pri sm" onclick="act('已建立招募需求單：北區 +1、中區 +1，送 HR。','ok')">送招募需求</button>
-          <button class="btn gho sm" onclick="act('已將人力寬裕區的車輛調度建議發送調度。','ok')">調度支援</button></div>
-        <div id="staffPanel" style="display:none;margin-top:11px;border-top:1px solid var(--line);padding-top:8px"></div>
-      </div>
-    </section>
-    <div class="foot">火箭隊 · 行動皆為原型模擬</div>`;
-  renderStaffing();
+ const sorted=regions.slice().sort((a,b)=>b.anomaly-a.anomaly);
+ const cards=sorted.map(r=>{
+ const ac=r.anomaly>=8?"var(--bad)":r.anomaly>=5?"var(--warn)":"var(--good)";
+ const oc=r.onTime>=95?"var(--good)":r.onTime>=90?"var(--warn)":"var(--bad)";
+ return `<div class="litem">
+ <div class="lh" onclick="toggleReg('${r.id}')">
+ <span class="dot" style="background:${r.color}"></span>
+ <span class="nm">${r.name}車隊</span>
+ <span class="chev" id="rt_${r.id}">展開 ▸</span></div>
+ <div class="stats">
+ <span>駕駛 <b>${r.drivers.length}</b></span>
+ <span>安全分 <b style="color:${scoreColor(r.safety.at(-1))}">${r.safety.at(-1)}</b></span>
+ <span>異常率 <b style="color:${ac}">${r.anomaly}%</b></span>
+ <span>準時率 <b style="color:${oc}">${r.onTime}%</b></span></div>
+ <div class="regdet" id="rd_${r.id}"><div id="db_${r.id}">${driverLines(r)}</div></div>
+ </div>`;}).join("");
+ screen.innerHTML=`
+ <section id="region">
+ <div class="sh"><h2>區域比較</h2></div>
+ <div class="subt">依異常率排序 · 點卡片看該區駕駛紅黃綠與已通知次數</div>
+ ${cards}
+ <div class="quickacts">
+ <button class="btn pri block" onclick="openBatchMail()">批次寄信低分車隊</button>
+ <button class="btn gho block" onclick="openIdleMessage()">發訊息請各車隊降怠速</button>
+ <button class="btn gho block" onclick="act('已產出全隊 ESG 碳排報告（GHG 格式）。','ok')">產出 ESG 報告</button>
+ </div>
+ </section>
+ <section id="staffing">
+ <div class="sh"><h2 class="sm">人力配置與招募</h2><span class="newbadge">新增</span></div>
+ <div class="subt">單量 vs 駕駛數 · 決定招新比例</div>
+ <div class="card">
+ <div style="font-weight:800;font-size:14.5px">建議招募 2 名駕駛（北區 +1、中區 +1）</div>
+ <div class="dt" id="staffInsight" style="font-size:12.5px;color:var(--mut);margin-top:5px"></div>
+ <div class="acts" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px">
+ <button class="btn gho sm" onclick="toggleStaff()"><span id="staffArr">▸</span>看數據</button>
+ <button class="btn pri sm" onclick="act('已建立招募需求單：北區 +1、中區 +1，送 HR。','ok')">送招募需求</button>
+ <button class="btn gho sm" onclick="act('已將人力寬裕區的車輛調度建議發送調度。','ok')">調度支援</button></div>
+ <div id="staffPanel" style="display:none;margin-top:11px;border-top:1px solid var(--line);padding-top:8px"></div>
+ </div>
+ </section>
+ <div class="foot">火箭隊 · 行動皆為原型模擬</div>`;
+ renderStaffing();
 }
 function toggleReg(id){const d=document.getElementById("rd_"+id),t=document.getElementById("rt_"+id),o=!d.classList.contains('on');d.classList.toggle('on',o);t.textContent=o?"收合 ▾":"展開 ▸";}
 function notifyDriver(id,i){notify[id+'_'+i]=(notify[id+'_'+i]||0)+1;const r=regions.find(x=>x.id===id),d=r.drivers[i],n=notify[id+'_'+i];
-  const db=document.getElementById("db_"+id);if(db)db.innerHTML=driverLines(r);
-  toast('已通知駕駛',`已通知 ${r.name}區 ${d.n}（第 ${n} 次）。`+(n>=2?' 已達 2 次，建議約談。':''),n>=2?'dn':'wn');}
+ const db=document.getElementById("db_"+id);if(db)db.innerHTML=driverLines(r);
+ toast('已通知駕駛',`已通知 ${r.name}區 ${d.n}（第 ${n} 次）。`+(n>=2?' 已達 2 次，建議約談。':''),n>=2?'dn':'wn');}
 function toggleStaff(){const p=document.getElementById("staffPanel"),a=document.getElementById("staffArr"),o=p.style.display==="none";p.style.display=o?"block":"none";a.textContent=o?"▾":"▸";}
 function renderStaffing(){
-  const rows=regions.map(r=>{const o=ordersByRegion[r.id],dn=r.drivers.length,per=Math.round(o/dn),load=per/TARGET_PER_DRIVER;
-    const need=Math.max(0,Math.ceil(o/TARGET_PER_DRIVER)-dn),sur=Math.max(0,dn-Math.ceil(o/TARGET_PER_DRIVER));
-    return {r,o,dn,per,load,need,sur};});
-  rows.sort((a,b)=>b.load-a.load);
-  let totalNeed=0;
-  const body=rows.map(x=>{
-    let badge,col;
-    if(x.need>0){badge=`招募 +${x.need}`;col="var(--bad)";totalNeed+=x.need;}
-    else if(x.sur>0){badge=`可支援`;col="var(--good)";}
-    else{badge="適中";col="var(--mut)";}
-    const lc=x.load>=1.15?"var(--bad)":x.load>=0.95?"var(--warn)":"var(--good)";
-    return `<div class="staffrow"><div class="nm"><span class="dot" style="background:${x.r.color}"></span>${x.r.name}</div>
-      <div class="mid">${x.o} 單 / ${x.dn} 人 · 人均 <b style="color:${lc}">${x.per}</b> · 負荷 <b style="color:${lc}">${Math.round(x.load*100)}%</b></div>
-      <div class="bd" style="color:${col}">${badge}</div></div>`;}).join("");
-  const staffPanel=document.getElementById("staffPanel");if(staffPanel)staffPanel.innerHTML=body;
-  const hi=rows[0];
-  const ins=document.getElementById("staffInsight");
-  if(ins)ins.innerHTML=`以每人月承載 ${TARGET_PER_DRIVER} 單為基準：<b style="color:var(--txt)">${hi.r.name}</b> 人均 ${hi.per} 單、負荷 ${Math.round(hi.load*100)}% 最吃緊。全隊建議優先招募 <b style="color:var(--bad)">${totalNeed} 名</b>駕駛（集中高負荷區），低負荷區可調度支援。`;
+ const rows=regions.map(r=>{const o=ordersByRegion[r.id],dn=r.drivers.length,per=Math.round(o/dn),load=per/TARGET_PER_DRIVER;
+ const need=Math.max(0,Math.ceil(o/TARGET_PER_DRIVER)-dn),sur=Math.max(0,dn-Math.ceil(o/TARGET_PER_DRIVER));
+ return {r,o,dn,per,load,need,sur};});
+ rows.sort((a,b)=>b.load-a.load);
+ let totalNeed=0;
+ const body=rows.map(x=>{
+ let badge,col;
+ if(x.need>0){badge=`招募 +${x.need}`;col="var(--bad)";totalNeed+=x.need;}
+ else if(x.sur>0){badge=`可支援`;col="var(--good)";}
+ else{badge="適中";col="var(--mut)";}
+ const lc=x.load>=1.15?"var(--bad)":x.load>=0.95?"var(--warn)":"var(--good)";
+ return `<div class="staffrow"><div class="nm"><span class="dot" style="background:${x.r.color}"></span>${x.r.name}</div>
+ <div class="mid">${x.o} 單 / ${x.dn} 人 · 人均 <b style="color:${lc}">${x.per}</b>· 負荷 <b style="color:${lc}">${Math.round(x.load*100)}%</b></div>
+ <div class="bd" style="color:${col}">${badge}</div></div>`;}).join("");
+ const staffPanel=document.getElementById("staffPanel");if(staffPanel)staffPanel.innerHTML=body;
+ const hi=rows[0];
+ const ins=document.getElementById("staffInsight");
+ if(ins)ins.innerHTML=`以每人月承載 ${TARGET_PER_DRIVER} 單為基準：<b style="color:var(--txt)">${hi.r.name}</b>人均 ${hi.per} 單、負荷 ${Math.round(hi.load*100)}% 最吃緊。全隊建議優先招募 <b style="color:var(--bad)">${totalNeed} 名</b>駕駛（集中高負荷區），低負荷區可調度支援。`;
 }
 
 /* ---- fleet me tab: overview ---- */
 function renderFleetMe(){
-  const worst=regions.slice().sort((a,b)=>b.anomaly-a.anomaly)[0];
-  screen.innerHTML=`
-    <section>
-      <div class="sh"><h2>整體概覽</h2></div>
-      <div class="subt">全隊背景指標 · 登入者：${SESSION.acc.name}（車隊總管）</div>
-      <div class="kpis">
-        <div class="kpi"><div class="k">車輛數</div><div class="v">20</div><div class="s">HINO 300/500/700</div></div>
-        <div class="kpi"><div class="k">怠速佔比</div><div class="v">14%</div><div class="s">≈1,150 小時空轉</div></div>
-        <div class="kpi"><div class="k">待修車輛</div><div class="v">3</div><div class="s">DTC/過熱/過載</div></div>
-        <div class="kpi"><div class="k">平均準時率</div><div class="v">94%</div><div class="s">本月 -1.5%</div></div>
-        <div class="kpi"><div class="k">全隊安全分</div><div class="v" style="color:${scoreColor(aggSafety.at(-1))}">${aggSafety.at(-1)}</div><div class="s">最弱：${worst.name}</div></div>
-        <div class="kpi"><div class="k">駕駛總數</div><div class="v">${regions.reduce((a,r)=>a+r.drivers.length,0)}</div><div class="s">6 區</div></div>
-      </div>
-    </section>
-    <section>
-      <div class="sh"><h2 class="sm">帳號與導覽</h2></div>
-      <div class="card">
-        <div style="font-size:13px;line-height:1.9">
-          <div>👤 登入身份：<b>${SESSION.acc.name}</b></div>
-          <div>🔑 帳號：${SESSION.acc.phone}</div>
-          <div>🧭 權限範圍：全隊（6 區 / 20 車）</div>
-        </div>
-        <div class="quickacts">
-          <button class="btn pri block" onclick="startTour()">✨ 重新看新功能導覽</button>
-          <button class="btn gho block" onclick="logout()">登出</button>
-        </div>
-      </div>
-    </section>
-    <div class="foot">HINO × GenAI Demo · 火箭隊</div>`;
+ const worst=regions.slice().sort((a,b)=>b.anomaly-a.anomaly)[0];
+ screen.innerHTML=`
+ <section>
+ <div class="sh"><h2>整體概覽</h2></div>
+ <div class="subt">全隊背景指標 · 登入者：${SESSION.acc.name}（車隊總管）</div>
+ <div class="kpis">
+ <div class="kpi"><div class="k">車輛數</div><div class="v">20</div><div class="s">HINO 300/500/700</div></div>
+ <div class="kpi"><div class="k">怠速佔比</div><div class="v">14%</div><div class="s">≈1,150 小時空轉</div></div>
+ <div class="kpi"><div class="k">待修車輛</div><div class="v">3</div><div class="s">DTC/過熱/過載</div></div>
+ <div class="kpi"><div class="k">平均準時率</div><div class="v">94%</div><div class="s">本月 -1.5%</div></div>
+ <div class="kpi"><div class="k">全隊安全分</div><div class="v" style="color:${scoreColor(aggSafety.at(-1))}">${aggSafety.at(-1)}</div><div class="s">最弱：${worst.name}</div></div>
+ <div class="kpi"><div class="k">駕駛總數</div><div class="v">${regions.reduce((a,r)=>a+r.drivers.length,0)}</div><div class="s">6 區</div></div>
+ </div>
+ </section>
+ <section>
+ <div class="sh"><h2 class="sm">帳號與導覽</h2></div>
+ <div class="card">
+ <div style="font-size:13px;line-height:1.9">
+ <div>登入身份：<b>${SESSION.acc.name}</b></div>
+ <div>帳號：${SESSION.acc.phone}</div>
+ <div>權限範圍：全隊（6 區 / 20 車）</div>
+ </div>
+ <div class="quickacts">
+ <button class="btn pri block" onclick="startTour()">重新看新功能導覽</button>
+ <button class="btn gho block" onclick="logout()">登出</button>
+ </div>
+ </div>
+ </section>
+ <div class="foot">HINO × GenAI Demo · 火箭隊</div>`;
 }
 
 /* =====================================================================
-   ROLE: 總負責人 (lead — 陳國華, 中區 only)  3 tabs
-   — no region switcher; region fixed to session account —
+ ROLE: 總負責人 (lead — 陳國華, 中區 only) 3 tabs
+ — no region switcher; region fixed to session account —
 ===================================================================== */
 const fatigueSet=new Set(["B0","A0","F0"]);
 function myRegion(){return regions.find(r=>r.id===SESSION.acc.region);}
 function driverLines2(r){return r.drivers.map((d,i)=>{const[lv,col]=lvl(d.s);const n=notify[r.id+'_'+i]||0;const nc=n>=2?"var(--bad)":n===1?"var(--warn)":"var(--mut2)";const fat=fatigueSet.has(r.id+i);
-  return `<div class="drvline">
-   <div class="who"><span class="dot" style="background:${col}"></span><b>${d.n}</b>
-     <span class="lvpill" style="color:${col};border-color:${col};margin-left:auto">${lv} ${d.s}</span></div>
-   <div class="mt2">${d.c} · ${d.i}${fat?' · ⚠️疲勞':''}</div>
-   <div class="row2"><span class="ntag" style="color:${nc}">已通知 ${n} 次</span>
-     <span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap"><button class="btn ${n>=2?'dng':'gho'} sm" onclick="notifyDriverL('${r.id}',${i})">${n>=2?'約談':'通知'}</button><button class="btn gho sm" onclick="voiceCall('${d.n}','voice')">語音</button>${fat?`<button class="btn warnb sm" onclick="openHandover()">派交接</button>`:''}</span></div>
-  </div>`;}).join("");}
+ return `<div class="drvline">
+ <div class="who"><span class="dot" style="background:${col}"></span><b>${d.n}</b>
+ <span class="lvpill" style="color:${col};border-color:${col};margin-left:auto">${lv} ${d.s}</span></div>
+ <div class="mt2">${d.c} · ${d.i}${fat?' · 疲勞':''}</div>
+ <div class="row2"><span class="ntag" style="color:${nc}">已通知 ${n} 次</span>
+ <span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap"><button class="btn ${n>=2?'dng':'gho'} sm" onclick="notifyDriverL('${r.id}',${i})">${n>=2?'約談':'通知'}</button><button class="btn gho sm" onclick="voiceCall('${d.n}','voice')">語音</button>${fat?`<button class="btn warnb sm" onclick="openHandover()">派交接</button>`:''}</span></div>
+ </div>`;}).join("");}
 function notifyDriverL(id,i){notify[id+'_'+i]=(notify[id+'_'+i]||0)+1;const r=regions.find(x=>x.id===id);const dv=document.getElementById("leadDrv");if(dv)dv.innerHTML=driverLines2(r);const n=notify[id+'_'+i];toast('已通知駕駛',`已通知 ${r.drivers[i].n}（第 ${n} 次）。`+(n>=2?' 已達 2 次，建議約談。':''),n>=2?'dn':'wn');}
 
 function renderLeadKpi(){
-  const r=myRegion(),sc=r.safety.at(-1);
-  const ac=r.anomaly>=8?'var(--bad)':r.anomaly>=5?'var(--warn)':'var(--good)';
-  screen.innerHTML=`
-    <section>
-      <div class="sh"><h2>${r.name} · 本區 KPI</h2></div>
-      <div class="subt">負責人 ${r.lead}（只看 ${r.name}，看不到其他區）</div>
-      <div class="kpis">
-        <div class="kpi"><div class="k">本區安全分</div><div class="v" style="color:${scoreColor(sc)}">${sc}</div><div class="s">全隊平均 ${aggSafety.at(-1)}</div></div>
-        <div class="kpi"><div class="k">異常率</div><div class="v" style="color:${ac}">${r.anomaly}%</div><div class="s">越低越好</div></div>
-        <div class="kpi"><div class="k">準時率</div><div class="v" style="color:${r.onTime>=95?'var(--good)':'var(--warn)'}">${r.onTime}%</div><div class="s">${r.name}</div></div>
-        <div class="kpi"><div class="k">人均單量</div><div class="v">${Math.round(ordersByRegion[r.id]/r.drivers.length)}</div><div class="s">${r.drivers.length} 位駕駛</div></div>
-      </div>
-    </section>
-    <section>
-      <div class="sh"><h2 class="sm">本區狀態</h2></div>
-      <div class="card">
-        <div style="font-size:13px;line-height:1.9">
-          <div>怠速佔比：<b style="color:${r.idlePct>=14?'var(--bad)':r.idlePct>=10?'var(--warn)':'var(--good)'}">${r.idlePct}%</b>（目標 ≤8%）</div>
-          <div>引擎過載：<b>${r.overload}</b> 次 · 未繫安全帶：<b>${r.seatbelt}</b> 次</div>
-          <div>百公里油耗：<b>${r.fuel} L</b></div>
-        </div>
-      </div>
-    </section>
-    <div class="foot">總負責人視角 · 僅限 ${r.name}</div>`;
+ const r=myRegion(),sc=r.safety.at(-1);
+ const ac=r.anomaly>=8?'var(--bad)':r.anomaly>=5?'var(--warn)':'var(--good)';
+ screen.innerHTML=`
+ <section>
+ <div class="sh"><h2>${r.name} · 本區 KPI</h2></div>
+ <div class="subt">負責人 ${r.lead}（只看 ${r.name}，看不到其他區）</div>
+ <div class="kpis">
+ <div class="kpi"><div class="k">本區安全分</div><div class="v" style="color:${scoreColor(sc)}">${sc}</div><div class="s">全隊平均 ${aggSafety.at(-1)}</div></div>
+ <div class="kpi"><div class="k">異常率</div><div class="v" style="color:${ac}">${r.anomaly}%</div><div class="s">越低越好</div></div>
+ <div class="kpi"><div class="k">準時率</div><div class="v" style="color:${r.onTime>=95?'var(--good)':'var(--warn)'}">${r.onTime}%</div><div class="s">${r.name}</div></div>
+ <div class="kpi"><div class="k">人均單量</div><div class="v">${Math.round(ordersByRegion[r.id]/r.drivers.length)}</div><div class="s">${r.drivers.length} 位駕駛</div></div>
+ </div>
+ </section>
+ <section>
+ <div class="sh"><h2 class="sm">本區狀態</h2></div>
+ <div class="card">
+ <div style="font-size:13px;line-height:1.9">
+ <div>怠速佔比：<b style="color:${r.idlePct>=14?'var(--bad)':r.idlePct>=10?'var(--warn)':'var(--good)'}">${r.idlePct}%</b>（目標 ≤8%）</div>
+ <div>引擎過載：<b>${r.overload}</b>次 · 未繫安全帶：<b>${r.seatbelt}</b>次</div>
+ <div>百公里油耗：<b>${r.fuel} L</b></div>
+ </div>
+ </div>
+ </section>
+ <div class="foot">總負責人視角 · 僅限 ${r.name}</div>`;
 }
 function renderLeadFocus(){
-  const r=myRegion();
-  const pts=[];
-  r.drivers.forEach(d=>{if(d.s<55)pts.push(`<b style="color:var(--txt)">${d.n}</b>（安全分 ${d.s}・紅）建議今日約談`);});
-  r.drivers.forEach(d=>{if(d.i.includes('超載'))pts.push(`${d.n} ${d.c} 疑似超載，需處理`);if(d.i.includes('疲勞'))pts.push(`${d.n} 疲勞風險，安排休息/交接`);if(d.i.includes('點檢'))pts.push(`${d.n} 未完成出車前點檢`);});
-  fatigueSet.forEach(code=>{if(code[0]===r.id){const d=r.drivers[+code.slice(1)];if(d&&!pts.some(p=>p.includes(d.n+' 疲勞')))pts.push(`${d.n} 疲勞風險，安排休息/交接`);}});
-  if(!pts.length)pts.push('本區狀況良好，無急件 👍');
-  screen.innerHTML=`
-    <section>
-      <div class="sh"><h2>${r.name} · 今日重點</h2></div>
-      <div class="subt">誰該約談、誰要處理，一目了然</div>
-      <div class="cause" style="border-left-color:var(--bad)"><ul style="margin-left:18px">${pts.map(p=>`<li>${p}</li>`).join("")}</ul>
-        <div class="acts" style="margin-top:6px">
-          <button class="btn pri sm" onclick="openFleetMail('${r.id}')">對全區寄信限期改善</button>
-          <button class="btn gho sm" onclick="act('已替本區高風險駕駛排安全訓練。','ok')">安排安全訓練</button>
-          <button class="btn gho sm" onclick="msgLead('${r.id}')">回報上級</button></div></div>
-    </section>
-    <div class="foot">總負責人視角 · 僅限 ${r.name}</div>`;
+ const r=myRegion();
+ const pts=[];
+ r.drivers.forEach(d=>{if(d.s<55)pts.push(`<b style="color:var(--txt)">${d.n}</b>（安全分 ${d.s}・紅）建議今日約談`);});
+ r.drivers.forEach(d=>{if(d.i.includes('超載'))pts.push(`${d.n} ${d.c} 疑似超載，需處理`);if(d.i.includes('疲勞'))pts.push(`${d.n} 疲勞風險，安排休息/交接`);if(d.i.includes('點檢'))pts.push(`${d.n} 未完成出車前點檢`);});
+ fatigueSet.forEach(code=>{if(code[0]===r.id){const d=r.drivers[+code.slice(1)];if(d&&!pts.some(p=>p.includes(d.n+' 疲勞')))pts.push(`${d.n} 疲勞風險，安排休息/交接`);}});
+ if(!pts.length)pts.push('本區狀況良好，無急件 ');
+ screen.innerHTML=`
+ <section>
+ <div class="sh"><h2>${r.name} · 今日重點</h2></div>
+ <div class="subt">誰該約談、誰要處理，一目了然</div>
+ <div class="cause" style="border-left-color:var(--bad)"><ul style="margin-left:18px">${pts.map(p=>`<li>${p}</li>`).join("")}</ul>
+ <div class="acts" style="margin-top:6px">
+ <button class="btn pri sm" onclick="openFleetMail('${r.id}')">對全區寄信限期改善</button>
+ <button class="btn gho sm" onclick="act('已替本區高風險駕駛排安全訓練。','ok')">安排安全訓練</button>
+ <button class="btn gho sm" onclick="msgLead('${r.id}')">回報上級</button></div></div>
+ </section>
+ <div class="foot">總負責人視角 · 僅限 ${r.name}</div>`;
 }
 function renderLeadDrivers(){
-  const r=myRegion();
-  screen.innerHTML=`
-    <section>
-      <div class="sh"><h2>${r.name} · 我的駕駛</h2></div>
-      <div class="subt">紅黃綠 · 已通知次數 · 可直接通知／語音／派交接</div>
-      <div id="leadDrv">${driverLines2(r)}</div>
-    </section>
-    <div class="foot">總負責人視角 · 僅限 ${r.name}</div>`;
+ const r=myRegion();
+ screen.innerHTML=`
+ <section>
+ <div class="sh"><h2>${r.name} · 我的駕駛</h2></div>
+ <div class="subt">紅黃綠 · 已通知次數 · 可直接通知／語音／派交接</div>
+ <div id="leadDrv">${driverLines2(r)}</div>
+ </section>
+ <div class="foot">總負責人視角 · 僅限 ${r.name}</div>`;
 }
 
 /* =====================================================================
-   ROLE: 車隊駕駛 / 個人用戶 (self only)  3 tabs
-   — no driver-name switcher; fixed to session account —
+ ROLE: 車隊駕駛 / 個人用戶 (self only) 3 tabs
+ — no driver-name switcher; fixed to session account —
 ===================================================================== */
 function myDriver(){return dref(SESSION.acc.drvCode);}
 function renderDriverHome(){
-  const{r,d}=myDriver();const[lv,col]=lvl(d.s);
-  const sorted=[...r.drivers].sort((x,y)=>y.s-x.s),rank=sorted.findIndex(x=>x.c===d.c)+1;
-  const isPersonal=SESSION.role==='personal';
-  screen.innerHTML=`
-    <section>
-      <div class="sh"><h2>${d.n} 的安全儀表</h2></div>
-      <div class="subt">${isPersonal?'個人用戶 · 只看自己的車與行程':r.name+' · 只看自己'}</div>
-      <div class="kpis">
-        <div class="kpi"><div class="k">我的安全分</div><div class="v" style="color:${col}">${d.s}</div><div class="s">${lv}燈 · ${isPersonal?'個人':r.name+'排第 '+rank+'/'+r.drivers.length}</div></div>
-        <div class="kpi"><div class="k">本月趟次</div><div class="v">${18+(d.s%7)}</div><div class="s">準時 ${Math.min(99,80+Math.round(d.s/5))}%</div></div>
-        <div class="kpi"><div class="k">安全獎金</div><div class="v" style="color:${d.s>=70?'var(--good)':'var(--mut2)'}">${d.s>=70?'NT$1,200':'—'}</div><div class="s">${d.s>=70?'本月達標 🎉':'安全分達 70 可領'}</div></div>
-        <div class="kpi"><div class="k">我的車</div><div class="v" style="font-size:18px">${d.c}</div><div class="s">HINO 車型</div></div>
-      </div>
-    </section>
-    <section>
-      <div class="sh"><h2 class="sm">安全獎金激勵</h2></div>
-      <div class="adv"><div class="f">${d.s>=70?'🎉 已達安全獎金門檻':'再加把勁就能領獎金'}</div>
-        <div class="why">安全分達 70（綠燈）當月可領 NT$1,200 安全獎金；${d.s>=70?'保持下去，連 3 個月再加碼！':'目前 '+d.s+' 分，距離門檻還差 '+Math.max(0,70-d.s)+' 分。'}</div>
-        <div class="acts"><button class="btn pri sm" onclick="act('已開啟安全駕駛小技巧與獎金規則。','ok')">看如何提分</button></div></div>
-    </section>
-    <div class="foot">${isPersonal?'個人用戶':'車隊駕駛'}視角 · 只看自己</div>`;
+ const{r,d}=myDriver();const[lv,col]=lvl(d.s);
+ const sorted=[...r.drivers].sort((x,y)=>y.s-x.s),rank=sorted.findIndex(x=>x.c===d.c)+1;
+ const isPersonal=SESSION.role==='personal';
+ screen.innerHTML=`
+ <section>
+ <div class="sh"><h2>${d.n} 的安全儀表</h2></div>
+ <div class="subt">${isPersonal?'個人用戶 · 只看自己的車與行程':r.name+' · 只看自己'}</div>
+ <div class="kpis">
+ <div class="kpi"><div class="k">我的安全分</div><div class="v" style="color:${col}">${d.s}</div><div class="s">${lv}燈 · ${isPersonal?'個人':r.name+'排第 '+rank+'/'+r.drivers.length}</div></div>
+ <div class="kpi"><div class="k">本月趟次</div><div class="v">${18+(d.s%7)}</div><div class="s">準時 ${Math.min(99,80+Math.round(d.s/5))}%</div></div>
+ <div class="kpi"><div class="k">安全獎金</div><div class="v" style="color:${d.s>=70?'var(--good)':'var(--mut2)'}">${d.s>=70?'NT$1,200':'—'}</div><div class="s">${d.s>=70?'本月達標 ':'安全分達 70 可領'}</div></div>
+ <div class="kpi"><div class="k">我的車</div><div class="v" style="font-size:18px">${d.c}</div><div class="s">HINO 車型</div></div>
+ </div>
+ </section>
+ <section>
+ <div class="sh"><h2 class="sm">安全獎金激勵</h2></div>
+ <div class="adv"><div class="f">${d.s>=70?' 已達安全獎金門檻':'再加把勁就能領獎金'}</div>
+ <div class="why">安全分達 70（綠燈）當月可領 NT$1,200 安全獎金；${d.s>=70?'保持下去，連 3 個月再加碼！':'目前 '+d.s+' 分，距離門檻還差 '+Math.max(0,70-d.s)+' 分。'}</div>
+ <div class="acts"><button class="btn pri sm" onclick="act('已開啟安全駕駛小技巧與獎金規則。','ok')">看如何提分</button></div></div>
+ </section>
+ <div class="foot">${isPersonal?'個人用戶':'車隊駕駛'}視角 · 只看自己</div>`;
 }
 function renderDriverTask(){
-  const{d}=myDriver();
-  screen.innerHTML=`
-    <section>
-      <div class="sh"><h2>今日任務 + ETA</h2></div>
-      <div class="card">
-        <div style="font-weight:800;font-size:15px">台中港倉 → 台積電 中科廠</div>
-        <div style="font-size:12.5px;color:var(--mut);margin-top:4px">下一站 ETA 約 <b style="color:var(--accent)">14 分</b> · 國道一號 大雅段 · 卸貨點 B12</div>
-        <div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-          <button class="btn pri sm" onclick="act('已開啟導航。','ok')">開始導航</button>
-          <button class="btn gho sm" onclick="act('已回報抵達卸貨點。','ok')">回報抵達</button></div>
-      </div>
-      <div class="card">
-        <div style="font-weight:800;font-size:15px">中科廠 → 台中港倉（回程）</div>
-        <div style="font-size:12.5px;color:var(--mut);margin-top:4px">預計 15:30 出發 · 空車回收棧板</div>
-        <div class="acts" style="margin-top:12px"><button class="btn gho sm" onclick="act('已加入行程排程。','ok')">加入排程</button></div>
-      </div>
-    </section>
-    <div class="foot">駕駛 ${d.n} · 只看自己的任務</div>`;
+ const{d}=myDriver();
+ screen.innerHTML=`
+ <section>
+ <div class="sh"><h2>今日任務 + ETA</h2></div>
+ <div class="card">
+ <div style="font-weight:800;font-size:15px">台中港倉 → 台積電 中科廠</div>
+ <div style="font-size:12.5px;color:var(--mut);margin-top:4px">下一站 ETA 約 <b style="color:var(--accent)">14 分</b>· 國道一號 大雅段 · 卸貨點 B12</div>
+ <div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+ <button class="btn pri sm" onclick="act('已開啟導航。','ok')">開始導航</button>
+ <button class="btn gho sm" onclick="act('已回報抵達卸貨點。','ok')">回報抵達</button></div>
+ </div>
+ <div class="card">
+ <div style="font-weight:800;font-size:15px">中科廠 → 台中港倉（回程）</div>
+ <div style="font-size:12.5px;color:var(--mut);margin-top:4px">預計 15:30 出發 · 空車回收棧板</div>
+ <div class="acts" style="margin-top:12px"><button class="btn gho sm" onclick="act('已加入行程排程。','ok')">加入排程</button></div>
+ </div>
+ </section>
+ <div class="foot">駕駛 ${d.n} · 只看自己的任務</div>`;
 }
 function renderDriverAlerts(){
-  const{r,d}=myDriver();
-  const al=[];
-  if(d.i.includes('疲勞'))al.push({t:"⚠️ 疲勞警示",m:"偵測到疲勞徵兆，請就近休息或等待交接，行車安全第一。",b:[{l:"我要休息",c:"pri",fn:"act('已回報就近休息，調度將安排交接。','ok')"}]});
-  if(d.i.includes('超速'))al.push({t:"超速提醒",m:"近期多次超速，請依路段限速行駛。",b:[{l:"我知道了",c:"gho",fn:"act('已確認超速提醒。','ok')"}]});
-  if(d.i.includes('未繫'))al.push({t:"未繫安全帶",m:"請全程繫好安全帶。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
-  if(d.i.includes('點檢'))al.push({t:"出車前點檢未完成",m:"請先完成車況點檢再出車。",b:[{l:"前往點檢",c:"pri",fn:"act('已開啟出車前點檢表。','ok')"}]});
-  if(d.i.includes('分心'))al.push({t:"分心提醒",m:"行車中請勿使用手機、保持專注。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
-  if(d.i.includes('急')||d.i.includes('煞'))al.push({t:"急煞/急減速偏高",m:"近期急煞偏多，請提早減速、保持安全車距。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
-  if(d.i.includes('怠速'))al.push({t:"怠速提醒",m:"怠速時間偏高，等候時請熄火，省油又減碳。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
-  if(d.i.includes('超載')||d.i.includes('過載'))al.push({t:"疑似超載提醒",m:"載重可能超出核定，請配合過磅與裝載調整。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
-  if(!al.length)al.push({t:"表現良好 👍",m:"本月無重大事件，繼續保持，安全獎金穩穩入袋！",b:[]});
-  const alerts=al.map(a=>`<div class="adv"><div class="f">${a.t}</div><div class="why">${a.m}</div>${a.b.length?`<div class="acts">${a.b.map(x=>`<button class="btn ${x.c} sm" onclick="${x.fn}">${x.l}</button>`).join("")}</div>`:''}</div>`).join("");
-  screen.innerHTML=`
-    <section>
-      <div class="sh"><h2>我的提醒</h2></div>
-      <div class="subt">依你本人的實際問題顯示</div>
-      <div class="advice">${alerts}</div>
-    </section>
-    <div class="foot">駕駛 ${d.n} · 只看自己的提醒</div>`;
+ const{r,d}=myDriver();
+ const al=[];
+ if(d.i.includes('疲勞'))al.push({t:" 疲勞警示",m:"偵測到疲勞徵兆，請就近休息或等待交接，行車安全第一。",b:[{l:"我要休息",c:"pri",fn:"act('已回報就近休息，調度將安排交接。','ok')"}]});
+ if(d.i.includes('超速'))al.push({t:"超速提醒",m:"近期多次超速，請依路段限速行駛。",b:[{l:"我知道了",c:"gho",fn:"act('已確認超速提醒。','ok')"}]});
+ if(d.i.includes('未繫'))al.push({t:"未繫安全帶",m:"請全程繫好安全帶。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
+ if(d.i.includes('點檢'))al.push({t:"出車前點檢未完成",m:"請先完成車況點檢再出車。",b:[{l:"前往點檢",c:"pri",fn:"act('已開啟出車前點檢表。','ok')"}]});
+ if(d.i.includes('分心'))al.push({t:"分心提醒",m:"行車中請勿使用手機、保持專注。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
+ if(d.i.includes('急')||d.i.includes('煞'))al.push({t:"急煞/急減速偏高",m:"近期急煞偏多，請提早減速、保持安全車距。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
+ if(d.i.includes('怠速'))al.push({t:"怠速提醒",m:"怠速時間偏高，等候時請熄火，省油又減碳。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
+ if(d.i.includes('超載')||d.i.includes('過載'))al.push({t:"疑似超載提醒",m:"載重可能超出核定，請配合過磅與裝載調整。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
+ if(!al.length)al.push({t:"表現良好 ",m:"本月無重大事件，繼續保持，安全獎金穩穩入袋！",b:[]});
+ const alerts=al.map(a=>`<div class="adv"><div class="f">${a.t}</div><div class="why">${a.m}</div>${a.b.length?`<div class="acts">${a.b.map(x=>`<button class="btn ${x.c} sm" onclick="${x.fn}">${x.l}</button>`).join("")}</div>`:''}</div>`).join("");
+ screen.innerHTML=`
+ <section>
+ <div class="sh"><h2>我的提醒</h2></div>
+ <div class="subt">依你本人的實際問題顯示</div>
+ <div class="advice">${alerts}</div>
+ </section>
+ <div class="foot">駕駛 ${d.n} · 只看自己的提醒</div>`;
 }
 
 /* =====================================================================
-   ROLE: 貨主 (shipper — 台積電 王採購)  2 tabs
-   — no company switcher; company fixed to session account —
+ ROLE: 貨主 (shipper — 台積電 王採購) 2 tabs
+ — no company switcher; company fixed to session account —
 ===================================================================== */
 const shippers=[
  {id:"tsmc",name:"台積電 中科廠",contact:"王採購",orders:[
-   {id:"#A2301",to:"台積電 中科廠",from:"台中港倉",driver:"林佳穎",car:"ABC-1501 · HINO 500",etaMin:14,progress:.62,status:"運送中",cur:"國道一號 大雅段",risk:false},
-   {id:"#A2307",to:"台積電 南科廠",from:"高雄倉",driver:"莊承翰",car:"ABC-1503 · HINO 700",etaMin:42,progress:.30,status:"運送中",cur:"國道三號 善化段",risk:false}]},
+ {id:"#A2301",to:"台積電 中科廠",from:"台中港倉",driver:"林佳穎",car:"ABC-1501 · HINO 500",etaMin:14,progress:.62,status:"運送中",cur:"國道一號 大雅段",risk:false},
+ {id:"#A2307",to:"台積電 南科廠",from:"高雄倉",driver:"莊承翰",car:"ABC-1503 · HINO 700",etaMin:42,progress:.30,status:"運送中",cur:"國道三號 善化段",risk:false}]},
  {id:"pxmart",name:"全聯 北區倉",contact:"林倉管",orders:[
-   {id:"#A2302",to:"全聯 北區倉",from:"楊梅物流中心",driver:"王建國",car:"ABC-1101 · HINO 300",etaMin:35,progress:.40,status:"延誤風險",cur:"中壢市區壅塞",risk:true}]},
+ {id:"#A2302",to:"全聯 北區倉",from:"楊梅物流中心",driver:"王建國",car:"ABC-1101 · HINO 300",etaMin:35,progress:.40,status:"延誤風險",cur:"中壢市區壅塞",risk:true}]},
  {id:"carrefour",name:"家樂福 南區",contact:"陳收貨",orders:[
-   {id:"#A2303",to:"家樂福 南區",from:"台南倉",driver:"高志明",car:"ABC-1502 · HINO 500",etaMin:5,progress:.90,status:"即將到達",cur:"距目的地 1.2 km",risk:false}]},
+ {id:"#A2303",to:"家樂福 南區",from:"台南倉",driver:"高志明",car:"ABC-1502 · HINO 500",etaMin:5,progress:.90,status:"即將到達",cur:"距目的地 1.2 km",risk:false}]},
 ];
 let curOrder=null,animTimer=null;
 function myShipper(){return shippers.find(x=>x.id===SESSION.acc.shipperId);}
 function myOrders(){return myShipper().orders.slice().sort((a,b)=>(b.risk-a.risk)||(a.etaMin-b.etaMin));}
 function mapSVG(o){return `<svg viewBox="0 0 600 280" style="width:100%;height:auto;display:block">
-   <rect width="600" height="280" fill="#eaf1f2"/>
-   <line x1="0" y1="205" x2="600" y2="120" stroke="#e1e9eb" stroke-width="2"/><line x1="130" y1="280" x2="330" y2="0" stroke="#e1e9eb" stroke-width="2"/><line x1="380" y1="280" x2="520" y2="0" stroke="#e1e9eb" stroke-width="2"/>
-   <path d="M44 240 Q 150 130 250 175 T 440 95 T 558 52" fill="none" stroke="#cfdadd" stroke-width="13" stroke-linecap="round"/>
-   <path id="routeP" d="M44 240 Q 150 130 250 175 T 440 95 T 558 52" fill="none" stroke="#7bb42e" stroke-width="4" stroke-linecap="round" opacity=".92"/>
-   <circle cx="44" cy="240" r="7" fill="#14414f"/><text x="44" y="264" fill="#5d7480" font-size="12" text-anchor="middle">${o.from}</text>
-   <circle cx="558" cy="52" r="11" fill="#f87171"/><text x="558" y="57" font-size="13" text-anchor="middle">📍</text><text x="558" y="32" fill="#5d7480" font-size="12" text-anchor="middle">${o.to}</text>
-   <g id="truckG"><circle r="15" fill="#7bb42e"/><text y="6" font-size="17" text-anchor="middle">🚛</text></g>
-  </svg>`;}
+ <rect width="600" height="280" fill="#eaf1f2"/>
+ <line x1="0" y1="205" x2="600" y2="120" stroke="#e1e9eb" stroke-width="2"/><line x1="130" y1="280" x2="330" y2="0" stroke="#e1e9eb" stroke-width="2"/><line x1="380" y1="280" x2="520" y2="0" stroke="#e1e9eb" stroke-width="2"/>
+ <path d="M44 240 Q 150 130 250 175 T 440 95 T 558 52" fill="none" stroke="#cfdadd" stroke-width="13" stroke-linecap="round"/>
+ <path id="routeP" d="M44 240 Q 150 130 250 175 T 440 95 T 558 52" fill="none" stroke="#7bb42e" stroke-width="4" stroke-linecap="round" opacity=".92"/>
+ <circle cx="44" cy="240" r="7" fill="#14414f"/><text x="44" y="264" fill="#5d7480" font-size="12" text-anchor="middle">${o.from}</text>
+ <circle cx="558" cy="52" r="11" fill="#f87171"/><text x="558" y="57" font-size="13" text-anchor="middle"></text><text x="558" y="32" fill="#5d7480" font-size="12" text-anchor="middle">${o.to}</text>
+ <g id="truckG"><circle r="15" fill="#7bb42e"/><text y="6" font-size="17" text-anchor="middle"></text></g>
+ </svg>`;}
 function positionTruck(p){const path=document.getElementById("routeP");if(!path)return;const pt=path.getPointAtLength(path.getTotalLength()*Math.min(p,1));const g=document.getElementById("truckG");if(g)g.setAttribute("transform",`translate(${pt.x},${pt.y})`);}
 function startAnim(o){if(animTimer)clearInterval(animTimer);let p=o.progress;
-  animTimer=setInterval(()=>{if(p>=0.985){clearInterval(animTimer);return;}p+=0.006;positionTruck(p);
-    const eta=Math.max(0,Math.round(o.etaMin*(1-p)/(1-o.progress)));const eb=document.getElementById("etaBig");if(eb)eb.textContent=eta;},1200);}
+ animTimer=setInterval(()=>{if(p>=0.985){clearInterval(animTimer);return;}p+=0.006;positionTruck(p);
+ const eta=Math.max(0,Math.round(o.etaMin*(1-p)/(1-o.progress)));const eb=document.getElementById("etaBig");if(eb)eb.textContent=eta;},1200);}
 function selectOrder(id){curOrder=id;renderShipperTrack();}
 function renderShipperTrack(){
-  const list=myOrders();if(!curOrder||!list.find(o=>o.id===curOrder))curOrder=list[0].id;
-  const o=list.find(x=>x.id===curOrder)||list[0];
-  const tabs=list.map(x=>`<div class="regchip ${curOrder===x.id?'on':''}" onclick="selectOrder('${x.id}')">${x.id} · ${x.to}${x.risk?' ⚠️':''}</div>`).join("");
-  const steps=["已取貨","運送中","即將到達","已送達"];const cur=o.progress>=1?3:o.progress>=.85?2:o.progress>0?1:0;
-  const tl=steps.map((s,i)=>`<div class="tstep ${i<cur?'done':i===cur?'cur':''}"><div class="d"></div><div class="t">${s}</div></div>`).join("");
-  screen.innerHTML=`
-    <section id="ship">
-      <div class="sh"><h2>即時追蹤您的貨件</h2></div>
-      <div class="subt">${myShipper().name} · ${SESSION.acc.name}（只看自己公司的單）</div>
-      <div class="regsel">${tabs}</div>
-      <div class="card">
-        <div class="eta-hero"><span class="big" id="etaBig">${o.etaMin}</span><span class="lbl">分鐘後到達</span>
-          <span class="stpill ${o.risk?'st-risk':o.progress>=.85?'st-soon':'st-go'}" style="margin-left:auto">${o.status}</span></div>
-        <div style="font-size:12.5px;color:var(--mut)">${o.from} → <b style="color:var(--txt)">${o.to}</b> ｜ 目前：${o.cur}</div>
-        <div class="mapwrap">${mapSVG(o)}</div>
-        <div class="tline">${tl}</div>
-        <div class="drvbar"><div class="av">🧑‍✈️</div><div><div style="font-weight:700;font-size:13px">司機 ${o.driver}</div><div style="font-size:11px;color:var(--mut)">${o.car}</div></div>
-          <div style="margin-left:auto;display:flex;gap:7px;flex-wrap:wrap"><button class="btn gho sm" onclick="act('已撥打司機 ${o.driver} 電話。','ok')">聯絡司機</button><button class="btn pri sm" onclick="act('已複製即時追蹤連結，可分享給收貨方。','ok')">分享連結</button></div></div>
-        ${o.risk?`<div class="cause" style="margin-top:12px;border-left-color:var(--bad)"><div class="h">⚠️ 預計延誤約 35 分</div><ul style="margin-left:18px"><li>原因：中壢市區交通壅塞</li><li>系統已自動改走替代路線並更新 ETA</li></ul><div class="acts"><button class="btn pri sm" onclick="act('已開啟延誤即時通知。','wn')">接收延誤通知</button></div></div>`:''}
-      </div>
-    </section>
-    <div class="foot">貨主視角 · 僅限 ${myShipper().name} 的貨件</div>`;
-  positionTruck(o.progress);startAnim(o);
+ const list=myOrders();if(!curOrder||!list.find(o=>o.id===curOrder))curOrder=list[0].id;
+ const o=list.find(x=>x.id===curOrder)||list[0];
+ const tabs=list.map(x=>`<div class="regchip ${curOrder===x.id?'on':''}" onclick="selectOrder('${x.id}')">${x.id} · ${x.to}${x.risk?' ':''}</div>`).join("");
+ const steps=["已取貨","運送中","即將到達","已送達"];const cur=o.progress>=1?3:o.progress>=.85?2:o.progress>0?1:0;
+ const tl=steps.map((s,i)=>`<div class="tstep ${i<cur?'done':i===cur?'cur':''}"><div class="d"></div><div class="t">${s}</div></div>`).join("");
+ screen.innerHTML=`
+ <section id="ship">
+ <div class="sh"><h2>即時追蹤您的貨件</h2></div>
+ <div class="subt">${myShipper().name} · ${SESSION.acc.name}（只看自己公司的單）</div>
+ <div class="regsel">${tabs}</div>
+ <div class="card">
+ <div class="eta-hero"><span class="big" id="etaBig">${o.etaMin}</span><span class="lbl">分鐘後到達</span>
+ <span class="stpill ${o.risk?'st-risk':o.progress>=.85?'st-soon':'st-go'}" style="margin-left:auto">${o.status}</span></div>
+ <div style="font-size:12.5px;color:var(--mut)">${o.from} → <b style="color:var(--txt)">${o.to}</b>｜ 目前：${o.cur}</div>
+ <div class="mapwrap">${mapSVG(o)}</div>
+ <div class="tline">${tl}</div>
+ <div class="drvbar"><div class="av"></div><div><div style="font-weight:700;font-size:13px">司機 ${o.driver}</div><div style="font-size:11px;color:var(--mut)">${o.car}</div></div>
+ <div style="margin-left:auto;display:flex;gap:7px;flex-wrap:wrap"><button class="btn gho sm" onclick="act('已撥打司機 ${o.driver} 電話。','ok')">聯絡司機</button><button class="btn pri sm" onclick="act('已複製即時追蹤連結，可分享給收貨方。','ok')">分享連結</button></div></div>
+ ${o.risk?`<div class="cause" style="margin-top:12px;border-left-color:var(--bad)"><div class="h">預計延誤約 35 分</div><ul style="margin-left:18px"><li>原因：中壢市區交通壅塞</li><li>系統已自動改走替代路線並更新 ETA</li></ul><div class="acts"><button class="btn pri sm" onclick="act('已開啟延誤即時通知。','wn')">接收延誤通知</button></div></div>`:''}
+ </div>
+ </section>
+ <div class="foot">貨主視角 · 僅限 ${myShipper().name} 的貨件</div>`;
+ positionTruck(o.progress);startAnim(o);
 }
 function renderShipperOrders(){
-  if(animTimer)clearInterval(animTimer);
-  const list=myOrders();
-  const cards=list.map(o=>`<div class="shipcard">
-    <div class="top"><span class="id">${o.id}</span>
-      <span class="stpill ${o.risk?'st-risk':o.progress>=.85?'st-soon':'st-go'}" style="margin-left:auto">${o.status}</span></div>
-    <div class="cust">${o.from} → <b style="color:var(--txt)">${o.to}</b></div>
-    <div class="cust">ETA ${o.etaMin} 分 · 目前 ${o.cur} · 司機 ${o.driver}</div>
-    <div class="acts"><button class="btn pri sm" onclick="selectOrderTab('${o.id}')">即時追蹤</button>
-      <button class="btn gho sm" onclick="act('已撥打司機 ${o.driver} 電話。','ok')">聯絡司機</button></div>
-  </div>`).join("");
-  screen.innerHTML=`
-    <section>
-      <div class="sh"><h2>我的貨件</h2><span class="num" style="background:var(--accent);color:#04121f">${list.length}</span></div>
-      <div class="subt">${myShipper().name} · ${SESSION.acc.name}（延誤優先）</div>
-      ${cards}
-    </section>
-    <div class="foot">貨主視角 · 僅限 ${myShipper().name} 的貨件</div>`;
+ if(animTimer)clearInterval(animTimer);
+ const list=myOrders();
+ const cards=list.map(o=>`<div class="shipcard">
+ <div class="top"><span class="id">${o.id}</span>
+ <span class="stpill ${o.risk?'st-risk':o.progress>=.85?'st-soon':'st-go'}" style="margin-left:auto">${o.status}</span></div>
+ <div class="cust">${o.from} → <b style="color:var(--txt)">${o.to}</b></div>
+ <div class="cust">ETA ${o.etaMin} 分 · 目前 ${o.cur} · 司機 ${o.driver}</div>
+ <div class="acts"><button class="btn pri sm" onclick="selectOrderTab('${o.id}')">即時追蹤</button>
+ <button class="btn gho sm" onclick="act('已撥打司機 ${o.driver} 電話。','ok')">聯絡司機</button></div>
+ </div>`).join("");
+ screen.innerHTML=`
+ <section>
+ <div class="sh"><h2>我的貨件</h2><span class="num" style="background:var(--accent);color:#04121f">${list.length}</span></div>
+ <div class="subt">${myShipper().name} · ${SESSION.acc.name}（延誤優先）</div>
+ ${cards}
+ </section>
+ <div class="foot">貨主視角 · 僅限 ${myShipper().name} 的貨件</div>`;
 }
 function selectOrderTab(id){curOrder=id;gotoTab('track');}
 
 /* =====================================================================
-   MODALS / DRILLDOWNS (reused, mobile-tuned as bottom sheets)
+ MODALS / DRILLDOWNS (reused, mobile-tuned as bottom sheets)
 ===================================================================== */
 function voiceCall(name,mode){
-  const isCall=mode==='call';
-  showModal(`<h3>${isCall?'AI 撥打電話':'AI 語音關懷提醒'} — ${name}</h3>
-    <p>AI 生成的關懷話術（將以 TTS 合成語音播放）：</p>
-    <div class="plan rec"><div class="pd">「${name} 您好，我是車隊安全助理。系統發現您近期急煞偏高，提醒您保持安全車距、提早減速；若有車況或路況問題，回覆即可，行車平安！」</div></div>
-    <p style="margin-top:11px;font-size:11.5px;color:var(--mut2)">正式版串接：文字→語音（TTS：Google／Azure／中華電信）＋ 語音外撥（Twilio／中華電信 IVR）或 LINE 語音訊息，並自動記錄接聽／回覆狀態。</p>
-    <div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" id="callBtn" onclick="simCall('${name}',${isCall})">${isCall?'模擬撥打':'模擬發送'}</button></div>`);
+ const isCall=mode==='call';
+ showModal(`<h3>${isCall?'AI 撥打電話':'AI 語音關懷提醒'} — ${name}</h3>
+ <p>AI 生成的關懷話術（將以 TTS 合成語音播放）：</p>
+ <div class="plan rec"><div class="pd">「${name} 您好，我是車隊安全助理。系統發現您近期急煞偏高，提醒您保持安全車距、提早減速；若有車況或路況問題，回覆即可，行車平安！」</div></div>
+ <p style="margin-top:11px;font-size:11.5px;color:var(--mut2)">正式版串接：文字→語音（TTS：Google／Azure／中華電信）＋ 語音外撥（Twilio／中華電信 IVR）或 LINE 語音訊息，並自動記錄接聽／回覆狀態。</p>
+ <div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" id="callBtn" onclick="simCall('${name}',${isCall})">${isCall?'模擬撥打':'模擬發送'}</button></div>`);
 }
-function simCall(name,isCall){const b=document.getElementById('callBtn');b.disabled=true;b.textContent=isCall?'撥號中…📞':'發送中…';
-  setTimeout(()=>{closeOv();toast(isCall?'通話完成':'語音已送出',isCall?`${name} 已接聽，AI 已宣讀提醒並留存錄音摘要。`:`已透過 LINE 語音／電話留言送達 ${name}，待回覆追蹤。`,'ok');},1500);}
+function simCall(name,isCall){const b=document.getElementById('callBtn');b.disabled=true;b.textContent=isCall?'撥號中…':'發送中…';
+ setTimeout(()=>{closeOv();toast(isCall?'通話完成':'語音已送出',isCall?`${name} 已接聽，AI 已宣讀提醒並留存錄音摘要。`:`已透過 LINE 語音／電話留言送達 ${name}，待回覆追蹤。`,'ok');},1500);}
 function drillDrivers(codes,title){const rows=codes.map(cd=>{const{r,d}=dref(cd);
-  return `<div class="mrow"><div style="flex:1"><div class="nm">${d.n} <span class="mt">· ${r.name}區 · ${d.c} · 安全分 ${d.s}</span></div><div class="mt">${d.i}</div></div>
-    <div class="ma"><button class="btn pri sm" onclick="act('已通知 ${d.n}。','ok')">通知</button><button class="btn gho sm" onclick="voiceCall('${d.n}','voice')">語音提醒</button><button class="btn gho sm" onclick="act('已替 ${d.n} 建立教育任務。','ok')">指派訓練</button></div></div>`;}).join("");
-  showModal(`<h3>${title||'駕駛明細'}</h3><p>共 ${codes.length} 位，可直接處理。</p>${rows}<div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已批次通知全部駕駛。','ok');closeOv()">全部通知</button></div>`);}
+ return `<div class="mrow"><div style="flex:1"><div class="nm">${d.n} <span class="mt">· ${r.name}區 · ${d.c} · 安全分 ${d.s}</span></div><div class="mt">${d.i}</div></div>
+ <div class="ma"><button class="btn pri sm" onclick="act('已通知 ${d.n}。','ok')">通知</button><button class="btn gho sm" onclick="voiceCall('${d.n}','voice')">語音提醒</button><button class="btn gho sm" onclick="act('已替 ${d.n} 建立教育任務。','ok')">指派訓練</button></div></div>`;}).join("");
+ showModal(`<h3>${title||'駕駛明細'}</h3><p>共 ${codes.length} 位，可直接處理。</p>${rows}<div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已批次通知全部駕駛。','ok');closeOv()">全部通知</button></div>`);}
 function drillVehicle(code){const isDtc=code==='DTC';
-  showModal(`<h3>${isDtc?'待修車輛（3 台）':'車輛 '+code}</h3>
-    <p>${isDtc?'DTC 故障碼 P2002 / P244B（DPF 柴油濾清器相關）。':'東區 ABC-1301 · 駕駛 蔡英傑 · 引擎過載 287 次，疑似超載。'}</p>
-    <div class="mrow"><div style="flex:1"><div class="nm">${isDtc?'ABC-1401 劉怡君':'ABC-1301 蔡英傑'}</div><div class="mt">${isDtc?'DTC P2002 · 建議進廠':'引擎過載 / 疑超載'}</div></div>
-      <div class="ma">${isDtc?`<button class="btn pri sm" onclick="act('已預約進廠。','ok')">預約進廠</button>`:`<button class="btn pri sm" onclick="closeOv();openOverloadFix()">處理超載</button>`}</div></div>
-    <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button></div>`);}
+ showModal(`<h3>${isDtc?'待修車輛（3 台）':'車輛 '+code}</h3>
+ <p>${isDtc?'DTC 故障碼 P2002 / P244B（DPF 柴油濾清器相關）。':'東區 ABC-1301 · 駕駛 蔡英傑 · 引擎過載 287 次，疑似超載。'}</p>
+ <div class="mrow"><div style="flex:1"><div class="nm">${isDtc?'ABC-1401 劉怡君':'ABC-1301 蔡英傑'}</div><div class="mt">${isDtc?'DTC P2002 · 建議進廠':'引擎過載 / 疑超載'}</div></div>
+ <div class="ma">${isDtc?`<button class="btn pri sm" onclick="act('已預約進廠。','ok')">預約進廠</button>`:`<button class="btn pri sm" onclick="closeOv();openOverloadFix()">處理超載</button>`}</div></div>
+ <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button></div>`);}
 function drillComplaints(){showModal(`<h3>客訴明細（2 件）</h3><p>南區 · 到貨延誤</p>
-  <div class="mrow"><div style="flex:1"><div class="nm">#A2305 鴻海 土城</div><div class="mt">延誤 50 分 · 原因：超載稽查</div></div><div class="ma"><button class="btn pri sm" onclick="act('已回覆貨主並致歉。','ok')">回覆</button></div></div>
-  <div class="mrow"><div style="flex:1"><div class="nm">#A2302 全聯 北區倉</div><div class="mt">延誤 35 分 · 原因：塞車繞行</div></div><div class="ma"><button class="btn pri sm" onclick="act('已回覆貨主並致歉。','ok')">回覆</button></div></div>
-  <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已指派客服專員跟進 2 件客訴。','ok');closeOv()">指派處理</button></div>`);}
+ <div class="mrow"><div style="flex:1"><div class="nm">#A2305 鴻海 土城</div><div class="mt">延誤 50 分 · 原因：超載稽查</div></div><div class="ma"><button class="btn pri sm" onclick="act('已回覆貨主並致歉。','ok')">回覆</button></div></div>
+ <div class="mrow"><div style="flex:1"><div class="nm">#A2302 全聯 北區倉</div><div class="mt">延誤 35 分 · 原因：塞車繞行</div></div><div class="ma"><button class="btn pri sm" onclick="act('已回覆貨主並致歉。','ok')">回覆</button></div></div>
+ <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已指派客服專員跟進 2 件客訴。','ok');closeOv()">指派處理</button></div>`);}
 function openHandover(){
-  const hd=[
-   {n:"陳大文",r:"中區",h:"5.2h",loc:"國道3號 龍井段",sub:"莊承翰",dist:"9 km／約 13 分",pt:"龍井服務區"},
-   {n:"王建國",r:"北區",h:"4.8h",loc:"國道1號 楊梅段",sub:"賴冠廷",dist:"6 km／約 9 分",pt:"楊梅休息站"},
-   {n:"蔡英傑",r:"東區",h:"5.5h",loc:"台9線 蘇澳",sub:"高志明",dist:"12 km／約 18 分",pt:"蘇澳轉運站"},
-  ];
-  const rows=hd.map(x=>`<div class="mrow"><div style="flex:1"><div class="nm">${x.n} <span class="mt">· ${x.r} · 連續 ${x.h} · 目前 ${x.loc}</span></div>
-    <div class="mt">建議替班：<b style="color:var(--accent)">${x.sub}</b>（${x.dist}）· 交接點 ${x.pt}</div></div>
-    <div class="ma"><button class="btn pri sm" onclick="act('已派 ${x.sub} 前往 ${x.pt} 與 ${x.n} 交接，並通知雙方與調度。','ok')">派他交接</button></div></div>`).join("");
-  showModal(`<h3>派員交接 — 疲勞駕駛</h3><p>系統已依各車目前位置，找出最近可調度的替班司機與交接點，當場安排換手。</p>${rows}
-    <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已一鍵安排 3 位疲勞駕駛全部交接換手。','ok');closeOv()">全部安排</button></div>`);
+ const hd=[
+ {n:"陳大文",r:"中區",h:"5.2h",loc:"國道3號 龍井段",sub:"莊承翰",dist:"9 km／約 13 分",pt:"龍井服務區"},
+ {n:"王建國",r:"北區",h:"4.8h",loc:"國道1號 楊梅段",sub:"賴冠廷",dist:"6 km／約 9 分",pt:"楊梅休息站"},
+ {n:"蔡英傑",r:"東區",h:"5.5h",loc:"台9線 蘇澳",sub:"高志明",dist:"12 km／約 18 分",pt:"蘇澳轉運站"},
+ ];
+ const rows=hd.map(x=>`<div class="mrow"><div style="flex:1"><div class="nm">${x.n} <span class="mt">· ${x.r} · 連續 ${x.h} · 目前 ${x.loc}</span></div>
+ <div class="mt">建議替班：<b style="color:var(--accent)">${x.sub}</b>（${x.dist}）· 交接點 ${x.pt}</div></div>
+ <div class="ma"><button class="btn pri sm" onclick="act('已派 ${x.sub} 前往 ${x.pt} 與 ${x.n} 交接，並通知雙方與調度。','ok')">派他交接</button></div></div>`).join("");
+ showModal(`<h3>派員交接 — 疲勞駕駛</h3><p>系統已依各車目前位置，找出最近可調度的替班司機與交接點，當場安排換手。</p>${rows}
+ <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已一鍵安排 3 位疲勞駕駛全部交接換手。','ok');closeOv()">全部安排</button></div>`);
 }
 function openOverloadFix(){
-  const sus=[{c:"ABC-1301",d:"蔡英傑",r:"東區",ev:287,pct:12},{c:"ABC-1302",d:"鄭家豪",r:"東區",ev:96,pct:5},{c:"ABC-2201",d:"陳大文",r:"中區",ev:73,pct:3}];
-  const list=sus.map(s=>`<div class="mrow"><div style="flex:1"><div class="nm">${s.c} · ${s.d} <span class="mt">· ${s.r} · 過載 ${s.ev} 次</span></div><div class="mt">估超出核定載重約 ${s.pct}%</div></div><div class="ma"><span class="stpill ${s.pct>=10?'st-risk':'st-soon'}">${s.pct>=10?'高風險':'臨界'}</span></div></div>`).join("");
-  showModal(`<h3>疑似超載車輛（${sus.length} 輛）</h3>
-    <p>ABC-1301 最嚴重。建議同步安排過磅確認，再選解法執行：</p>
-    ${list}
-    <div style="font-size:12.5px;color:var(--mut);margin:15px 0 6px;font-weight:700">處理方式（可直接執行）</div>
-    <div class="mrow"><div style="flex:1"><div class="nm">重新分配貨物</div><div class="mt">超出部分改派同區餘裕車輛</div></div><div class="ma"><button class="btn pri sm" onclick="act('已重新分配貨物到 ABC-1303，載重回到安全範圍。','ok');closeOv()">執行</button></div></div>
-    <div class="mrow"><div style="flex:1"><div class="nm">更換較大車型</div><div class="mt">改派 500/700 系承載</div></div><div class="ma"><button class="btn gho sm" onclick="act('已改派 700 系承載此趟。','ok');closeOv()">執行</button></div></div>
-    <div class="mrow"><div style="flex:1"><div class="nm">增加配送批次</div><div class="mt">拆成 2 趟配送</div></div><div class="ma"><button class="btn gho sm" onclick="act('已調整為 2 批次配送。','ok');closeOv()">執行</button></div></div>
-    <div class="mrow"><div style="flex:1"><div class="nm">調整派車規則 + 過磅</div><div class="mt">依貨量自動配對車型、裝載前過磅稽核</div></div><div class="ma"><button class="btn gho sm" onclick="act('已更新派車規則並啟用裝載前過磅。','ok');closeOv()">套用</button></div></div>
-    <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button></div>`);}
+ const sus=[{c:"ABC-1301",d:"蔡英傑",r:"東區",ev:287,pct:12},{c:"ABC-1302",d:"鄭家豪",r:"東區",ev:96,pct:5},{c:"ABC-2201",d:"陳大文",r:"中區",ev:73,pct:3}];
+ const list=sus.map(s=>`<div class="mrow"><div style="flex:1"><div class="nm">${s.c} · ${s.d} <span class="mt">· ${s.r} · 過載 ${s.ev} 次</span></div><div class="mt">估超出核定載重約 ${s.pct}%</div></div><div class="ma"><span class="stpill ${s.pct>=10?'st-risk':'st-soon'}">${s.pct>=10?'高風險':'臨界'}</span></div></div>`).join("");
+ showModal(`<h3>疑似超載車輛（${sus.length} 輛）</h3>
+ <p>ABC-1301 最嚴重。建議同步安排過磅確認，再選解法執行：</p>
+ ${list}
+ <div style="font-size:12.5px;color:var(--mut);margin:15px 0 6px;font-weight:700">處理方式（可直接執行）</div>
+ <div class="mrow"><div style="flex:1"><div class="nm">重新分配貨物</div><div class="mt">超出部分改派同區餘裕車輛</div></div><div class="ma"><button class="btn pri sm" onclick="act('已重新分配貨物到 ABC-1303，載重回到安全範圍。','ok');closeOv()">執行</button></div></div>
+ <div class="mrow"><div style="flex:1"><div class="nm">更換較大車型</div><div class="mt">改派 500/700 系承載</div></div><div class="ma"><button class="btn gho sm" onclick="act('已改派 700 系承載此趟。','ok');closeOv()">執行</button></div></div>
+ <div class="mrow"><div style="flex:1"><div class="nm">增加配送批次</div><div class="mt">拆成 2 趟配送</div></div><div class="ma"><button class="btn gho sm" onclick="act('已調整為 2 批次配送。','ok');closeOv()">執行</button></div></div>
+ <div class="mrow"><div style="flex:1"><div class="nm">調整派車規則 + 過磅</div><div class="mt">依貨量自動配對車型、裝載前過磅稽核</div></div><div class="ma"><button class="btn gho sm" onclick="act('已更新派車規則並啟用裝載前過磅。','ok');closeOv()">套用</button></div></div>
+ <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button></div>`);}
 function openRoutePlan(){showModal(`<h3>路線優化方案 — 中區繞行 +22%</h3>
-  <p>AI 已產生 3 個方案，含影響評估，主管做決策即可：</p>
-  <div class="plan rec"><div class="ph">方案 A <span class="rb">推薦</span></div><div class="pd">改走 64 快速道路避開市區 → 里程 -14%、預估準時率 +6%、油耗 -9%。</div></div>
-  <div class="plan"><div class="ph">方案 B</div><div class="pd">調整配送順序（先南後北）→ 里程 -8%、準時率 +3%，不需改主幹道。</div></div>
-  <div class="plan"><div class="ph">方案 C</div><div class="pd">尖峰改派 2 車分流 → 準時率 +9%，但成本略增。</div></div>
-  <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已一鍵套用方案 A，並通知中區駕駛。','ok');closeOv()">套用方案 A</button></div>`);}
+ <p>AI 已產生 3 個方案，含影響評估，主管做決策即可：</p>
+ <div class="plan rec"><div class="ph">方案 A <span class="rb">推薦</span></div><div class="pd">改走 64 快速道路避開市區 → 里程 -14%、預估準時率 +6%、油耗 -9%。</div></div>
+ <div class="plan"><div class="ph">方案 B</div><div class="pd">調整配送順序（先南後北）→ 里程 -8%、準時率 +3%，不需改主幹道。</div></div>
+ <div class="plan"><div class="ph">方案 C</div><div class="pd">尖峰改派 2 車分流 → 準時率 +9%，但成本略增。</div></div>
+ <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已一鍵套用方案 A，並通知中區駕駛。','ok');closeOv()">套用方案 A</button></div>`);}
 function openFleetMail(id){const f=regions.find(r=>r.id===id);const rows=f.drivers.map((d,di)=>`<label class="mrow" style="cursor:pointer"><input type="checkbox" checked data-i="${di}"><div style="flex:1"><div class="nm">${d.n} <span class="mt">· ${f.name}區 · ${d.c} · 安全分 ${d.s}</span></div><div class="mt">${d.i}</div></div></label>`).join("");
-  showModal(`<h3>寄信限期改善 — ${f.name}車隊</h3><p>以下為 ${f.name}區 駕駛（預設全選），確認後寄出 7 天限期改善通知。</p>${rows}<div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="confirmFleetMail('${id}')">確認寄信</button></div>`);}
+ showModal(`<h3>寄信限期改善 — ${f.name}車隊</h3><p>以下為 ${f.name}區 駕駛（預設全選），確認後寄出 7 天限期改善通知。</p>${rows}<div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="confirmFleetMail('${id}')">確認寄信</button></div>`);}
 function confirmFleetMail(id){const f=regions.find(r=>r.id===id);let n=0;modal.querySelectorAll('input').forEach(c=>{if(c.checked){notify[id+'_'+c.dataset.i]=(notify[id+'_'+c.dataset.i]||0)+1;n++;}});warnState[id]=(warnState[id]||0)+1;closeOv();
-  const db=document.getElementById("db_"+id);if(db)db.innerHTML=driverLines(f);
-  const ld=document.getElementById("leadDrv");if(ld)ld.innerHTML=driverLines2(f);
-  toast('已寄出改善通知',`已寄信給 ${f.name}區 ${n} 位駕駛（第 ${warnState[id]} 次）。`,'wn');}
+ const db=document.getElementById("db_"+id);if(db)db.innerHTML=driverLines(f);
+ const ld=document.getElementById("leadDrv");if(ld)ld.innerHTML=driverLines2(f);
+ toast('已寄出改善通知',`已寄信給 ${f.name}區 ${n} 位駕駛（第 ${warnState[id]} 次）。`,'wn');}
 function openBatchMail(){const t=regions.filter(r=>r.safety.at(-1)<65);let html="",total=0;
-  t.forEach(f=>{f.drivers.forEach((d,di)=>{total++;html+=`<label class="mrow" style="cursor:pointer"><input type="checkbox" checked><div style="flex:1"><div class="nm">${d.n} <span class="mt">· ${f.name}區 · ${d.c}</span></div><div class="mt">${d.i}</div></div></label>`;});});
-  showModal(`<h3>批次寄信 — 限期改善</h3><p>安全分 < 65 的 ${t.length} 個車隊、共 ${total} 位駕駛：</p>${html}<div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="act('已批次寄信 ${total} 位駕駛。','wn');closeOv()">確認寄信</button></div>`);}
-function openIdleMessage(){const s=regions.slice().sort((a,b)=>b.idlePct-a.idlePct);const rows=s.map(f=>`<label class="mrow" style="cursor:pointer"><input type="checkbox" ${f.idlePct>8?'checked':''} data-f="${f.id}"><div style="flex:1"><div class="nm">${f.name}車隊 <span class="mt">· ${f.lead}</span></div><div class="mt">怠速 <b style="color:${f.idlePct>=14?'var(--bad)':f.idlePct>=10?'var(--warn)':'var(--good)'}">${f.idlePct}%</b> → 目標 ≤8%</div></div></label>`).join("");
-  showModal(`<h3>發訊息請各車隊調整怠速</h3><p>一鍵發訊息給各負責人，14 天內把怠速降到 8% 以下（預設只勾超標）。</p>${rows}<div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="confirmIdle()">確認發訊息</button></div>`);}
+ t.forEach(f=>{f.drivers.forEach((d,di)=>{total++;html+=`<label class="mrow" style="cursor:pointer"><input type="checkbox" checked><div style="flex:1"><div class="nm">${d.n} <span class="mt">· ${f.name}區 · ${d.c}</span></div><div class="mt">${d.i}</div></div></label>`;});});
+ showModal(`<h3>批次寄信 — 限期改善</h3><p>安全分 < 65 的 ${t.length} 個車隊、共 ${total} 位駕駛：</p>${html}<div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="act('已批次寄信 ${total} 位駕駛。','wn');closeOv()">確認寄信</button></div>`);}
+function openIdleMessage(){const s=regions.slice().sort((a,b)=>b.idlePct-a.idlePct);const rows=s.map(f=>`<label class="mrow" style="cursor:pointer"><input type="checkbox" ${f.idlePct>8?'checked':''} data-f="${f.id}"><div style="flex:1"><div class="nm">${f.name}車隊 <span class="mt">· ${f.lead}</span></div><div class="mt">怠速 <b style="color:${f.idlePct>=14?'var(--bad)':f.idlePct>=10?'var(--warn)':'var(--good)'}">${f.idlePct}%</b>→ 目標 ≤8%</div></div></label>`).join("");
+ showModal(`<h3>發訊息請各車隊調整怠速</h3><p>一鍵發訊息給各負責人，14 天內把怠速降到 8% 以下（預設只勾超標）。</p>${rows}<div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="confirmIdle()">確認發訊息</button></div>`);}
 function confirmIdle(){let names=[];modal.querySelectorAll('input').forEach(c=>{if(c.checked)names.push(regions.find(r=>r.id===c.dataset.f).name);});closeOv();
-  toast('怠速調整訊息已發送',`已通知 ${names.length} 個車隊（${names.join('、')}）負責人限期改善。`,'ok');}
+ toast('怠速調整訊息已發送',`已通知 ${names.length} 個車隊（${names.join('、')}）負責人限期改善。`,'ok');}
 function msgLead(id){const f=regions.find(r=>r.id===id);closeOv();toast('訊息已送出',`已通知 ${f.name}負責人 ${f.lead}（${f.phone}）。`,'ok');}
 
 /* =====================================================================
-   ONBOARDING TOUR (mobile-fit spotlight; tooltip clamped inside frame)
+ ONBOARDING TOUR (mobile-fit spotlight; tooltip clamped inside frame)
 ===================================================================== */
 const tourSteps=[
- {tab:'todo',sel:'#todo',t:'✨ 待處理決策中心',x:'AI 幫你把安全／油耗／維修／客訴收斂成「今天該處理什麼」，每件都能一鍵處理 — iTRAQ 只通知，這裡直接決策。'},
- {tab:'todo',sel:'#advice',t:'✨ AI 可執行建議',x:'系統發現問題 → 給建議 → 一鍵 AI 撥電話／語音關懷／建立教育任務。'},
- {tab:'analytic',sel:'#trend',t:'✨ 趨勢＋原因分析',x:'不只給數字，AI 還推測「為什麼上升」並附一鍵行動。'},
- {tab:'team',sel:'#staffing',t:'✨ 人力配置與招募',x:'比對各區單量 vs 駕駛數，直接給你招募／調度建議 — iTRAQ 沒碰 HR。底部分頁還有「貨主」即時追蹤（B2B2B 新增）。'},
+ {tab:'todo',sel:'#todo',t:' 待處理決策中心',x:'AI 幫你把安全／油耗／維修／客訴收斂成「今天該處理什麼」，每件都能一鍵處理 — iTRAQ 只通知，這裡直接決策。'},
+ {tab:'todo',sel:'#advice',t:' AI 可執行建議',x:'系統發現問題 → 給建議 → 一鍵 AI 撥電話／語音關懷／建立教育任務。'},
+ {tab:'analytic',sel:'#trend',t:' 趨勢＋原因分析',x:'不只給數字，AI 還推測「為什麼上升」並附一鍵行動。'},
+ {tab:'team',sel:'#staffing',t:' 人力配置與招募',x:'比對各區單量 vs 駕駛數，直接給你招募／調度建議 — iTRAQ 沒碰 HR。底部分頁還有「貨主」即時追蹤（B2B2B 新增）。'},
 ];
 let tourI=0;
 function startTour(){if(!SESSION||SESSION.role!=='fleet')return;tourI=0;document.getElementById('tourMask').classList.add('on');showTourStep();}
 function showTourStep(){const st=tourSteps[tourI];
-  if(curTab!==st.tab){gotoTab(st.tab);setTimeout(showTourStep,260);return;}
-  const target=document.querySelector(st.sel);if(!target){nextTour();return;}
-  target.scrollIntoView({block:'center'});
-  setTimeout(()=>{
-    const app=document.getElementById('app'),ar=app.getBoundingClientRect(),r=target.getBoundingClientRect();
-    const hole=document.getElementById('tourHole'),tip=document.getElementById('tourTip');
-    // position relative to app frame
-    hole.style.top=(r.top-ar.top-8)+'px';hole.style.left=(r.left-ar.left-8)+'px';
-    hole.style.width=(r.width+16)+'px';hole.style.height=(r.height+16)+'px';
-    tip.innerHTML=`<div class="tt">${st.t}</div><div class="tx">${st.x}</div><div class="tb"><span class="step">${tourI+1}/${tourSteps.length}</span><span style="display:flex;gap:8px"><button class="btn gho sm" onclick="endTour()">略過</button><button class="btn pri sm" onclick="nextTour()">${tourI===tourSteps.length-1?'完成':'下一步 →'}</button></span></div>`;
-    // clamp tooltip inside the phone frame (never wider/taller than the frame)
-    tip.style.maxWidth=Math.min(290,ar.width-24)+'px';
-    const tw=Math.min(tip.offsetWidth,ar.width-24),th=tip.offsetHeight;
-    let tp=(r.bottom-ar.top)+12;
-    if(tp+th>ar.height-70)tp=(r.top-ar.top)-th-12;
-    tp=Math.max(12,Math.min(tp,ar.height-th-12));
-    let lp=Math.max(12,Math.min(r.left-ar.left,ar.width-tw-12));
-    tip.style.top=tp+'px';tip.style.left=lp+'px';
-  },320);
+ if(curTab!==st.tab){gotoTab(st.tab);setTimeout(showTourStep,260);return;}
+ const target=document.querySelector(st.sel);if(!target){nextTour();return;}
+ target.scrollIntoView({block:'center'});
+ setTimeout(()=>{
+ const app=document.getElementById('app'),ar=app.getBoundingClientRect(),r=target.getBoundingClientRect();
+ const hole=document.getElementById('tourHole'),tip=document.getElementById('tourTip');
+ // position relative to app frame
+ hole.style.top=(r.top-ar.top-8)+'px';hole.style.left=(r.left-ar.left-8)+'px';
+ hole.style.width=(r.width+16)+'px';hole.style.height=(r.height+16)+'px';
+ tip.innerHTML=`<div class="tt">${st.t}</div><div class="tx">${st.x}</div><div class="tb"><span class="step">${tourI+1}/${tourSteps.length}</span><span style="display:flex;gap:8px"><button class="btn gho sm" onclick="endTour()">略過</button><button class="btn pri sm" onclick="nextTour()">${tourI===tourSteps.length-1?'完成':'下一步 →'}</button></span></div>`;
+ // clamp tooltip inside the phone frame (never wider/taller than the frame)
+ tip.style.maxWidth=Math.min(290,ar.width-24)+'px';
+ const tw=Math.min(tip.offsetWidth,ar.width-24),th=tip.offsetHeight;
+ let tp=(r.bottom-ar.top)+12;
+ if(tp+th>ar.height-70)tp=(r.top-ar.top)-th-12;
+ tp=Math.max(12,Math.min(tp,ar.height-th-12));
+ let lp=Math.max(12,Math.min(r.left-ar.left,ar.width-tw-12));
+ tip.style.top=tp+'px';tip.style.left=lp+'px';
+ },320);
 }
 function nextTour(){tourI++;if(tourI>=tourSteps.length){endTour();return;}showTourStep();}
 function endTour(){document.getElementById('tourMask').classList.remove('on');try{localStorage.setItem('hinoMTourDone','1')}catch(e){}}
 
 /* =====================================================================
-   UTILS: modal / toast (scoped to phone frame)
+ UTILS: modal / toast (scoped to phone frame)
 ===================================================================== */
 const ov=document.getElementById('ov'),modal=document.getElementById('modal');
 function showModal(h){modal.innerHTML=`<div class="grip"></div>`+h;ov.classList.add("on");}
