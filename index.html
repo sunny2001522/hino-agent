@@ -6,25 +6,24 @@
 <title>HINO AI 車隊軍師 — 待處理事項中心</title>
 <style>
   :root{
-    --bg:#0a0f1f;--bg2:#0e1530;--card:#141d36;--card2:#1a2442;--line:#243154;
-    --txt:#e8edf7;--mut:#93a2c4;--mut2:#6b7ba0;--accent:#2bd1c4;
-    --grad:linear-gradient(135deg,#2bd1c4,#3b82f6);--good:#34d399;--warn:#fbbf24;--bad:#f87171;--info:#a78bfa;
-    --badbg:#3a1722;--warnbg:#3a2f12;--goodbg:#0f2e26;--infobg:#241c3a;--r:14px;--sh:0 8px 30px rgba(0,0,0,.35);
+    --bg:#eef2f4;--bg2:#f4f8f9;--card:#ffffff;--card2:#eef3f4;--line:#dbe3e6;
+    --txt:#1c2b31;--mut:#5d7480;--mut2:#8ca0a9;--accent:#7bb42e;--teal:#14414f;
+    --grad:linear-gradient(135deg,#9aca3c,#7bb42e);--good:#43a047;--warn:#e8961b;--bad:#e5484d;--info:#7e57c2;
+    --badbg:#fdeded;--warnbg:#fcf3e2;--goodbg:#eaf6ea;--infobg:#f0eafb;--r:12px;--sh:0 3px 14px rgba(20,65,79,.09);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,sans-serif;background:radial-gradient(1200px 600px at 80% -10%,#16224a 0%,var(--bg) 55%);color:var(--txt);line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
+  body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt);line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
   .wrap{max-width:1180px;margin:0 auto;padding:0 16px 80px}
-  header{position:sticky;top:0;z-index:30;backdrop-filter:blur(12px);background:rgba(10,15,31,.85);border-bottom:1px solid var(--line)}
+  header{position:sticky;top:0;z-index:30;background:var(--teal);border-bottom:3px solid var(--accent)}
   .hd{max-width:1180px;margin:0 auto;padding:11px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
-  .logo{width:38px;height:38px;border-radius:11px;background:var(--grad);display:grid;place-items:center;font-size:19px;flex:0 0 auto}
-  .hd h1{font-size:16px;font-weight:850}.hd h1 small{font-weight:600;color:var(--mut);font-size:11.5px;display:block}
-  .tabs{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px;background:var(--card);border:1px solid var(--line);padding:4px;border-radius:12px}
-  .tab{font:inherit;font-size:13px;font-weight:700;color:var(--mut);background:none;border:none;padding:7px 14px;border-radius:9px;cursor:pointer}
-  .tab.on{background:var(--grad);color:#04121f}
+  .logo{height:34px;border-radius:8px;background:var(--accent);color:var(--teal);display:grid;place-items:center;font-size:16px;font-weight:900;letter-spacing:.5px;padding:0 11px;flex:0 0 auto}
+  .hd h1{font-size:16px;font-weight:850;color:#fff}.hd h1 small{font-weight:500;color:#a9c6bf;font-size:11.5px;display:block}
+  .tab{font:inherit;font-size:13px;font-weight:700;color:#dcecc9;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);padding:7px 14px;border-radius:9px;cursor:pointer}
+  .tab.on{background:var(--accent);color:var(--teal)}
   section{margin-top:26px;scroll-margin-top:76px}
   .sh{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
   .sh h2{font-size:18px;font-weight:800}.sh .tag{font-size:12px;color:var(--mut)}
-  .sh .num{font-size:12px;font-weight:800;color:#04121f;background:var(--bad);border-radius:20px;padding:2px 9px}
+  .sh .num{font-size:12px;font-weight:800;color:#fff;background:var(--bad);border-radius:20px;padding:2px 9px}
   .subt{font-size:12.5px;color:var(--mut2);margin-bottom:13px}
   /* TODO action center */
   .todos{display:flex;flex-direction:column;gap:10px}
@@ -40,14 +39,14 @@
   .btn{font:inherit;font-size:13px;font-weight:700;border:none;border-radius:9px;padding:8px 13px;cursor:pointer;transition:.15s;white-space:nowrap}
   .btn:active{transform:translateY(1px)}
   .btn.pri{background:var(--grad);color:#04121f}.btn.gho{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
-  .btn.dng{background:#f87171;color:#2a0b10}.btn.warnb{background:#fbbf24;color:#2a2206}.btn.gd{background:var(--good);color:#04241a}
+  .btn.dng{background:var(--bad);color:#fff}.btn.warnb{background:var(--warn);color:#fff}.btn.gd{background:var(--good);color:#fff}
   .btn.sm{padding:7px 11px;font-size:12px}.btn:disabled{opacity:.45;cursor:not-allowed}
   /* AI advice */
   .advice{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:13px}
-  .adv{background:linear-gradient(135deg,#11203f,#15182f);border:1px solid #2a3a63;border-radius:var(--r);padding:16px 17px;box-shadow:var(--sh)}
-  .adv .f{font-size:14px;font-weight:800;margin-bottom:4px}.adv .f b{color:#7fe6dc}
+  .adv{background:#f4f9ec;border:1px solid #d8e7c0;border-radius:var(--r);padding:16px 17px;box-shadow:var(--sh)}
+  .adv .f{font-size:14px;font-weight:800;margin-bottom:4px}.adv .f b{color:#4e7d1f}
   .adv .why{font-size:12.5px;color:var(--mut);margin-bottom:10px}
-  .adv .rec{font-size:12.5px;color:#cdd7ec;margin-bottom:11px}
+  .adv .rec{font-size:12.5px;color:var(--txt);margin-bottom:11px}
   .adv .acts{display:flex;gap:7px;flex-wrap:wrap}
   /* region compare table */
   .tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
@@ -55,18 +54,18 @@
   .tbl th{font-size:12px;color:var(--mut);font-weight:700;background:var(--bg2)}
   .tbl td.n{font-weight:800}
   .tbl tr:last-child td{border-bottom:none}
-  .tbl tr.click{cursor:pointer}.tbl tr.click:hover td{background:#16203c}
+  .tbl tr.click{cursor:pointer}.tbl tr.click:hover td{background:var(--bg2)}
   .dotcell{display:flex;align-items:center;gap:8px}
   .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
   .mini{font-size:11px;color:var(--mut)}
   .exptri{display:inline-block;width:12px;color:var(--accent)}
   .drvbox{display:flex;flex-direction:column;gap:3px;padding:6px 2px}
   .drvline{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:9px;flex-wrap:wrap;font-size:13px}
-  .drvline:hover{background:#16203c}.drvline .mt2{font-size:11.5px;color:var(--mut)}
+  .drvline:hover{background:var(--bg2)}.drvline .mt2{font-size:11.5px;color:var(--mut)}
   .lvpill{font-size:11px;font-weight:800;border:1px solid;border-radius:20px;padding:1px 9px}
   .ntag{font-size:11.5px;font-weight:700}
   .upill{font-size:10.5px;font-weight:800;padding:2px 9px;border-radius:20px;margin-left:9px}
-  .u-bad{background:var(--badbg);color:var(--bad)}.u-warn{background:var(--warnbg);color:var(--warn)}.u-info{background:var(--infobg);color:#b9a6ff}
+  .u-bad{background:var(--badbg);color:var(--bad)}.u-warn{background:var(--warnbg);color:var(--warn)}.u-info{background:var(--infobg);color:var(--info)}
   .loginbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 15px;margin-bottom:13px;font-size:13.5px}
   .loginbar .sw{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;align-items:center}
   .loginbar .swc{font-size:12px;font-weight:700;color:var(--mut);background:var(--card);border:1px solid var(--line);padding:5px 11px;border-radius:18px;cursor:pointer}
@@ -91,7 +90,7 @@
   .bar-name{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bar-track{height:18px;background:var(--bg2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
   .bar-fill{height:100%;border-radius:6px 0 0 6px;transition:width .5s}
-  .bar-fill.good{background:linear-gradient(90deg,#16a34a,#34d399)}.bar-fill.bad{background:linear-gradient(90deg,#b91c1c,#f87171)}.bar-fill.mid{background:linear-gradient(90deg,#33425f,#4a5a82)}
+  .bar-fill.good{background:linear-gradient(90deg,#43a047,#7bb42e)}.bar-fill.bad{background:linear-gradient(90deg,#c62828,#e5484d)}.bar-fill.mid{background:linear-gradient(90deg,#c6ced3,#9fb0b8)}
   .bar-val{font-size:13px;font-weight:800;text-align:right}.rk{width:18px;text-align:center}
   .bar-leg{font-size:12px;color:var(--mut);margin-top:9px;display:flex;gap:14px;flex-wrap:wrap}.bar-leg b.g{color:var(--good)}.bar-leg b.r{color:var(--bad)}
   .dimsol{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px 17px;margin-top:12px;box-shadow:var(--sh)}
@@ -109,7 +108,7 @@
   .ship .eta{font-size:13px;font-weight:700;width:110px}
   .ship .acts{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
   .stpill{font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:20px;white-space:nowrap}
-  .st-go{background:var(--infobg);color:#b9a6ff}.st-soon{background:var(--goodbg);color:var(--good)}.st-risk{background:var(--badbg);color:var(--bad)}.st-done{background:#16263f;color:var(--mut)}
+  .st-go{background:var(--infobg);color:var(--info)}.st-soon{background:var(--goodbg);color:var(--good)}.st-risk{background:var(--badbg);color:var(--bad)}.st-done{background:#e7edef;color:var(--mut)}
   .eta-hero{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:5px}
   .eta-hero .big{font-size:40px;font-weight:850;color:var(--accent);line-height:1}
   .eta-hero .lbl{font-size:14px;color:var(--mut)}
@@ -120,7 +119,7 @@
   .tstep{display:flex;flex-direction:column;align-items:center;gap:6px;z-index:1;flex:1}
   .tstep .d{width:17px;height:17px;border-radius:50%;background:var(--card2);border:2px solid var(--line)}
   .tstep.done .d{background:var(--good);border-color:var(--good)}
-  .tstep.cur .d{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 5px rgba(43,209,196,.2)}
+  .tstep.cur .d{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 5px rgba(123,180,46,.28)}
   .tstep .t{font-size:11.5px;color:var(--mut2)}.tstep.cur .t,.tstep.done .t{color:var(--txt)}
   .drvbar{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;flex-wrap:wrap}
   .drvbar .av{width:40px;height:40px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:18px}
@@ -129,12 +128,20 @@
   .rolecard:hover{transform:translateY(-4px);border-color:var(--accent)}
   .rolecard .ic{font-size:42px;margin-bottom:10px}
   .rolecard b{display:block;font-size:18px;font-weight:850}.rolecard span{font-size:12.5px;color:var(--mut)}
+  .newbadge{display:inline-block;font-size:10px;font-weight:800;color:var(--teal);background:var(--accent);border-radius:20px;padding:1px 8px;margin-left:8px;vertical-align:middle}
+  .rolecard{position:relative}.rolecard .nb{position:absolute;top:12px;right:12px;margin:0}
+  #tourMask{position:fixed;inset:0;z-index:80;display:none}#tourMask.on{display:block}
+  #tourHole{position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(15,35,45,.72);pointer-events:none;transition:top .25s,left .25s,width .25s,height .25s}
+  #tourTip{position:fixed;max-width:330px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:0 12px 44px rgba(0,0,0,.32);z-index:81}
+  #tourTip .tt{font-weight:850;font-size:15px;margin-bottom:5px}
+  #tourTip .tx{font-size:13px;color:var(--mut);margin-bottom:13px;line-height:1.6}
+  #tourTip .tb{display:flex;gap:8px;justify-content:space-between;align-items:center}#tourTip .step{font-size:11.5px;color:var(--mut2)}
   .hidden{display:none}
   #toasts{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;flex-direction:column;gap:9px;max-width:90vw}
   .toast{background:var(--card2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:11px;padding:12px 15px;font-size:13.5px;box-shadow:var(--sh);animation:slin .25s;max-width:370px}
   .toast.ok{border-left-color:var(--good)}.toast.dn{border-left-color:var(--bad)}.toast.wn{border-left-color:var(--warn)}.toast b{display:block;margin-bottom:2px}
   @keyframes slin{from{opacity:0;transform:translateY(12px)}to{opacity:1}}
-  .ov{position:fixed;inset:0;background:rgba(4,8,18,.74);z-index:70;display:none;place-items:center;padding:18px}.ov.on{display:grid}
+  .ov{position:fixed;inset:0;background:rgba(18,42,52,.5);z-index:70;display:none;place-items:center;padding:18px}.ov.on{display:grid}
   .modal{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;max-width:500px;width:100%;box-shadow:var(--sh);max-height:86vh;overflow:auto}
   .modal h3{font-size:18px;margin-bottom:6px}.modal p{font-size:13.5px;color:var(--mut);margin-bottom:14px}
   .modal .mb{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
@@ -142,7 +149,7 @@
   .mrow:last-child{border-bottom:none}.mrow .nm{font-size:13.5px;font-weight:700}.mrow .mt{font-size:11.5px;color:var(--mut)}
   .mrow .ma{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
   .plan{border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:10px}
-  .plan.rec{border-color:var(--accent);background:#0f2530}
+  .plan.rec{border-color:var(--accent);background:#f2f8e7}
   .plan .ph{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:5px}
   .plan .rb{font-size:10.5px;font-weight:800;color:#04121f;background:var(--accent);padding:2px 8px;border-radius:20px}
   .plan .pd{font-size:12.5px;color:var(--mut)}
@@ -154,9 +161,12 @@
 <body>
 <header>
   <div class="hd">
-    <div class="logo">🚛</div>
-    <div><h1>HINO AI 車隊軍師<small>商用車頭家的智慧夥伴 · 火箭隊</small></h1></div>
-    <button class="tab" id="switchBtn" onclick="switchView('home')" style="display:none;margin-left:auto">← 切換身分</button>
+    <div class="logo">iTRAQ</div>
+    <div><h1>AI 車隊軍師<small>iTRAQ GenAI 智慧層 · 火箭隊</small></h1></div>
+    <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="tab" onclick="switchView('fleet');setTimeout(startTour,450)">✨ 新功能導覽</button>
+      <button class="tab" id="switchBtn" onclick="switchView('home')" style="display:none">← 切換身分</button>
+    </div>
   </div>
 </header>
 
@@ -168,9 +178,9 @@
     <p style="text-align:center;color:var(--mut);margin-bottom:26px;font-size:13.5px">登入後僅顯示與您角色相關的內容</p>
     <div class="rolepick">
       <div class="rolecard" onclick="switchView('fleet')"><div class="ic">🧭</div><b>車隊管理</b><span>老闆 / 總管</span></div>
-      <div class="rolecard" onclick="switchView('lead')"><div class="ic">🧑‍💼</div><b>車隊負責人</b><span>區域主管</span></div>
-      <div class="rolecard" onclick="switchView('driver')"><div class="ic">🚚</div><b>司機</b><span>駕駛端</span></div>
-      <div class="rolecard" onclick="switchView('shipper')"><div class="ic">📦</div><b>貨主</b><span>貨件追蹤</span></div>
+      <div class="rolecard" onclick="switchView('lead')"><span class="newbadge nb">✨新</span><div class="ic">🧑‍💼</div><b>車隊負責人</b><span>區域主管</span></div>
+      <div class="rolecard" onclick="switchView('driver')"><span class="newbadge nb">✨新</span><div class="ic">🚚</div><b>司機</b><span>駕駛端</span></div>
+      <div class="rolecard" onclick="switchView('shipper')"><span class="newbadge nb">✨新</span><div class="ic">📦</div><b>貨主</b><span>貨件追蹤</span></div>
     </div>
   </section>
 </div>
@@ -180,19 +190,19 @@
 
   <!-- 1. 待處理事項中心 (HERO) -->
   <section id="todo">
-    <div class="sh"><h2>今日需處理事項</h2><span class="num" id="todoNum"></span><span class="tag">依緊急程度排序</span></div>
+    <div class="sh"><h2>今日需處理事項</h2><span class="newbadge">✨ 新增</span><span class="num" id="todoNum"></span><span class="tag">依緊急程度排序</span></div>
     <div class="todos" id="todoList"></div>
   </section>
 
   <!-- 2. AI 可執行建議 -->
   <section id="advice">
-    <div class="sh"><h2>AI 建議（可直接執行）</h2></div>
+    <div class="sh"><h2>AI 建議（可直接執行）</h2><span class="newbadge">✨ 新增</span></div>
     <div class="advice" id="adviceList"></div>
   </section>
 
   <!-- 人力配置 (決策行動，可展開看數據) -->
   <section id="staffing">
-    <div class="sh"><h2>人力配置與招募建議</h2><span class="tag">單量 vs 駕駛數 · 決定招新比例</span></div>
+    <div class="sh"><h2>人力配置與招募建議</h2><span class="newbadge">✨ 新增</span><span class="tag">單量 vs 駕駛數 · 決定招新比例</span></div>
     <div class="todo warn" style="flex-direction:column;align-items:stretch">
       <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
         <div class="meta"><div class="cat">人力決策</div><div class="tt">建議招募 2 名駕駛（北區 +1、中區 +1）</div><div class="dt" id="staffInsight"></div></div>
@@ -220,7 +230,7 @@
 
   <!-- 5. 趨勢 + 原因 (面向 tabs) -->
   <section id="trend">
-    <div class="sh"><h2>趨勢與原因</h2><span class="tag">切換面向看全隊趨勢與成因</span></div>
+    <div class="sh"><h2>趨勢與原因</h2><span class="newbadge">✨ 新增</span><span class="tag">切換面向看全隊趨勢與成因</span></div>
     <div class="regsel" id="metricTabs"></div>
     <div class="charts" style="grid-template-columns:1fr">
       <div class="chartcard"><div class="ch-h"><span class="ttl" id="m_ttl"></span><span class="sub" id="m_sub"></span><span class="now" id="m_now"></span></div><div id="chart_metric"></div>
@@ -281,6 +291,7 @@
   <div class="foot">HINO AI 車隊軍師 · HINO × GenAI 黑客松 Demo · 行動皆為原型模擬</div>
 </div>
 
+<div id="tourMask"><div id="tourHole"></div><div id="tourTip"></div></div>
 <div id="toasts"></div>
 <div class="ov" id="ov"><div class="modal" id="modal"></div></div>
 
@@ -332,6 +343,7 @@ function switchView(v){
   if(v==="shipper")renderShipperView();else if(animTimer)clearInterval(animTimer);
   if(v==="lead")renderLead();
   if(v==="driver")renderDriver();
+  if(v==="fleet"){try{if(!localStorage.getItem('hinoTourDone'))setTimeout(startTour,650);}catch(e){}}
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -433,7 +445,7 @@ function renderStaffing(){
       <td class="n" style="color:${lc}">${Math.round(x.load*100)}%</td>
       <td class="n" style="color:${col}">${badge}</td></tr>`;}).join("");
   const hi=rows[0];
-  document.getElementById("staffInsight").innerHTML=`以每人月承載 ${TARGET_PER_DRIVER} 單為基準：<b style="color:#e8edf7">${hi.r.name}</b> 人均 ${hi.per} 單、負荷 ${Math.round(hi.load*100)}% 最吃緊。全隊建議優先招募 <b style="color:var(--bad)">${totalNeed} 名</b>駕駛（集中高負荷區），低負荷區可調度支援、不需擴編。`;
+  document.getElementById("staffInsight").innerHTML=`以每人月承載 ${TARGET_PER_DRIVER} 單為基準：<b style="color:var(--txt)">${hi.r.name}</b> 人均 ${hi.per} 單、負荷 ${Math.round(hi.load*100)}% 最吃緊。全隊建議優先招募 <b style="color:var(--bad)">${totalNeed} 名</b>駕駛（集中高負荷區），低負荷區可調度支援、不需擴編。`;
 }
 
 /* ---------- voice / call (realistic demo) ---------- */
@@ -453,7 +465,7 @@ function lineChart(series,opts){
   const W=560,H=220,pl=40,pr=14,pt=12,pb=24;const all=series.flatMap(s=>s.vals);
   let mn=opts.min!=null?opts.min:Math.min(...all),mx=opts.max!=null?opts.max:Math.max(...all);if(mn===mx){mn-=1;mx+=1;}const pad=(mx-mn)*.12;mn-=pad;mx+=pad;
   const x=i=>pl+(W-pl-pr)*(i/(MONTHS.length-1)),y=v=>pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));
-  let g="";for(let k=0;k<=3;k++){const gv=mn+(mx-mn)*k/3,gy=y(gv);g+=`<line x1="${pl}" y1="${gy}" x2="${W-pr}" y2="${gy}" stroke="#223052"/><text x="${pl-6}" y="${gy+4}" text-anchor="end">${Math.round(gv)}</text>`;}
+  let g="";for(let k=0;k<=3;k++){const gv=mn+(mx-mn)*k/3,gy=y(gv);g+=`<line x1="${pl}" y1="${gy}" x2="${W-pr}" y2="${gy}" stroke="#e4ebed"/><text x="${pl-6}" y="${gy+4}" text-anchor="end">${Math.round(gv)}</text>`;}
   MONTHS.forEach((m,i)=>{if(i%2===0||i===MONTHS.length-1)g+=`<text x="${x(i)}" y="${H-7}" text-anchor="middle">${m}</text>`;});
   let ln="";series.forEach(s=>{const p=s.vals.map((v,i)=>`${x(i)},${y(v)}`).join(" ");ln+=`<polyline points="${p}" fill="none" stroke="${s.color}" stroke-width="${s.bold?3:1.5}" opacity="${s.bold?1:.45}" stroke-linejoin="round"/>`;if(s.bold)s.vals.forEach((v,i)=>ln+=`<circle cx="${x(i)}" cy="${y(v)}" r="${i===s.vals.length-1?4:2.4}" fill="${s.color}"/>`);
     if(s.label)s.vals.forEach((v,i)=>{const dv=i>0?v-s.vals[i-1]:0;const dc=dv>0?"#f4a0a0":dv<0?"#86e0bf":"#9fb0d0";ln+=`<text x="${x(i)}" y="${Math.max(11,y(v)-9)}" text-anchor="middle" font-size="9" fill="#dbe7ff">${v}</text>`;if(i>0)ln+=`<text x="${x(i)}" y="${Math.max(20,y(v)-1)}" text-anchor="middle" font-size="7.5" fill="${dc}">${dv>0?'+':''}${dv}</text>`;});});
@@ -488,9 +500,9 @@ function renderMetricTabs(){document.getElementById("metricTabs").innerHTML=metr
 function setMetric(k){curMetric=k;renderMetricTabs();renderTrend();}
 function renderTrend(){const m=metrics.find(x=>x.key===curMetric);
   const series=regions.map(r=>({vals:regionSeries(m,r),color:r.color}));
-  series.push({vals:m.data,color:"#2bd1c4",bold:true});
+  series.push({vals:m.data,color:"#7bb42e",bold:true});
   document.getElementById("chart_metric").innerHTML=lineChart(series,{min:m.min,max:m.max});
-  document.getElementById("m_legend").innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:16px;height:3px;border-radius:3px;background:#2bd1c4;display:inline-block"></i>全隊平均</span>`+
+  document.getElementById("m_legend").innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:16px;height:3px;border-radius:3px;background:#7bb42e;display:inline-block"></i>全隊平均</span>`+
     regions.map(r=>`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:14px;height:3px;border-radius:3px;background:${r.color};display:inline-block"></i>${r.name}</span>`).join("");
   document.getElementById("m_ttl").textContent=m.name;
   document.getElementById("m_sub").textContent="各區 + 全隊 · 2025/01–11";
@@ -498,7 +510,7 @@ function renderTrend(){const m=metrics.find(x=>x.key===curMetric);
   const up=now>prev,betterUp=m.key==="safety",good=up===betterUp,delta=prev?Math.abs((now-prev)/prev*100):0;
   nn.innerHTML=`全隊 <span style="color:${m.key==="safety"?scoreColor(now):"var(--bad)"}">${now.toLocaleString()} ${m.unit}</span> <span style="font-size:13px;font-weight:700;color:${good?"var(--good)":"var(--bad)"}">${up?"▲":"▼"} ${delta.toFixed(1)}% 較上月</span>`;
   const c=m.cause;document.getElementById("m_cause").innerHTML=`<div class="h">${c.t}</div>
-    <div style="font-size:12.5px;color:#cdd7ec;margin:2px 0 9px">📊 資料顯示（事實）：${factMap[m.key]}。</div>
+    <div style="font-size:12.5px;color:#35505a;margin:2px 0 9px">📊 資料顯示（事實）：${factMap[m.key]}。</div>
     <div style="font-size:12px;color:var(--mut2);margin-bottom:2px">🤔 AI 推測原因（需與現場驗證）：</div>
     <ul>${c.rs.map(r=>`<li>${r}</li>`).join("")}</ul><div class="acts">${c.act.map(a=>`<button class="btn ${a.c} sm" onclick="${a.fn}">${a.l}</button>`).join("")}</div>`;
 }
@@ -617,13 +629,13 @@ function renderShipperView(){renderLogin();const list=myOrders();if(!curOrder||!
 function renderOrderTabs(){document.getElementById("orderTabs").innerHTML=myOrders().map(o=>`<div class="regchip ${curOrder===o.id?'on':''}" onclick="selectOrder('${o.id}')">${o.id} · ${o.to}${o.risk?' ⚠️':''}</div>`).join("");}
 function selectOrder(id){curOrder=id;renderOrderTabs();renderTrack();}
 function mapSVG(o){return `<svg viewBox="0 0 600 280" style="width:100%;height:auto;display:block">
-   <rect width="600" height="280" fill="#0b1226"/>
-   <line x1="0" y1="205" x2="600" y2="120" stroke="#142039" stroke-width="2"/><line x1="130" y1="280" x2="330" y2="0" stroke="#142039" stroke-width="2"/><line x1="380" y1="280" x2="520" y2="0" stroke="#142039" stroke-width="2"/>
-   <path d="M44 240 Q 150 130 250 175 T 440 95 T 558 52" fill="none" stroke="#1d2b4d" stroke-width="13" stroke-linecap="round"/>
-   <path id="routeP" d="M44 240 Q 150 130 250 175 T 440 95 T 558 52" fill="none" stroke="#2bd1c4" stroke-width="4" stroke-linecap="round" opacity=".92"/>
-   <circle cx="44" cy="240" r="7" fill="#fff"/><text x="44" y="264" fill="#93a2c4" font-size="12" text-anchor="middle">${o.from}</text>
-   <circle cx="558" cy="52" r="11" fill="#f87171"/><text x="558" y="57" font-size="13" text-anchor="middle">📍</text><text x="558" y="32" fill="#93a2c4" font-size="12" text-anchor="middle">${o.to}</text>
-   <g id="truckG"><circle r="15" fill="#2bd1c4"/><text y="6" font-size="17" text-anchor="middle">🚛</text></g>
+   <rect width="600" height="280" fill="#eaf1f2"/>
+   <line x1="0" y1="205" x2="600" y2="120" stroke="#e1e9eb" stroke-width="2"/><line x1="130" y1="280" x2="330" y2="0" stroke="#e1e9eb" stroke-width="2"/><line x1="380" y1="280" x2="520" y2="0" stroke="#e1e9eb" stroke-width="2"/>
+   <path d="M44 240 Q 150 130 250 175 T 440 95 T 558 52" fill="none" stroke="#cfdadd" stroke-width="13" stroke-linecap="round"/>
+   <path id="routeP" d="M44 240 Q 150 130 250 175 T 440 95 T 558 52" fill="none" stroke="#7bb42e" stroke-width="4" stroke-linecap="round" opacity=".92"/>
+   <circle cx="44" cy="240" r="7" fill="#14414f"/><text x="44" y="264" fill="#5d7480" font-size="12" text-anchor="middle">${o.from}</text>
+   <circle cx="558" cy="52" r="11" fill="#f87171"/><text x="558" y="57" font-size="13" text-anchor="middle">📍</text><text x="558" y="32" fill="#5d7480" font-size="12" text-anchor="middle">${o.to}</text>
+   <g id="truckG"><circle r="15" fill="#7bb42e"/><text y="6" font-size="17" text-anchor="middle">🚛</text></g>
   </svg>`;}
 function positionTruck(p){const path=document.getElementById("routeP");if(!path)return;const pt=path.getPointAtLength(path.getTotalLength()*Math.min(p,1));const g=document.getElementById("truckG");if(g)g.setAttribute("transform",`translate(${pt.x},${pt.y})`);}
 function startAnim(o){if(animTimer)clearInterval(animTimer);let p=o.progress;
@@ -656,7 +668,7 @@ function notifyDriverL(id,i){notify[id+'_'+i]=(notify[id+'_'+i]||0)+1;const r=re
 function renderLeadSel(){document.getElementById("leadSel").innerHTML=regions.map(r=>`<div class="regchip ${curLead===r.id?'on':''}" onclick="selLead('${r.id}')"><span class="dot" style="background:${r.color}"></span>${r.name}・${r.lead}</div>`).join("");}
 function selLead(id){curLead=id;renderLead();}
 function renderLead(){renderLeadSel();const r=regions.find(x=>x.id===curLead),sc=r.safety.at(-1);
-  const pts=[];r.drivers.forEach(d=>{if(d.s<55)pts.push(`<b style="color:#fff">${d.n}</b>（安全分 ${d.s}・紅）建議今日約談`);});
+  const pts=[];r.drivers.forEach(d=>{if(d.s<55)pts.push(`<b style="color:var(--txt)">${d.n}</b>（安全分 ${d.s}・紅）建議今日約談`);});
   r.drivers.forEach(d=>{if(d.i.includes('超載'))pts.push(`${d.n} ${d.c} 疑似超載，需處理`);if(d.i.includes('疲勞'))pts.push(`${d.n} 疲勞風險，安排休息/交接`);if(d.i.includes('點檢'))pts.push(`${d.n} 未完成出車前點檢`);});
   if(!pts.length)pts.push('本區狀況良好，無急件 👍');
   const ac=r.anomaly>=8?'var(--bad)':r.anomaly>=5?'var(--warn)':'var(--good)';
@@ -704,6 +716,25 @@ function renderDriver(){renderDrvSel();const{r,d}=dref(curDrv);const[lv,col]=lvl
    <div class="sh"><h2 style="font-size:16px">我的提醒</h2></div>
    <div class="advice">${alerts}</div>`;
 }
+
+const tourSteps=[
+ {sel:'#todo',t:'✨ 待處理決策中心',x:'AI 幫你把安全／油耗／維修／客訴收斂成「今天該處理什麼」，每件都能一鍵處理 — iTRAQ 只通知，這裡直接決策。'},
+ {sel:'#advice',t:'✨ AI 可執行建議',x:'系統發現問題 → 給建議 → 一鍵 AI 撥電話／語音關懷／建立教育任務。'},
+ {sel:'#staffing',t:'✨ 人力配置與招募',x:'比對各區單量 vs 駕駛數，直接給你招募／調度建議 — iTRAQ 沒碰 HR。'},
+ {sel:'#trend',t:'✨ 趨勢＋原因分析',x:'不只給數字，AI 還推測「為什麼上升」並附一鍵行動。看完可用右上「切換身分」體驗負責人／司機／貨主視角（皆為新增）。'},
+];
+let tourI=0;
+function startTour(){if(document.getElementById('view_fleet').classList.contains('hidden'))switchView('fleet');tourI=0;document.getElementById('tourMask').classList.add('on');showTourStep();}
+function showTourStep(){const st=tourSteps[tourI],el=document.querySelector(st.sel);if(!el){nextTour();return;}
+  el.scrollIntoView({block:'center'});
+  setTimeout(()=>{const r=el.getBoundingClientRect(),hole=document.getElementById('tourHole'),tip=document.getElementById('tourTip');
+    hole.style.top=(r.top-8)+'px';hole.style.left=(r.left-8)+'px';hole.style.width=(r.width+16)+'px';hole.style.height=(r.height+16)+'px';
+    tip.innerHTML=`<div class="tt">${st.t}</div><div class="tx">${st.x}</div><div class="tb"><span class="step">${tourI+1}/${tourSteps.length}</span><span style="display:flex;gap:8px"><button class="btn gho sm" onclick="endTour()">略過</button><button class="btn pri sm" onclick="nextTour()">${tourI===tourSteps.length-1?'完成':'下一步 →'}</button></span></div>`;
+    let tp=r.bottom+14;if(tp+tip.offsetHeight>window.innerHeight-12)tp=Math.max(70,r.top-tip.offsetHeight-14);
+    tip.style.top=tp+'px';tip.style.left=Math.min(Math.max(12,r.left),window.innerWidth-345)+'px';},300);
+}
+function nextTour(){tourI++;if(tourI>=tourSteps.length){endTour();return;}showTourStep();}
+function endTour(){document.getElementById('tourMask').classList.remove('on');try{localStorage.setItem('hinoTourDone','1')}catch(e){}}
 
 /* ---------- utils ---------- */
 function showModal(h){modal.innerHTML=h;ov.classList.add("on");}
