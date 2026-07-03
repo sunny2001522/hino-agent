@@ -123,6 +123,10 @@
   .tstep .t{font-size:11.5px;color:var(--mut2)}.tstep.cur .t,.tstep.done .t{color:var(--txt)}
   .drvbar{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;flex-wrap:wrap}
   .drvbar .av{width:40px;height:40px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-size:18px}
+  .idcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px;cursor:pointer;box-shadow:var(--sh);transition:.15s}
+  .idcard:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .idcard .ih{font-weight:850;font-size:17px;margin-bottom:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .idcard .idesc{font-size:13.5px;color:var(--txt);line-height:1.85}
   .rolepick{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;max-width:780px;margin:0 auto}
   .rolecard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 20px;text-align:center;cursor:pointer;transition:.18s;box-shadow:var(--sh)}
   .rolecard:hover{transform:translateY(-4px);border-color:var(--accent)}
@@ -173,15 +177,27 @@
 <div class="wrap">
 <!-- ===================== 選擇身分 ===================== -->
 <div id="view_home">
-  <section style="margin-top:48px">
-    <div style="text-align:center;margin-bottom:6px"><h2 style="font-size:25px">請選擇您的身分</h2></div>
-    <p style="text-align:center;color:var(--mut);margin-bottom:26px;font-size:13.5px">登入後僅顯示與您角色相關的內容</p>
-    <div class="rolepick">
-      <div class="rolecard" onclick="switchView('fleet')"><div class="ic">🧭</div><b>車隊管理</b><span>老闆 / 總管</span></div>
-      <div class="rolecard" onclick="switchView('lead')"><span class="newbadge nb">✨新</span><div class="ic">🧑‍💼</div><b>車隊負責人</b><span>區域主管</span></div>
-      <div class="rolecard" onclick="switchView('driver')"><span class="newbadge nb">✨新</span><div class="ic">🚚</div><b>司機</b><span>駕駛端</span></div>
-      <div class="rolecard" onclick="switchView('shipper')"><span class="newbadge nb">✨新</span><div class="ic">📦</div><b>貨主</b><span>貨件追蹤</span></div>
+  <section style="margin:34px auto 0;max-width:560px">
+    <div style="text-align:center;margin-bottom:28px"><div style="font-size:34px;font-weight:850;color:var(--good)">歡迎使用</div></div>
+    <div style="font-weight:850;font-size:19px;margin-bottom:3px">請選擇身份</div>
+    <p style="color:var(--mut2);margin-bottom:18px;font-size:13.5px;display:flex;align-items:center;gap:7px">根據身份提供差異化服務 <span style="display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--good);color:#fff;font-size:11px;font-weight:800">?</span></p>
+    <div class="idcard" onclick="switchView('fleet')">
+      <div class="ih" style="color:#2e9e4f">⚙️ 車隊管理</div>
+      <div class="idesc">註冊：iTRAQ 系統網站註冊車隊管理帳號<br>登入：輸入手機號碼或電子信箱<br>www.HINO-iTRAQ.com.tw</div>
     </div>
+    <div class="idcard" onclick="switchView('driver')">
+      <div class="ih" style="color:#4a6cf0">👥 車隊駕駛</div>
+      <div class="idesc">註冊：由車隊管理者建立車隊駕駛帳號<br>登入：一律採用手機號碼登入 APP</div>
+    </div>
+    <div class="idcard" onclick="switchView('driver')">
+      <div class="ih" style="color:#e0862a">👤 個人用戶</div>
+      <div class="idesc">登入：一律採用手機號碼登入 APP</div>
+    </div>
+    <div class="idcard" onclick="switchView('shipper')" style="border-color:var(--accent)">
+      <div class="ih" style="color:#2e9e4f">📦 貨主（貨件追蹤）<span class="newbadge">✨ 新增</span></div>
+      <div class="idesc">登入：手機號碼登入 APP · 即時追蹤貨件位置與到貨 ETA<br><b style="color:var(--good)">本團隊 B2B2B 新增身份</b>（iTRAQ 原本沒有）</div>
+    </div>
+    <div style="text-align:center;color:var(--mut2);font-size:12px;margin-top:24px">軟體版本: 1.5.2(1) · HINO × GenAI Demo · 火箭隊</div>
   </section>
 </div>
 
@@ -225,6 +241,7 @@
       <button class="btn pri sm" onclick="openBatchMail()">批次寄信低分車隊</button>
       <button class="btn gho sm" onclick="openIdleMessage()">發訊息請各車隊降怠速</button>
       <button class="btn gho sm" onclick="act('已產出全隊 ESG 碳排報告（GHG 格式）。','ok')">產出 ESG 報告</button>
+      <button class="btn gho sm" onclick="switchView('lead')">切換：區域負責人視角</button>
     </div>
   </section>
 
@@ -721,7 +738,7 @@ const tourSteps=[
  {sel:'#todo',t:'✨ 待處理決策中心',x:'AI 幫你把安全／油耗／維修／客訴收斂成「今天該處理什麼」，每件都能一鍵處理 — iTRAQ 只通知，這裡直接決策。'},
  {sel:'#advice',t:'✨ AI 可執行建議',x:'系統發現問題 → 給建議 → 一鍵 AI 撥電話／語音關懷／建立教育任務。'},
  {sel:'#staffing',t:'✨ 人力配置與招募',x:'比對各區單量 vs 駕駛數，直接給你招募／調度建議 — iTRAQ 沒碰 HR。'},
- {sel:'#trend',t:'✨ 趨勢＋原因分析',x:'不只給數字，AI 還推測「為什麼上升」並附一鍵行動。看完可用右上「切換身分」體驗負責人／司機／貨主視角（皆為新增）。'},
+ {sel:'#trend',t:'✨ 趨勢＋原因分析',x:'不只給數字，AI 還推測「為什麼上升」並附一鍵行動。身分選擇與車隊管理/駕駛是 iTRAQ 既有；我們新增的是這層 AI 智慧＋「貨主」即時追蹤（B2B2B）。'},
 ];
 let tourI=0;
 function startTour(){if(document.getElementById('view_fleet').classList.contains('hidden'))switchView('fleet');tourI=0;document.getElementById('tourMask').classList.add('on');showTourStep();}
