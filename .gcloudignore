@@ -1,0 +1,10 @@
+.git
+.gitignore
+.claude
+node_modules
+npm-debug.log
+.env
+.env.*
+.DS_Store
+scratch_script.js
+index-desktop.html

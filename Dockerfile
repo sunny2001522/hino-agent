@@ -8,7 +8,7 @@ RUN npm install --omit=dev
 
 # 複製其餘檔案
 COPY server.js ./
-COPY index.html index-mobile.html index-desktop.html README.md ./
+COPY index.html index-mobile.html README.md ./
 
 ENV NODE_ENV=production
 ENV PORT=8080
