@@ -1649,7 +1649,7 @@ function openAIChat(){
  :`${SESSION.acc.name} 你好，我是全隊省油×安全 AI 軍師，已接上 iTRAQ 全隊大數據。`;
  log.innerHTML=`<div class="bub ai"><div class="lbl">${AI_TAG}</div>${hi}</div>`;
  // 老闆/負責人端偵測到真 AI 後端時，標示已串接 Claude
- if(c.role==='fleet'||c.role==='lead'){checkBackend().then(on=>{const s=document.getElementById('chatSub');if(s)s.textContent=roleLabel+' · '+(on?'已串接 Claude 生成式 AI，依 iTRAQ 數據即時回答':'依你的 iTRAQ 數據即時生成');});}
+ if(c.role==='fleet'||c.role==='lead'){checkBackend().then(on=>{const s=document.getElementById('chatSub');if(s)s.textContent=roleLabel+' · '+(on?'已串接 Gemini 生成式 AI，依 iTRAQ 數據即時回答':'依你的 iTRAQ 數據即時生成');});}
 }
 function aiAskInput(){const i=document.getElementById('chatInput');const v=(i.value||'').trim();if(!v)return;i.value='';aiAsk(v);}
 
