@@ -1,0 +1,74 @@
+:root {
+  --ink: #0d3340;
+  --lime: #a7d94c;
+  --mist: #edf4f1;
+}
+
+.competition-hero {
+  background: linear-gradient(135deg, #123f4c 0%, #1d6270 70%, #3a8a80 100%);
+  color: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 8px 26px rgba(15, 57, 68, .18);
+}
+.competition-hero .eyebrow { color: var(--lime); font-size: 11px; font-weight: 850; letter-spacing: .08em; }
+.competition-hero h2 { font-size: 21px; margin: 4px 0; }
+.competition-hero p { color: #d9edf0; font-size: 13px; }
+.competition-hero .hero-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.competition-hero .hero-actions .btn { background: var(--lime); color: var(--ink); }
+.competition-hero .hero-actions .btn.ghost { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25); color: #fff; }
+
+.office-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.ranklist { display: flex; flex-direction: column; gap: 8px; }
+.rankrow { display: grid; grid-template-columns: 31px 1fr auto; align-items: center; gap: 9px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; box-shadow: var(--sh); }
+.rankrow.mine { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(123,180,46,.13); }
+.ranknum { width: 26px; height: 26px; border-radius: 50%; background: var(--mist); color: var(--ink); display: grid; place-items: center; font-size: 12px; font-weight: 900; }
+.ranknum.top { background: linear-gradient(135deg, #f7cf54, #e6a91f); color: #573b00; }
+.rankmain b { display: block; font-size: 13px; }
+.rankmain span { color: var(--mut); font-size: 11.5px; }
+.rankscore { text-align: right; font-size: 19px; font-weight: 900; color: var(--ink); }
+.rankscore small { display: block; font-size: 10px; font-weight: 700; color: var(--mut); }
+
+.decision-card { background: var(--card); border: 1px solid var(--line); border-radius: 15px; padding: 15px; box-shadow: var(--sh); }
+.decision-card.emphasis { border-top: 4px solid var(--accent); }
+.decision-card.warning { border-top: 4px solid var(--warn); }
+.decision-card.danger { border-top: 4px solid var(--bad); }
+.decision-card h3 { font-size: 15px; margin-bottom: 5px; }
+.decision-card p { color: var(--mut); font-size: 12.5px; line-height: 1.7; }
+.decision-card .acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.decision-metric { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 9px 0; font-size: 12.5px; color: var(--mut); }
+.decision-metric b { color: var(--ink); font-size: 20px; }
+.guardrail { background: #fff8e8; border: 1px solid #f3d991; border-radius: 12px; padding: 12px 13px; color: #745119; font-size: 12px; line-height: 1.65; }
+.guardrail b { color: #55390b; }
+.private-note { background: #edf3fb; border: 1px solid #ccddf4; border-radius: 12px; padding: 12px 13px; color: #345274; font-size: 12px; line-height: 1.65; }
+.next-gain { background: #f4f9ec; border: 1px solid #d8e7c0; border-radius: 14px; padding: 14px; }
+.next-gain strong { display: block; font-size: 18px; color: #486f1d; }
+.next-gain p { font-size: 12.5px; color: var(--mut); margin-top: 3px; }
+.mini-checks { padding-left: 18px; color: var(--mut); font-size: 12px; line-height: 1.8; }
+.shipper-ai { background: #edf7f6; border: 1px solid #c2e1dc; border-radius: 14px; padding: 14px; }
+.shipper-ai h3 { font-size: 14px; color: #125a5c; }
+.shipper-ai p { font-size: 12.5px; color: #41686a; margin-top: 4px; line-height: 1.65; }
+.status-tile { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+.status-tile > div { background: var(--bg2); padding: 10px; border: 1px solid var(--line); border-radius: 10px; }
+.status-tile span { display: block; color: var(--mut); font-size: 10.5px; }
+.status-tile b { display: block; font-size: 14px; margin-top: 2px; }
+.module-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.module-chip { min-height: 70px; background: var(--card); border: 1px solid var(--line); border-radius: 11px; padding: 10px; }
+.module-chip b { display: block; font-size: 12px; color: var(--ink); }
+.module-chip span { display: block; color: var(--mut); font-size: 10.5px; line-height: 1.45; margin-top: 2px; }
+
+@media (min-width: 820px) {
+  body.office { padding: 24px; background: linear-gradient(135deg, #e1e9ea, #f7faf8); }
+  body.office .app { max-width: 1180px; width: min(1180px, 100%); height: calc(100vh - 48px); border-radius: 22px; border: 1px solid #c8d6d5; }
+  body.office .appbar { padding: 13px 25px; }
+  body.office .screen { padding: 26px 30px calc(var(--barh) + 28px); }
+  body.office .tabbar { justify-content: center; gap: 2px; padding: 0 18px; }
+  body.office .tabbar button { flex: 0 1 150px; }
+  body.office .kpis { grid-template-columns: repeat(4, 1fr); }
+  body.office .office-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body.office .ranklist { gap: 10px; }
+  body.office .competition-hero { padding: 23px 25px; }
+  body.office .competition-hero h2 { font-size: 24px; }
+  body.office .decision-card { min-height: 210px; }
+  body.office .module-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
