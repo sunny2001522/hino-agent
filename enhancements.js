@@ -44,6 +44,53 @@
   function competitionRules() {
     return `<div class="guardrail"><b>競賽護欄：</b>個人只看自己的名次，不公開同仁姓名；團隊可看團隊名次。獎勵以「安全改善與達標」為主，不以違規罰款或扣薪為規則；安全分不直接作為解雇依據，須經改善期、申訴與人資覆核。</div>`;
   }
+  const manualPages = [
+    { p:1, t:'系統使用說明手冊', d:'iTRAQ WEB 原始操作範圍與畫面設計基準。', b:['WEB 系統操作介面','手冊共 16 頁，以下逐頁保留原始圖稿','AI 決策層以原始系統資料為基礎'], m:'系統入口與版型基準' },
+    { p:2, t:'監控地圖', d:'即時監控車輛狀態、位置、駕駛與基本車輛資訊。', b:['車號、駕駛、行駛狀態、手機、車速、位置、最後上線時間','狀態：行駛中、怠速、失聯、熄火','電子圍籬範圍／名稱與即時影像、外接設備入口'], m:'即時監控資料' },
+    { p:3, t:'即時影像', d:'查看車輛安裝 DVR 設備的即時影像內容。', b:['多鏡頭即時播放區','選取左側或右側車輛即可播放','車輛資訊列表可回到即時位置'], m:'DVR 即時影像資料' },
+    { p:4, t:'軌跡回放', d:'查詢歷史車輛行駛軌跡與車輛資料。', b:['第一層：車隊內所有車輛的歷史軌跡','第二層：單一車輛的所有軌跡行程','第三層：單一軌跡的點位時間、位置、狀態與觸發事件'], m:'歷史行程與軌跡資料' },
+    { p:5, t:'影像調閱', d:'查詢或下載該車七日內的行駛影像紀錄。', b:['以車號與日期搜尋','點選日期後查看該日車輛影像列表','影像調閱屬付費使用功能'], m:'七日行駛影像紀錄' },
+    { p:6, t:'任務管理', d:'查看需執行之任務狀態，支援新增、匯入、複製與刪除。', b:['依任務或車號查看清單','狀態：待執行、調度中、執行中、已中斷、已完成','執行中／調度中的任務不可刪除'], m:'任務執行狀態' },
+    { p:7, t:'保修系統｜車輛週期', d:'查看近期保修紀錄與預約原廠保修。', b:['以日期、部門等條件篩選','設定前次保修值與保修週期','查看保修週期排程與工單項目'], m:'保修週期與工單資料' },
+    { p:8, t:'保修系統｜預約資料', d:'查看預約原廠保修之資料與處理狀態。', b:['切換已預約、已進廠、已逾期等狀態','匯出或刪除預約資料','點選清單列查看預約細節'], m:'原廠保修預約資料' },
+    { p:9, t:'事件列表', d:'查詢車輛觸發的歷史事件。', b:['查看車隊所有車輛事件次數與七大類事件','單一車輛／單類事件可下鑽','每筆包含觸發地點、時間、當下車速、持續時間與備註'], m:'安全與車況事件資料' },
+    { p:10, t:'營運月報', d:'查看每月營運月報資料與匯出月報。', b:['每日車輛移動率圖表','每日累積里程、累積油耗量、平均油耗','保養維修項目比例與筆數／花費、任務執行率與準時達成率'], m:'月營運 KPI 資料' },
+    { p:11, t:'車輛管理', d:'查看各個車輛資料，新增後可編輯、刪除與重新納管。', b:['部門、搜尋條件與車輛清單','車輛基本資料、ETC、網址、裝置識別碼','新增車輛後顯示成功通知'], m:'車輛主檔資料' },
+    { p:12, t:'駕駛管理', d:'瀏覽車隊駕駛資料，並指派管理行程給對應駕駛。', b:['新增駕駛與編輯基本資料','管理駕駛行程','點選安全分可查看駕駛成績'], m:'駕駛主檔與安全分資料' },
+    { p:13, t:'管理行程', d:'管理行程指派給指定駕駛，並依狀態結算成績。', b:['依行程狀態搜尋','行程歸屬駕駛可調整','月內無違反有疑慮才可結算成績'], m:'排班與行程執行資料' },
+    { p:14, t:'駕駛成績', d:'查看駕駛成績內容與車速、怠速等分析。', b:['駕駛基本資料、總成績、總行駛時間與里程','可切換車速、怠速、油門、急煞等分析','可匯出成績單'], m:'個人安全駕駛成績資料' },
+    { p:15, t:'圍籬管理', d:'使用者查詢圍籬範圍，車輛進出範圍時發送訊息告知。', b:['新增、編輯、刪除圍籬','範圍顏色與是否顯示在地圖','車輛離開或進入圍籬產生通知'], m:'電子圍籬與進出通知資料' },
+    { p:16, t:'通知中心', d:'查看各類型通知，支援日期與通知類型篩選。', b:['事件、任務、圍籬、語音、納管、平台通知','保修通知、駕駛成績、影像通知','預設顯示全部通知，可依日期查詢'], m:'通知紀錄資料' }
+  ];
+  const manualLiveData = {
+    1:[['系統模組','16 頁'],['納管車輛','20 台'],['登入角色','5 種']],
+    2:[['行駛中','12 台'],['怠速','3 台'],['熄火／失聯','4／1 台']],
+    3:[['DVR 車輛','8 台'],['即時鏡頭','4 路'],['可播放車號','KLA-999']],
+    4:[['歷史行程','186 筆'],['點位事件','42 筆'],['最近回放','KLA-111']],
+    5:[['調閱期間','7 日'],['可用影像','144 段'],['查詢車號','KLA-111']],
+    6:[['待執行','7 件'],['執行中','5 件'],['已完成','18 件']],
+    7:[['待保修車輛','3 台'],['最近保修','KLA-111'],['週期預警','10 小時']],
+    8:[['已預約','5 筆'],['已進廠','2 筆'],['已逾期','1 筆']],
+    9:[['事件總數','2,184 件'],['超速事件','730 件'],['未繫帶','683 件']],
+    10:[['本月里程','394,300 km'],['累積油耗','3,921 L'],['平均油耗','20.2 L/100km']],
+    11:[['車輛主檔','20 台'],['ETC 已設定','18 台'],['待重新納管','1 台']],
+    12:[['駕駛主檔','20 人'],['已派行程','18 人'],['待補資料','2 人']],
+    13:[['本月行程','100 件'],['準時完成','90%'],['可結算成績','5 人']],
+    14:[['最高成績','100 分'],['平均車速','87 km/h'],['急煞安全分','78 分']],
+    15:[['啟用圍籬','9 組'],['今日進出','37 次'],['待確認警示','2 件']],
+    16:[['未讀通知','12 則'],['事件通知','6 則'],['保修／任務','3／3 則']]
+  };
+  let currentManualPage = 1;
+  function renderItraqWorkspace() {
+    const page = manualPages.find(item => item.p === currentManualPage) || manualPages[0];
+    const tabs = manualPages.map(item => `<button class="manual-tab ${item.p === page.p ? 'on' : ''}" onclick="selectManualPage(${item.p})">${String(item.p).padStart(2,'0')} ${item.t}</button>`).join('');
+    const index = manualPages.map(item => `<button class="btn gho sm" onclick="selectManualPage(${item.p})">${String(item.p).padStart(2,'0')} · ${item.t}</button>`).join('');
+    const live = (manualLiveData[page.p] || []).map(([label,value]) => `<div><span>${label}</span><b>${value}</b></div>`).join('');
+    screen.innerHTML = `
+      <section class="competition-hero"><div class="eyebrow">iTRAQ WEB · ORIGINAL DATA LAYER</div><h2>手冊 16 頁原始圖像與資料都在主系統</h2><p>可逐頁查看 PDF 原始畫面；右側同步列出該頁的資料欄位與可用能力。AI 決策頁、競賽與人力建議皆建立在這些原始資料上。</p><div class="hero-actions"><button class="btn sm" onclick="selectManualPage(2)">從監控地圖開始</button><button class="btn sm ghost" onclick="selectManualPage(10)">查看營運月報</button></div></section>
+      <section><div class="sh"><h2>iTRAQ 原始功能與資料</h2><span class="newbadge">PDF 逐頁原稿</span></div><div class="subt">使用手冊的原始圖片已內嵌到網站，畫面會隨螢幕寬度自適應；右側同步載入可用的系統資料快照。</div><div class="manual-shell"><div class="manual-tabs">${tabs}</div><div class="manual-view"><div class="manual-shot"><img src="assets/itraq-manual/manual-${String(page.p).padStart(2,'0')}.jpg" alt="iTRAQ 使用手冊第 ${page.p} 頁：${page.t}"></div><div class="manual-data"><div class="page-no">PDF PAGE ${String(page.p).padStart(2,'0')} / 16</div><h3>${page.t}</h3><p>${page.d}</p><div class="status-tile">${live}</div><ul>${page.b.map(item => `<li>${item}</li>`).join('')}</ul><div class="source-note"><b>已納入資料層：</b>${page.m}。上方為目前 Demo 資料快照；此頁的事件、狀態、車輛、駕駛、任務或通知資訊，能提供給決策／競賽／AI 問答使用。</div><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn pri sm" onclick="openItraqDataDetail(${page.p})">查看資料欄位</button><button class="btn gho sm" onclick="gotoTab('${SESSION.role === 'fleet' ? 'analytic' : 'focus'}')">回到 AI 分析</button></div></div></div></div></section>
+      <section><div class="sh"><h2 class="sm">16 頁快速跳轉</h2></div><div class="manual-index">${index}</div></section><div class="foot">${SESSION.role === 'fleet' ? '車隊管理' : '總負責人'}視角 · iTRAQ 原始資料模組</div>`;
+  }
   function renderFleetCompetition() {
     screen.innerHTML = `
       <section class="competition-hero"><div class="eyebrow">SAFETY LEAGUE · 08 月賽季</div><h2>把安全駕駛變成可前進的團隊目標</h2><p>第一名車隊可獲團隊獎金；每位駕駛的個人名次維持私密，只呈現自己的改善路徑。</p><div class="hero-actions"><button class="btn sm" onclick="openCompetitionLaunch()">設定本月獎勵</button><button class="btn sm ghost" onclick="openCompetitionRules()">查看公平規則</button></div></section>
@@ -94,7 +141,7 @@
   function renderFleetSettingsEnhanced() {
     baseFleetMe();
     const foot = screen.querySelector('.foot');
-    foot.insertAdjacentHTML('beforebegin', `<section><div class="sh"><h2 class="sm">iTRAQ 原始 WEB 功能</h2><span class="tag">依使用手冊功能模組對照</span></div><div class="subt">保留監控、車務、保修與通知的原始操作範圍；本作品的 AI 決策層建立在這些資料之上。</div><div class="module-grid"><div class="module-chip"><b>監控地圖 / 車輛定位</b><span>位置、狀態與基本車輛資訊</span></div><div class="module-chip"><b>即時影像 / 軌跡回放</b><span>行車影像調閱與歷史軌跡</span></div><div class="module-chip"><b>任務 / 事件 / 通知</b><span>任務派發、異常事件與推播中心</span></div><div class="module-chip"><b>保修 / 車輛 / 駕駛</b><span>保修履歷、車輛資料與駕駛管理</span></div><div class="module-chip"><b>營運月報 / 駕駛成績</b><span>月報圖表與安全駕駛成績</span></div><div class="module-chip"><b>管理行程</b><span>工作流程與調度歷程</span></div></div><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a class="btn pri sm" href="index-desktop.html">開啟 iTRAQ 原始操作台</a><button class="btn gho sm" onclick="openManualChecklist()">查看手冊頁面對照</button></div></section>`);
+    foot.insertAdjacentHTML('beforebegin', `<section><div class="sh"><h2 class="sm">iTRAQ 原始 WEB 功能</h2><span class="tag">依使用手冊功能模組對照</span></div><div class="subt">監控、車務、保修與通知的原始操作畫面及資料已整合至「iTRAQ」頁面。</div><div class="module-grid"><div class="module-chip"><b>監控地圖 / 車輛定位</b><span>位置、狀態與基本車輛資訊</span></div><div class="module-chip"><b>即時影像 / 軌跡回放</b><span>行車影像調閱與歷史軌跡</span></div><div class="module-chip"><b>任務 / 事件 / 通知</b><span>任務派發、異常事件與推播中心</span></div><div class="module-chip"><b>保修 / 車輛 / 駕駛</b><span>保修履歷、車輛資料與駕駛管理</span></div><div class="module-chip"><b>營運月報 / 駕駛成績</b><span>月報圖表與安全駕駛成績</span></div><div class="module-chip"><b>管理行程 / 圍籬</b><span>工作流程、電子圍籬與進出通知</span></div></div><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn pri sm" onclick="gotoTab('itraq')">開啟 16 頁 iTRAQ 資料台</button><button class="btn gho sm" onclick="openManualChecklist()">查看手冊頁面對照</button></div></section>`);
   }
   function renderDriverHomeEnhanced() {
     baseDriverHome();
@@ -144,7 +191,9 @@
   window.openRaiseReview = function () { const list = allDrivers().filter(x => x.driver.s >= 80).sort((a,b) => b.driver.s-a.driver.s).slice(0,3); showModal(`<h3>薪酬與留任覆核</h3><p>候選：${list.map(x => x.driver.n + '（' + x.region.name + '，安全 ' + x.driver.s + ' 分）').join('、')}。</p><div class="guardrail">建議將安全表現與出勤、客訴、技術、資歷及同工同酬一併評估；不以單月排名直接加薪。</div><div class="mb"><button class="btn gho" onclick="closeOv()">返回</button><button class="btn pri" onclick="act('已建立薪酬覆核清單，送主管與人資共同審查。','ok');closeOv()">送薪酬會議</button></div>`); };
   window.openPerformanceReview = function () { showModal(`<h3>啟動安全改善與個案審查</h3><p>先由總負責人確認車況、排班、訓練與健康／工時風險，再給 30 天改善計畫、必要支持與申訴管道。</p><div class="guardrail"><b>不啟動自動裁員：</b>若改善未達成，仍須由人資依勞動法規、績效紀錄與合理調整程序進行個案審查。</div><div class="mb"><button class="btn gho" onclick="closeOv()">返回</button><button class="btn warnb" onclick="act('已建立 30 天安全改善計畫與人資個案覆核，不執行自動裁員。','wn');closeOv()">建立改善計畫</button></div>`); };
   window.openWorkforceGuardrail = function () { showModal(`<h3>人資決策覆核流程</h3><p>1. 檢視單量、車況與班表；2. 提供轉調／訓練／合理調整；3. 設定改善目標與申訴管道；4. 人資與主管依適用法規個案核准。</p><div class="guardrail">安全分是輔助訊號，不是裁員按鈕。所有解約／裁撤均須人為審核與法遵確認。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`); };
-  window.openManualChecklist = function () { showModal(`<h3>iTRAQ 使用手冊頁面對照</h3><p>原始 WEB 功能由操作台承接；AI 層使用其中的事件、車輛、駕駛、保修與營運資料，做權限分流與決策建議。</p><ul class="mini-checks"><li>頁 2–5：監控地圖、即時影像、軌跡回放、影像調閱</li><li>頁 6–9：任務管理、保修系統、保修資料、事件列表</li><li>頁 10–14：營運月報、車輛管理、駕駛管理、管理行程、駕駛成績</li><li>頁 15–16：車輛管理定位、通知中心</li></ul><div class="guardrail">本次新增的競賽、招募、薪酬與人資覆核，均是建立在上述原始資料能力之上。</div><div class="mb"><a class="btn pri" href="index-desktop.html">前往原始操作台</a><button class="btn gho" onclick="closeOv()">關閉</button></div>`); };
+  window.openManualChecklist = function () { showModal(`<h3>iTRAQ 使用手冊頁面對照</h3><p>所有原始 WEB 功能均已收進主系統的 iTRAQ 頁面；AI 層使用其中的事件、車輛、駕駛、保修與營運資料，做權限分流與決策建議。</p><ul class="mini-checks"><li>頁 2–5：監控地圖、即時影像、軌跡回放、影像調閱</li><li>頁 6–9：任務管理、保修系統、保修資料、事件列表</li><li>頁 10–14：營運月報、車輛管理、駕駛管理、管理行程、駕駛成績</li><li>頁 15–16：圍籬管理、通知中心</li></ul><div class="guardrail">本次新增的競賽、招募、薪酬與人資覆核，均是建立在上述原始資料能力之上。</div><div class="mb"><button class="btn pri" onclick="closeOv();gotoTab('itraq')">開啟 16 頁資料台</button><button class="btn gho" onclick="closeOv()">關閉</button></div>`); };
+  window.selectManualPage = function (page) { currentManualPage = page; renderItraqWorkspace(); };
+  window.openItraqDataDetail = function (pageNo) { const page = manualPages.find(item => item.p === pageNo); showModal(`<h3>${page.t}｜資料欄位</h3><p>${page.d}</p><ul class="mini-checks">${page.b.map(item => `<li>${item}</li>`).join('')}</ul><div class="source-note"><b>使用方式：</b>${page.m}會回填到車隊決策、AI 問答、風險預警與競賽改善計畫；資料仍依登入身份限縮可見範圍。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`); };
   window.openDriverSafetyPlan = function () { const {r,d} = myDriver(), p = improvementPlan(d,r); showModal(`<h3>${d.n} 的 7 天安全提分計畫</h3><p>目標：安全分 ${d.s} → ${Math.min(100,d.s+p.gain)}，${p.forward ? '預估前進 ' + p.forward + ' 名' : '先穩定降低事件'}。</p><ul class="mini-checks">${p.reasons.map((item,i)=>`<li>第 ${i+1} 項：${item}</li>`).join('')}<li>每天結束前查看自己的事件摘要；有車況或工時問題直接回報。</li></ul><div class="mb"><button class="btn gho" onclick="closeOv()">稍後再說</button><button class="btn pri" onclick="act('已啟動 7 天安全提分計畫，提醒不影響休息與安全判斷。','ok');closeOv()">開始計畫</button></div>`); };
   window.openDriverRouteCoach = function () { showModal(`<h3>AI 路線建議</h3><p>目前路段：國道一號大雅段。AI 建議先維持安全車距，若壅塞持續 10 分鐘以上，再由調度確認後改走替代路線 A；不會要求你為了排名超速或縮短休息。</p><div class="mb"><button class="btn gho" onclick="closeOv()">維持原路線</button><button class="btn pri" onclick="act('已請調度評估替代路線與卸貨時段。','ok');closeOv()">請調度評估</button></div>`); };
   window.playDriverSafetyAudio = function () { const {d} = myDriver(); const text = /超速/.test(d.i) ? '請依目前路段限速行駛，放鬆油門並保持安全車距。' : /怠速/.test(d.i) ? '等候超過九十秒請熄火，安全省油一起做到。' : '請全程繫好安全帶，保持專注，行車平安。'; try { if ('speechSynthesis' in window) { speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = 'zh-TW'; speechSynthesis.speak(utterance); } } catch (_) {} toast('安全語音已播放', '提醒後系統會用後續行車資料確認是否改善；需要協助可直接回報。', 'wn'); };
@@ -156,13 +205,30 @@
   window.renderDriverTask = renderDriverTaskEnhanced;
   window.renderDriverAlerts = renderDriverAlertsEnhanced;
   window.renderFleetMe = renderFleetSettingsEnhanced;
+  function originalDataAnswer(question) {
+    const topic = [
+      { test:/保修|維修|工單|進廠/, p:7, next:'可至 iTRAQ → 保修系統查看週期與預約資料。' },
+      { test:/任務|派工|調度/, p:6, next:'可至 iTRAQ → 任務管理查看待執行、執行中與已完成任務。' },
+      { test:/事件|超速|未繫|急煞/, p:9, next:'可至 iTRAQ → 事件列表下鑽車號、地點、時間與持續時間。' },
+      { test:/月報|里程|油耗|營運/, p:10, next:'可至 iTRAQ → 營運月報檢視每日趨勢與保修／任務 KPI。' },
+      { test:/圍籬|進出|地理/, p:15, next:'可至 iTRAQ → 圍籬管理檢視進出警示與範圍。' },
+      { test:/通知|推播|未讀/, p:16, next:'可至 iTRAQ → 通知中心依類型與日期篩選。' },
+      { test:/影像|DVR|錄影/, p:3, next:'可至 iTRAQ → 即時影像／影像調閱查看可播放與七日紀錄。' },
+      { test:/監控|位置|地圖|軌跡/, p:2, next:'可至 iTRAQ → 監控地圖或軌跡回放查看車輛狀態。' }
+    ].find(item => item.test.test(question));
+    if (!topic) return null;
+    const page = manualPages.find(item => item.p === topic.p);
+    const values = manualLiveData[topic.p] || [];
+    return `${AI_TAG} 依 iTRAQ「${page.t}」資料快照：\n\n${values.map(([label,value]) => `· ${label}：<b>${value}</b>`).join('\n')}\n\n${topic.next} 這些數據也會回填到風險預警與管理決策，但人事與安全處置仍需依權限與人工覆核。`;
+  }
   window.aiContext = function () {
     if (SESSION && SESSION.role === 'shipper') { const order = myOrders()[0]; return { role:'shipper', name:SESSION.acc.name, company:myShipper().name, order, vehicle:order.car.split(' · ')[0] }; }
     return baseAiContext();
   };
-  window.aiSuggestions = function () { if (SESSION && SESSION.role === 'shipper') return ['為什麼 ETA 有變化？', '貨件現在需要我做什麼？', '若延誤，系統會怎麼通知我？']; return baseAiSuggestions(); };
+  window.aiSuggestions = function () { if (SESSION && SESSION.role === 'shipper') return ['為什麼 ETA 有變化？', '貨件現在需要我做什麼？', '若延誤，系統會怎麼通知我？']; if (SESSION && (SESSION.role === 'fleet' || SESSION.role === 'lead')) return [...baseAiSuggestions(), '目前待保修車輛與工單？', '本月營運月報的油耗與里程？']; return baseAiSuggestions(); };
   window.aiGenerate = function (question) {
     if (SESSION && SESSION.role === 'shipper') { const c = aiContext(), o = c.order; if (/延誤|ETA|多久|到達/.test(question)) return `${AI_TAG} ${o.id} 目前預估 ${o.etaMin} 分鐘後到達。${o.risk ? '系統已偵測到壅塞，調度正在採用安全替代方案，若 ETA 再變動會立即推播。' : '運送節點正常，若出現安全或裝卸等待事件，會先保護駕駛並主動更新 ETA。'}`; if (/怠速|為什麼|狀況/.test(question)) return `${AI_TAG} 我只提供與貨況相關的摘要：${o.risk ? '本次 ETA 受市區壅塞與裝卸等待影響，調度已處理。' : '目前沒有影響 ETA 的異常。'} 為保護駕駛隱私與行車安全，不提供司機個資或精確位置。`; return `${AI_TAG} 我可以協助說明 ${o.id} 的 ETA、到貨通知與異常處理。這個介面不顯示地圖、司機聯絡方式，也不能取消訂單。`; }
+    if (SESSION && (SESSION.role === 'fleet' || SESSION.role === 'lead')) { const answer = originalDataAnswer(question); if (answer) return answer; }
     return baseAiGenerate(question);
   };
   window.openAIChat = function () {
@@ -175,12 +241,13 @@
 
   TABS.fleet.splice(0, TABS.fleet.length,
     { id:'todo', l:'決策', render:renderFleetTodo },
+    { id:'itraq', l:'iTRAQ', render:renderItraqWorkspace },
     { id:'analytic', l:'分析', render:renderFleetAnalytics },
     { id:'people', l:'人力', render:renderPeopleDecision },
     { id:'competition', l:'競賽', render:renderFleetCompetition },
     { id:'me', l:'設定', render:renderFleetSettingsEnhanced }
   );
-  TABS.lead.push({ id:'competition', l:'競賽', render:renderLeadCompetition });
+  TABS.lead.splice(3, 0, { id:'itraq', l:'iTRAQ', render:renderItraqWorkspace }, { id:'competition', l:'競賽', render:renderLeadCompetition });
   TABS.driver.splice(3, 0, { id:'competition', l:'排名', render:renderDriverCompetition });
   TABS.driver.find(tab => tab.id === 'home').render = renderDriverHomeEnhanced;
   TABS.driver.find(tab => tab.id === 'task').render = renderDriverTaskEnhanced;
