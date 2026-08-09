@@ -187,7 +187,7 @@
     return ({2:nativeMonitor,3:nativeVideoLive,4:nativeJourneyHierarchy,5:nativeVideoArchive,6:nativeTaskTable,7:nativeMaintenance,8:nativeAppointments,9:nativeEvents,10:nativeReport,11:nativeVehiclesPage,12:nativeDriversPage,13:nativeManagedJourneys,14:nativeScore,15:nativeFence,16:nativeNotification}[pageNo] || nativeMonitor)();
   }
   function renderItraqWorkspace() {
-    const pageIds = SESSION.role === 'fleet' ? itraqSections[currentItraqSection] : manualPages.filter(item => item.p > 1).map(item => item.p);
+    const pageIds = itraqSections[currentItraqSection] || itraqSections.monitor;
     const pages = pageIds.map(pageNo => manualPages.find(item => item.p === pageNo)).filter(Boolean);
     const page = pages.find(item => item.p === currentManualPage) || pages[0];
     const tabs = pages.map(item => `<button class="itraq-web-tab ${item.p === page.p ? 'on' : ''}" onclick="selectManualPage(${item.p})">${item.t}</button>`).join('');
@@ -355,13 +355,25 @@
     { id:'maintenance', l:'保修系統', render:() => renderItraqPage(7, 'maintenance') },
     { id:'data', l:'數據中心', render:() => renderItraqPage(9, 'data') },
     { id:'fleet', l:'車隊管理', render:() => renderItraqPage(11, 'fleet') },
-    { id:'settings', l:'系統設定', render:renderFleetSettingsEnhanced },
+    { id:'settings', l:'系統設定', render:() => renderItraqPage(16, 'settings') },
     { id:'decision', l:'管理決策', render:renderFleetTodo },
     { id:'people', l:'人力管理', render:renderPeopleDecision },
     { id:'competition', l:'安全競賽', render:renderFleetCompetition },
     { id:'ai', l:'AI 分析', render:renderFleetAnalytics }
   );
-  TABS.lead.splice(3, 0, { id:'itraq', l:'iTRAQ', render:renderItraqWorkspace }, { id:'competition', l:'競賽', render:renderLeadCompetition });
+  TABS.lead.splice(0, TABS.lead.length,
+    { id:'monitor', l:'即時監控', render:() => renderItraqPage(2, 'monitor') },
+    { id:'history', l:'歷史車輛', render:() => renderItraqPage(4, 'history') },
+    { id:'task', l:'任務派遣', render:() => renderItraqPage(6, 'task') },
+    { id:'maintenance', l:'保修系統', render:() => renderItraqPage(7, 'maintenance') },
+    { id:'data', l:'數據中心', render:() => renderItraqPage(9, 'data') },
+    { id:'fleet', l:'車隊管理', render:() => renderItraqPage(11, 'fleet') },
+    { id:'settings', l:'系統設定', render:() => renderItraqPage(16, 'settings') },
+    { id:'kpi', l:'本區管理', render:renderLeadKpi },
+    { id:'focus', l:'管理重點', render:renderLeadFocus },
+    { id:'drivers', l:'駕駛', render:renderLeadDrivers },
+    { id:'competition', l:'安全競賽', render:renderLeadCompetition }
+  );
   TABS.driver.splice(3, 0, { id:'competition', l:'排名', render:renderDriverCompetition });
   TABS.driver.find(tab => tab.id === 'home').render = renderDriverHomeEnhanced;
   TABS.driver.find(tab => tab.id === 'task').render = renderDriverTaskEnhanced;
