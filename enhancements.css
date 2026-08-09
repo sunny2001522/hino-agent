@@ -79,8 +79,12 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
 .native-table .run, .native-table .done { color: #5a8e22; font-weight: 800; }
 .native-table .idle, .native-table .dispatch, .native-table .pending { color: #b17b18; font-weight: 800; }
 .native-table .lost, .native-table .stopped { color: #b64a43; font-weight: 800; }
-.native-pager { display: flex; justify-content: space-between; gap: 12px; padding: 13px 3px 1px; color: #7f8b8d; font-size: 11.5px; }
-.native-pager b { display: inline-grid; width: 22px; height: 22px; margin: 0 4px; border-radius: 50%; place-items: center; background: #165264; color: #fff; }
+.native-row-actions { display: inline-flex; align-items: center; gap: 4px; }
+.native-icon-action, .native-text-action, .native-page-size, .native-pager span button { border: 0; background: transparent; color: #527176; font: inherit; cursor: pointer; }
+.native-icon-action { display: inline-grid; width: 24px; height: 24px; border: 1px solid transparent; border-radius: 4px; place-items: center; font-size: 14px; }.native-icon-action:hover, .native-icon-action:focus-visible { border-color: #cae0aa; background: #f5faeb; color: #466f1c; outline: 0; }
+.native-text-action { border: 1px solid #d9e8b7; border-radius: 3px; padding: 4px 7px; background: #f8fcec; color: #4e7620; font-size: 11px; font-weight: 750; }
+.native-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 3px 1px; color: #7f8b8d; font-size: 11.5px; }
+.native-page-size { color: #7f8b8d; }.native-pager span { display: inline-flex; align-items: center; gap: 3px; }.native-pager span button { display: inline-grid; width: 22px; height: 22px; border-radius: 50%; place-items: center; }.native-pager span button.on { background: #165264; color: #fff; }.native-pager span button:hover, .native-pager span button:focus-visible, .native-page-size:focus-visible { background: #edf5e1; color: #466f1c; outline: 0; }
 .native-monitor-layout, .native-video-layout, .archive-grid, .native-fence-layout, .score-layout { display: grid; gap: 16px; }
 .native-monitor-layout { grid-template-columns: minmax(330px, 1.2fr) minmax(430px, 1fr); }
 .native-video-layout { grid-template-columns: minmax(330px, 1.1fr) minmax(410px, 1fr); }
@@ -95,9 +99,10 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
 .road-b { top: 24%; left: 11%; width: 69%; transform: rotate(48deg); }
 .road-c { bottom: 15%; left: -13%; width: 91%; transform: rotate(13deg); }
 .water { position: absolute; z-index: 1; right: -5%; bottom: -22%; width: 43%; height: 64%; border-radius: 50% 0 0; background: #92d1db; transform: rotate(18deg); }
-.map-label, .map-fence { position: absolute; z-index: 3; padding: 4px 6px; border-radius: 2px; background: rgba(255,255,255,.89); color: #4c5f61; font-size: 10px; font-style: normal; box-shadow: 0 1px 3px rgba(31,56,60,.2); }
+.map-label, .map-fence { position: absolute; z-index: 3; padding: 4px 6px; border-radius: 2px; background: rgba(255,255,255,.89); color: #4c5f61; font: inherit; font-size: 10px; font-style: normal; box-shadow: 0 1px 3px rgba(31,56,60,.2); }
+.map-fence { cursor: pointer; }
 .label-a { top: 28%; left: 31%; }.label-b { top: 52%; right: 20%; }.map-fence { right: 8%; bottom: 21%; border: 1px solid #a6d94d; color: #507b21; }
-.map-pin { position: absolute; z-index: 4; display: grid; width: 26px; height: 26px; border: 2px solid #fff; border-radius: 50%; place-items: center; color: #fff; font-size: 11px; box-shadow: 0 1px 4px rgba(13,51,64,.32); }
+.map-pin { position: absolute; z-index: 4; display: grid; width: 26px; height: 26px; padding: 0; border: 2px solid #fff; border-radius: 50%; place-items: center; color: #fff; font: inherit; font-size: 11px; cursor: pointer; box-shadow: 0 1px 4px rgba(13,51,64,.32); }
 .pin-run { top: 35%; left: 44%; background: #74a82a; }.pin-idle { top: 67%; left: 27%; background: #ecab3b; }.pin-off { top: 54%; right: 28%; background: #c85c55; }
 .native-video-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-content: start; }
 .video-tile { position: relative; min-height: 177px; overflow: hidden; border-radius: 2px; background: linear-gradient(150deg, #354a52 0 25%, #89938e 25% 32%, #25333a 32% 57%, #526052 57% 63%, #182329 63%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
@@ -116,6 +121,7 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
 .score-layout { grid-template-columns: minmax(230px, .7fr) minmax(390px, 1.3fr); }.score-layout aside, .score-layout article { padding: 14px; border: 1px solid #e1e7e6; background: #fcfdfd; }.score-layout h2 { margin: 0 0 10px; color: #40555a; font-size: 15px; }.score-layout aside span { display: flex; justify-content: space-between; padding: 6px 0; color: #7b898b; }.score-layout aside b, .score-layout article h2 b { color: #426d1a; }.score-layout hr { border: 0; border-top: 1px solid #e3e9e8; }.speed-pie { width: min(240px, 60vw); aspect-ratio: 1; margin: 19px auto 12px; border-radius: 50%; background: conic-gradient(#41a49d 0 32%, #a6d94c 32% 51%, #f0bd5b 51% 79%, #e67164 79%); }.score-layout article > p { color: #849193; font-size: 11.5px; text-align: center; }
 .native-fence-layout { grid-template-columns: minmax(340px, .9fr) minmax(430px, 1.1fr); }.native-fence-layout .native-action { float: right; margin-bottom: 10px; }
 .notification-tabs { margin-bottom: 13px; }
+.native-modal-fields { display: grid; gap: 10px; margin: 14px 0; }.native-modal-fields label { display: grid; gap: 5px; color: #56666a; font-size: 12px; font-weight: 750; }.native-modal-fields input, .native-modal-fields textarea { width: 100%; border: 1px solid #d8e1e2; border-radius: 7px; padding: 9px 10px; color: #30464b; font: inherit; font-size: 13px; outline: 0; }.native-modal-fields textarea { min-height: 70px; resize: vertical; }.native-modal-fields input:focus, .native-modal-fields textarea:focus { border-color: #9bc850; box-shadow: 0 0 0 3px rgba(155,200,80,.14); }
 
 @media (min-width: 560px) and (max-width: 819px) {
   html body { padding: 0; background: #f4f7f7; }
