@@ -93,15 +93,105 @@
   let currentItraqSection = 'monitor';
   function sectionForPage(pageNo) { return Object.keys(itraqSections).find(key => itraqSections[key].includes(pageNo)) || 'monitor'; }
   function renderItraqPage(pageNo, section) { currentManualPage = pageNo; currentItraqSection = section || sectionForPage(pageNo); renderItraqWorkspace(); }
+  const nativeVehicles = [
+    ['683-M6','陳興明','行駛中','0912-345-678','70','新北市板橋區南雅東路255號2樓'],
+    ['KNA-1368','陳興明','行駛中','0912-345-678','70','-19.50289, 175.41761'],
+    ['LAD-800','陳興明','失聯','0912-345-678','--','臺中市台灣大道六段407號14樓'],
+    ['KNA-1365','陳興明','失聯','0912-345-678','--','1.91709, 6.05392'],
+    ['LAD-005','陳興明','怠速30分','0912-345-678','0','新北市土城區國道南339號7樓'],
+    ['KLA-5665','陳興明','怠速30分','0912-345-678','0','高雄市楠梓區楠梓路209號5樓']
+  ];
+  const nativeTasks = [
+    ['執行中','20211115001','2/5','王曉明 / 0911-111-111','KLA-1111','綠豆糕','宏台 (10:00)'],
+    ['調度中','20211115002','10/12','李曉明 / 0911-111-111','KLA-9999','文宣稿','和泰本場 (13:00)'],
+    ['已完成','20211115003','1/8','吳小雯 / 0911-111-111','KLA-9999','餅乾盒','--'],
+    ['已中斷','20211115004','0/3','陳曉明 / 0911-111-111','KLA-9999','文宣稿','--'],
+    ['待執行','20211115005','0/3','陳曉明 / 0911-111-111','KLA-9999','菠蘿','大里車站 (18:00)']
+  ];
+  function nativeTable(headers, rows, tone) {
+    return `<div class="native-table-wrap"><table class="native-table"><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${row.map((cell, i) => `<td${i === 0 && tone ? ` class="${tone(cell)}"` : ''}>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }
+  function nativeFilter({date='2020-11-11', search='搜尋車號／駕駛／姓名／車牌', actions='' } = {}) {
+    return `<div class="native-filter"><button class="native-input">◫&nbsp; ${date}</button><button class="native-input">部門 (all)⌄</button><label class="native-search">⌕ <input value="" placeholder="${search}"></label>${actions}</div>`;
+  }
+  function nativePager() { return `<div class="native-pager"><span>每頁資料筆數: 10⌄</span><span>‹ <b>1</b> 2 3 4 ›</span></div>`; }
+  function nativePageTitle(title, trail) { return `<div class="native-breadcrumb">${trail || '車隊管理'} <span>›</span> ${title}</div>`; }
+  function nativeSectionLabel(pageNo) {
+    if ([2, 3].includes(pageNo)) return '即時監控';
+    if ([4, 5].includes(pageNo)) return '歷史車輛';
+    if (pageNo === 6) return '任務派遣';
+    if ([7, 8].includes(pageNo)) return '保修系統';
+    if ([9, 10].includes(pageNo)) return '數據中心';
+    if ([11, 12, 13, 14, 15].includes(pageNo)) return '車隊管理';
+    return '系統設定';
+  }
+  function nativeMap() {
+    return `<div class="native-map"><i class="road road-a"></i><i class="road road-b"></i><i class="road road-c"></i><i class="water"></i><span class="map-label label-a">新莊生命禮儀</span><span class="map-label label-b">大立企業社</span><b class="map-pin pin-run">▶</b><b class="map-pin pin-idle">Ⅱ</b><b class="map-pin pin-off">×</b><em class="map-fence">北部PDS</em></div>`;
+  }
+  function nativeMonitor() {
+    return `<div class="native-workspace"><div class="native-monitor-layout"><div><div class="native-map-switch"><button class="on">車號</button><button class="on">駕駛</button><button class="on">速度</button><button class="on">電子圍籬</button></div>${nativeMap()}</div><div class="native-list-panel"><b>搜尋結果：部門 (all) / 總計23筆</b>${nativeTable(['車號 ↕','駕駛 ↕','行駛狀態 ↕','手機號碼 ↕','車速(km/h) ↕','位置 ↕'], nativeVehicles, state => state.includes('行駛') ? 'run' : state.includes('怠速') ? 'idle' : 'lost')}</div></div></div>`;
+  }
+  function nativeVideoLive() {
+    return `<div class="native-workspace"><div class="native-video-layout"><div class="native-video-grid"><div class="video-tile v1"><b>①</b><span>前鏡頭 · 683-M6</span></div><div class="video-tile v2"><b>②</b><span>右側鏡頭</span></div><div class="video-tile v3"><b>③</b><span>左側鏡頭</span></div><div class="video-tile v4"><b>④</b><span>後鏡頭</span></div></div><div class="native-list-panel"><b>雙擊車輛即可查看即時影像</b>${nativeTable(['車號','駕駛','行駛狀態','手機號碼','車速(km/h)','位置'], nativeVehicles.slice(0,4), state => state.includes('行駛') ? 'run' : 'lost')}</div></div></div>`;
+  }
+  function nativeJourneyHierarchy() {
+    return `<div class="native-workspace"><div class="journey-flow"><article><b>第一層</b><div><strong>單日車隊內所有車輛歷史軌跡列表</strong><span>車號、駕駛、累積里程數、行駛總時長</span></div></article><article><b>第二層</b><div><strong>單日單一車輛的所有軌跡列表</strong><span>每一行程的啟動與熄火時間、累積時長及起訖點</span></div></article><article><b>第三層</b><div><strong>單日單一車輛單一軌跡的各點位列表</strong><span>點位時間、位置、車輛狀態、觸發事件</span></div></article></div></div>`;
+  }
+  function nativeVideoArchive() {
+    const rows = [['KLA-1111','144'],['KLA-1234','33'],['ABC-1234','7'],['SDC-1688','53'],['AAAB-123','34'],['KLA-2222','132'],['KLA-3333','32']];
+    return `<div class="native-workspace native-video-archive"><div class="archive-grid"><div class="archive-empty"><span>請點選右側車輛列表，並擇一時段進行影像播放</span></div><aside><div class="native-filter"><button class="native-input">車號 (all)⌄</button><button class="native-input">◫ 2020-11-11</button></div>${nativeTable(['車號','檔案數量'],rows)}</aside></div></div>`;
+  }
+  function nativeTaskTable() {
+    return `<div class="native-workspace">${nativeFilter({actions:'<button class="native-action">＋ 新增任務</button><button class="native-action">⇧ 批量匯入</button>'})}<div class="native-tabs"><button class="on">依任務</button><button>依駕駛</button></div>${nativeTable(['任務狀態 ↕','任務編號 ↕','進度 ↕','駕駛/手機號碼 ↕','車號 ↕','任務類型 ↕','下一站點 ↕','操作'], nativeTasks.map(r => [...r,'✎　▢　♲']), state => ({'執行中':'running','調度中':'dispatch','已完成':'done','已中斷':'stopped','待執行':'pending'}[state]))}${nativePager()}</div>`;
+  }
+  function nativeMaintenance() {
+    const rows = [['KLA-1111','--','尚未設定','尚未設定','--','◴'],['KLA-1112','--','2023/02/12','25,262','9,732','◴'],['KLA-1113','KASE23','2023/02/12','25,262','9,732','✎'],['KLA-1114','--','--','0','0','◴'],['KLA-1115','KASE23','2023/05/02','456,215','9,732','◴']];
+    return `<div class="native-workspace">${nativeFilter({date:'2020-11-11 - 2020-11-11'})}<div class="native-tabs"><button class="on">車輛週期一覽</button><button>預約資料</button><button>工單資料</button></div>${nativeTable(['車號 ↕','工單編號 ↕','保修日期 ↕','總里程數 ↕','引擎運轉時數 ↕','保修項目 ↕','操作'],rows)}<div class="native-maint-cards"><div><b>前次保修值設定</b><span>保修日期 2022-06-08</span><span>保修總里程數 21,463 公里</span><span>保修引擎運轉時數 10 小時</span><button>確認</button></div><div><b>保修項目週期排程 - KLA-1111</b><span>煞車保養 10,000 → 預估 25,680</span><span>引擎運轉時數 200 → 預估 450</span></div></div></div>`;
+  }
+  function nativeAppointments() {
+    const rows = [['已預約','原廠','KLA-1111','王曉明','2021/12/14','DDD123','大盛保修廠','全天候皆可','定期保養'],['已預約','原廠','KLA-1111','王曉明','2021/12/01','DDD123','大盛保修廠','09:00-12:00','定期保養'],['已進廠','原廠','KLA-1111','王曉明','2021/11/24','DDD123','大盛保修廠','09:00-12:00','其他'],['已逾期','原廠','KLA-1111','王曉明','2021/10/14','DDD123','大盛保修廠','09:00-12:00','定期保養']];
+    return `<div class="native-workspace">${nativeFilter({date:'2020-11-11 - 2020-11-11',actions:'<button class="native-action">⇩ 匯出資料</button><button class="native-action">◷ 預約原廠</button>'})}<div class="native-tabs"><button>車輛週期一覽</button><button class="on">預約資料</button><button>工單資料</button></div>${nativeTable(['狀態 ↕','類別 ↕','車號 ↕','聯絡人 ↕','預約日期 ↕','預約編號 ↕','服務廠 ↕','預計進廠時段 ↕','派工項目 ↕','操作'],rows, state => state === '已預約' ? 'pending' : state === '已進廠' ? 'running' : 'stopped')}${nativePager()}</div>`;
+  }
+  function nativeEvents() {
+    const rows = [['KLA-9999','陳曉明','122','4','2','5','5','2','46','46'],['KLA-9999','王曉明','116','12','3','3','9','8','12','12'],['KLA-9999','--','99','42','5','5','2','2','2','2'],['KLA-9999','洪曉明','116','12','7','2','5','1','12','12']];
+    return `<div class="native-workspace">${nativeFilter({actions:'<button class="native-action">⇩ 匯出報表</button>'})}${nativeTable(['車號 ↕','駕駛 ↕','全部事件 ↕','圍籬進出 ↕','行駛軌跡異常 ↕','引擎異常通知 ↕','速度異常通知 ↕','DTC錯誤通知 ↕','外接設備 ↕','駕駛異常警示 ↕'],rows)}${nativePager()}</div>`;
+  }
+  function nativeReport() {
+    const bars = [18,65,28,82,42,91,37,76,52,69,20,84,49,57,72,35,88,61,45,76,30,66,50,93,27,52,40,71,31,62];
+    return `<div class="native-workspace report-page"><div class="report-head"><button class="native-input">‹　2022-04　›</button><span>統計時間：2022-04-01 - 2022-04-30</span><button class="native-action">⇩ 匯出月報</button></div><div class="report-kpis"><div><span>總開車時間</span><b>180小時</b></div><div><span>總怠速時間</span><b>30小時</b></div><div><span>車輛稼動率</span><b>83.3%</b></div><div><span>累積里程數</span><b>394,300公里</b></div><div><span>累積油耗量</span><b>3,291公升</b></div><div><span>平均油耗</span><b>20公里/公升</b></div><div><span>預估油錢</span><b>40,201元</b></div></div><div class="report-grid"><article><h3>車輛稼動率</h3><div class="native-bars">${bars.map((h,i)=>`<i style="height:${h}%" title="${i+1}日"></i>`).join('')}</div></article><article><h3>車輛行駛數據</h3><div class="native-line"><i></i><i></i><i></i><i></i><i></i><i></i></div><p>每日累積里程數、累積油耗量、平均油耗</p></article><article><h3>保養維修概況</h3><div class="report-maint"><b>預約維修 20筆</b><b>維修率 10%</b><b>保修總額 24,000元</b><span class="pie"></span></div></article><article><h3>任務執行概率</h3><div class="report-task"><b>任務數 100個</b><b>完成率 / 準時達成率 90% / 100%</b><b>平均誤差 5%</b></div></article></div></div>`;
+  }
+  function nativeVehiclesPage() {
+    const rows = Array.from({length:7}, (_,i) => ['KLA-9999','王曉明','神台汽車組','2021-08','貨運廂式車','聯結車','17T','98無鉛','SSASA1-123593',i < 4 ? '12312ADSFAF' + (134+i) : '--','✎　♲　▢']);
+    return `<div class="native-workspace">${nativeFilter({search:'搜尋車號/所屬廠牌/關鍵詞…',actions:'<button class="native-action">＋ 新增車輛</button>'})}${nativeTable(['車號 ↕','所屬駕駛 ↕','歸屬部門 ↕','出廠年月 ↕','車種 ↕','ETC車型 ↕','噸位 ↕','燃料種類 ↕','車輛識別碼 ↕','納管碼 ↕','操作'],rows)}${nativePager()}</div>`;
+  }
+  function nativeDriversPage() {
+    const rows = [['0911-389-291','陳曉明','專案部','A102******','KLA-9312','80','✎　▢'],['0911-389-291','陳志明','專案部','A102******','KLA-9312','79','✎　▢'],['0911-389-291','陳志明','專案部','A102******','KLA-9312','73','✎　▢'],['0911-389-291','陳曉明','專案部','A102******','KLA-9312','87','✎　▢'],['0911-389-291','陳曉明','專案部','A102******','KLA-9312','88','✎　▢'],['0911-223-344','王曉明','研發部','A102******','KLA-1294','64','✎　▢']];
+    return `<div class="native-workspace">${nativeFilter({date:'2020-11',search:'搜尋手機號碼/姓名/車號…',actions:'<button class="native-action">▣ 管理行程</button><button class="native-action">＋ 新增駕駛</button>'})}${nativeTable(['手機號碼 ↕','姓名 ↕','歸屬部門 ↕','身分證字號 ↕','所屬車輛 ↕','駕駛成績 ↕','操作'],rows)}${nativePager()}</div>`;
+  }
+  function nativeManagedJourneys() {
+    const rows = [['2022-01-01','13:40:02 - 15:12:12','待確認','數位大餅 A駕駛','任務配給 B駕駛','系統預設 B駕駛','儲存'],['2022-01-01','13:40:02 - 15:12:12','駕駛A','數位大餅 A駕駛','任務配給 A駕駛','系統預設 A駕駛','編輯'],['2022-01-01','13:40:02 - 15:12:12','無駕駛','數位大餅','任務配給','系統預設','儲存']];
+    return `<div class="native-workspace">${nativeFilter({date:'2020-11',search:'搜尋手機號碼/姓名/車號…',actions:'<button class="native-action">▣ 結算成績</button>'})}<div class="journey-group"><h3>AAA-1111⌃</h3>${nativeTable(['日期 ↕','行程起訖時間 ↕','行程歸屬駕駛 ↕','備註 ↕','任務配給','系統預設','操作'],rows)}</div><div class="journey-group"><h3>AAA-1112⌃</h3>${nativeTable(['日期 ↕','行程起訖時間 ↕','行程歸屬駕駛 ↕','備註 ↕','任務配給','系統預設','操作'],rows.slice(1))}</div></div>`;
+  }
+  function nativeScore() {
+    return `<div class="native-workspace score-page"><div class="score-head"><button class="native-input">‹　2020-12　›</button><button class="native-action">⇩ 匯出成績單</button></div><div class="score-layout"><aside><h2>林興聯</h2><span>手機號碼 0900-000-000</span><span>部門 資車部</span><span>結算期間 12-01 ~ 12-31</span><hr><span>行駛總里程數 <b>123,456公里</b></span><span>引擎運轉總時數 <b>87小時</b></span><span>總油耗 <b>987公升</b></span><span>平均車速 <b>87.6 km/h</b></span><span>平均油耗 <b>12.4 km/L</b></span><span>事件發生次數 <b>678次</b></span></aside><article><h2>總成績 <b>100分</b></h2><div class="native-tabs"><button class="on">車速分析</button><button>怠速分析</button><button>油門分析</button><button>急加減速分析</button><button>轉速分析</button></div><div class="speed-pie"></div><p>各速度區間時間佔比 · 怠速總時間 10.9 分鐘 · 車速分析得分 3.8%</p></article></div></div>`;
+  }
+  function nativeFence() {
+    const rows = [['豐盛','否','否','已到期','✎　▢'],['北部PDS','是','是','永久有效','✎　▢'],['北部PDS','是','是','2021-11-09','✎　▢'],['泛台','是','是','2021-11-09','✎　▢'],['台北港','是','是','已到期','✎　▢'],['泛台','否','否','2021-11-09','✎　▢']];
+    return `<div class="native-workspace"><div class="native-fence-layout"><div>${nativeMap()}</div><div><button class="native-action">＋ 新增圍籬</button>${nativeTable(['顯示','圍籬名稱 ↕','進出通知設定 ↕','狀態 ↕','時效性 ↕','操作'],rows)}</div></div></div>`;
+  }
+  function nativeNotification() {
+    const rows = [['週期預警','DKP-5478 預計剩餘1,000公里，建議檢查定期的服務與保修狀況','前往預約','2021-11-04 14:32:12'],['保修結果','DKP-5478 已成功預約 2021-11-23 進廠保修','前往查看','2021-11-04 14:32:12'],['保修結果','DKP-5478 預約 2021-11-21 進廠保修','前往設定','2021-11-04 14:32:12'],['原廠工單','有 6 筆原廠工單，請於工單資料內完成設定保修週期','前往設定','2021-11-04 14:32:12']];
+    return `<div class="native-workspace">${nativeFilter({date:'2020-11-11'})}<div class="native-tabs notification-tabs"><button class="on">全部</button><button>事件通知</button><button>任務通知</button><button>圍籬通知</button><button>語音通知</button><button>納管通知</button><button>平台通知</button><button>保修通知</button><button>駕駛成績</button><button>影像通知</button></div>${nativeTable(['','通知類型','內容','操作','時間'],rows.map(row => ['♧',...row]))}${nativePager()}</div>`;
+  }
+  function renderItraqNative(pageNo) {
+    return ({2:nativeMonitor,3:nativeVideoLive,4:nativeJourneyHierarchy,5:nativeVideoArchive,6:nativeTaskTable,7:nativeMaintenance,8:nativeAppointments,9:nativeEvents,10:nativeReport,11:nativeVehiclesPage,12:nativeDriversPage,13:nativeManagedJourneys,14:nativeScore,15:nativeFence,16:nativeNotification}[pageNo] || nativeMonitor)();
+  }
   function renderItraqWorkspace() {
     const pageIds = SESSION.role === 'fleet' ? itraqSections[currentItraqSection] : manualPages.filter(item => item.p > 1).map(item => item.p);
     const pages = pageIds.map(pageNo => manualPages.find(item => item.p === pageNo)).filter(Boolean);
     const page = pages.find(item => item.p === currentManualPage) || pages[0];
     const tabs = pages.map(item => `<button class="itraq-web-tab ${item.p === page.p ? 'on' : ''}" onclick="selectManualPage(${item.p})">${item.t}</button>`).join('');
-    const live = (manualLiveData[page.p] || []).map(([label,value]) => `<div><span>${label}</span><b>${value}</b></div>`).join('');
-    const localTabs = `<div class="itraq-web-tabs">${tabs}</div>`;
-    screen.innerHTML = `
-      <section class="itraq-workspace">${localTabs}<div class="itraq-view"><div class="itraq-canvas"><img src="assets/itraq-manual/manual-${String(page.p).padStart(2,'0')}.jpg" alt="iTRAQ ${page.t}"></div><aside class="itraq-sidepanel"><div class="module-kicker">來源畫面資料</div><h2>${page.t}</h2><p>${page.d}</p><div class="status-tile">${live}</div><ul>${page.b.map(item => `<li>${item}</li>`).join('')}</ul><div class="connected-note"><b>畫面對照：</b>以上是原始 iTRAQ 畫面中可直接辨識的篩選值、欄位與示例紀錄；不是即時連線或推估數字。</div><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn pri sm" onclick="openItraqDataDetail(${page.p})">查看欄位</button><button class="btn gho sm" onclick="gotoTab('${SESSION.role === 'fleet' ? 'ai' : 'focus'}')">AI 分析</button></div></aside></div></section>`;
+    screen.innerHTML = `<section class="itraq-native"><div class="itraq-web-tabs">${tabs}</div>${nativePageTitle(page.t, nativeSectionLabel(page.p))}${renderItraqNative(page.p)}</section>`;
   }
   function renderFleetCompetition() {
     screen.innerHTML = `
