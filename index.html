@@ -254,7 +254,7 @@
  color:#04121f;font-weight:900;font-size:11px;line-height:1.1;text-align:center;letter-spacing:.5px}
  .aifab:active{transform:scale(.94)}
  .aifab .dt2{position:absolute;top:-2px;right:-2px;width:14px;height:14px;border-radius:50%;background:var(--bad);border:2px solid #fff}
- /* ---------- 事件模擬器（比賽 Demo 用，左下角） ---------- */
+ /* ---------- 事件測試入口（預設隱藏） ---------- */
  .simfab{position:absolute;left:14px;bottom:calc(var(--barh) + 14px);z-index:55;width:56px;height:56px;border-radius:50%;
  background:var(--teal);border:2px dashed rgba(220,236,201,.55);box-shadow:0 6px 18px rgba(20,65,79,.4);cursor:pointer;display:grid;place-items:center;
  color:#dcecc9;font-weight:900;font-size:11px;line-height:1.1;text-align:center;letter-spacing:.5px}
@@ -330,7 +330,7 @@
  <!-- ===== 生成式 AI 對話助理 浮動入口 ===== -->
  <button class="aifab" id="aifab" style="display:none" onclick="openAIChat()">AI<br>助理<span class="dt2"></span></button>
 
- <!-- ===== 事件模擬器 浮動入口（比賽 Demo：現場無真實車輛事件，手動觸發觀察 AI 自動處理） ===== -->
+<!-- ===== 預設隱藏的事件測試入口 ===== -->
  <button class="simfab" id="simfab" style="display:none" onclick="openSimPanel()">模擬<br>事件</button>
 
  <!-- overlays live inside frame -->
@@ -339,11 +339,14 @@
  <div class="ov" id="ov"><div class="modal" id="modal"></div></div>
 </div>
 
+<script src="excel-derived-data.js"></script>
 <script>
 /* =====================================================================
  DATA MODEL (reused from desktop reference)
 ===================================================================== */
-const MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月'];
+const MONTHS=window.HINO_EXCEL_DATA.months;
+/* Historical fallback retained below for source comparison only. The running app
+   reads the workbook-compiled data immediately after this declaration. */
 const regions=[
  {id:"B",name:"中區",lead:"陳國華",phone:"0912-345-678",color:"#f87171",idlePct:16,overload:180,seatbelt:318,fuel:34,anomaly:12.4,onTime:88,
  safety:[63,61,60,58,57,55,54,52,51,50,49],brake:[180,200,230,250,270,290,300,320,330,350,360],
@@ -364,14 +367,16 @@ const regions=[
  safety:[80,80,81,81,81,81,82,81,82,82,81],brake:[30,32,30,34,32,36,34,38,36,40,38],
  drivers:[{n:"王大年",c:"ABC-1601",s:79,i:"優良"},{n:"蘇曉婷",c:"ABC-1602",s:81,i:"優良"},{n:"何柏翰",c:"ABC-1603",s:82,i:"全隊最佳"},{n:"賴冠廷",c:"ABC-1604",s:83,i:"優良"}]},
 ];
-const aggSafety=MONTHS.map((_,i)=>Math.round(regions.reduce((a,r)=>a+r.safety[i],0)/regions.length));
-const aggBrake=MONTHS.map((_,i)=>regions.reduce((a,r)=>a+r.brake[i],0));
+regions.splice(0, regions.length, ...window.HINO_EXCEL_DATA.regions);
+const aggSafety=window.HINO_EXCEL_DATA.aggregate.safety;
+const aggBrake=window.HINO_EXCEL_DATA.metrics.find(item=>item.key==='speed').data;
 let curMetric="safety",curDim="safety";
 const warnState={},drvSent={},notify={};
-const ordersByRegion={B:720,A:980,F:560,D:540,E:600,C:760};const TARGET_PER_DRIVER=210;
-const speedByRegion={B:730,A:440,F:275,D:195,E:124,C:88};
-const metricCfg={speed:{type:'sum',rv:r=>speedByRegion[r.id]},idle:{type:'avg',rv:r=>r.idlePct},overload:{type:'sum',rv:r=>r.overload},seatbelt:{type:'sum',rv:r=>r.seatbelt},fuel:{type:'avg',rv:r=>r.fuel}};
+const ordersByRegion=window.HINO_EXCEL_DATA.ordersByRegion;const TARGET_PER_DRIVER=window.HINO_EXCEL_DATA.targetJourneysPerVehicle;
+const speedByRegion=Object.fromEntries(regions.map(r=>[r.id,r.series.speed.at(-1)]));
+const metricCfg={speed:{type:'sum',rv:r=>speedByRegion[r.id]},idle:{type:'avg',rv:r=>r.idlePct},load:{type:'sum',rv:r=>r.overload},dtc:{type:'sum',rv:r=>r.seatbelt},fuel:{type:'avg',rv:r=>r.fuel}};
 function regionSeries(m,r){
+ if(r.series&&r.series[m.key])return r.series[m.key];
  if(m.key==='safety')return r.safety;
  if(m.key==='brake')return r.brake;
  const cfg=metricCfg[m.key],sc=cfg.rv(r);
@@ -401,12 +406,17 @@ const ROLES={
  desc:"登入：手機號碼登入 APP · 即時追蹤貨件位置與 ETA<br><b style=\"color:var(--good)\">本團隊 B2B2B 新增身份</b>（iTRAQ 原本沒有）", isNew:true},
 };
 // each demo account maps to EXACTLY one person / region / company
+const EXCEL_ACCOUNT_BINDING=window.HINO_EXCEL_DATA.accountBindings;
+const EXCEL_DRIVER_REGION=regions.find(region=>region.id===EXCEL_ACCOUNT_BINDING.lead_region);
+const EXCEL_DRIVER=EXCEL_DRIVER_REGION.drivers[0];
+const EXCEL_PERSONAL_REGION=regions.find(region=>region.id===EXCEL_ACCOUNT_BINDING.personal_code[0]);
+const EXCEL_PERSONAL=EXCEL_PERSONAL_REGION.drivers[0];
 const ACCOUNTS={
- fleet: {phone:"0900-000-001", name:"王大明", roleName:"車隊管理", scope:"全隊總管"},
- lead: {phone:"0912-345-678", name:"陳國華", roleName:"總負責人", region:"B", scope:"中區負責人"},
- driver: {phone:"0900-110-101", name:"王建國", roleName:"車隊駕駛", drvCode:"A0", scope:"北區司機"},
- personal:{phone:"0900-220-202", name:"陳冠宇", roleName:"個人用戶", drvCode:"D2", scope:"個人車主"},
- shipper: {phone:"0900-880-808", name:"王採購", roleName:"貨主", shipperId:"tsmc", scope:"台積電"},
+ fleet: {phone:"0900-000-001", name:"車隊管理帳號", roleName:"車隊管理", scope:`Excel ${window.HINO_EXCEL_DATA.meta.vehicles} 台車`},
+ lead: {phone:"0912-345-678", name:`${EXCEL_DRIVER_REGION.name}總負責人`, roleName:"總負責人", region:EXCEL_DRIVER_REGION.id, scope:`${EXCEL_DRIVER_REGION.name}車隊`},
+ driver: {phone:"0900-110-101", name:`車號 ${EXCEL_DRIVER.c}`, roleName:"車隊駕駛", drvCode:EXCEL_ACCOUNT_BINDING.driver_code, scope:`${EXCEL_DRIVER_REGION.name}車隊`},
+ personal:{phone:"0900-220-202", name:`車號 ${EXCEL_PERSONAL.c}`, roleName:"個人用戶", drvCode:EXCEL_ACCOUNT_BINDING.personal_code, scope:`${EXCEL_PERSONAL_REGION.name}車隊`},
+ shipper: {phone:"0900-880-808", name:"貨主示範帳號", roleName:"貨主", shipperId:"telemetry", scope:"Excel 車聯網紀錄"},
 };
 let SESSION=null; // {role, acc}
 
@@ -454,13 +464,12 @@ function login(role){
  buildTabs();
  // 生成式 AI 助理：貨主以外都可用
  document.getElementById('aifab').style.display=(role==='shipper')?'none':'grid';
- // 事件模擬器：比賽 Demo 用，只在老闆端顯示（現場無真實事件，手動觸發觀察 AI 自動處理）
+ // 事件測試入口預設隱藏，正式操作不以模擬事件作為資料來源。
  document.getElementById('simfab').style.display=(role==='fleet')?'grid':'none';
  const first=TABS[role][0];
  gotoTab(first.id);
- // onboarding spotlight（fleet 完整導覽；driver 給 2 步簡短導覽），首次登入
- if(role==='fleet'){try{if(!localStorage.getItem('hinoMTourDone'))setTimeout(startTour,600);}catch(e){setTimeout(startTour,600);}}
- else if(role==='driver'){try{if(!localStorage.getItem('hinoDrvTourDone'))setTimeout(startTour,600);}catch(e){setTimeout(startTour,600);}}
+ // Do not auto-launch the guided tour: an overlay must never block first-use actions.
+ document.getElementById('tourMask').classList.remove('on');
 }
 function logout(){
  SESSION=null;curTab=null;
@@ -509,7 +518,7 @@ function renderWelcome(){
  <div class="desc">根據身份提供差異化服務 <span class="q">?</span></div>
  ${cards}
  </div>
- <div class="verhint">軟體版本 1.5.2(1) · HINO × GenAI Demo · 登入後由帳號決定看到誰的資料</div>
+ <div class="verhint">軟體版本 1.5.2(1) · HINO × GenAI · 登入後由帳號決定看到誰的資料</div>
  </div>`;
  screen.scrollTo({top:0});
 }
@@ -526,10 +535,10 @@ function renderLoginPage(role){
  <input id="loginInput" type="text" inputmode="tel" placeholder="請輸入手機號碼或電子信箱" autocomplete="off">
  </div>
  <div class="demohint">
- <b>評審 Demo 帳號</b>（點下方按鈕自動帶入）<br>
+ <b>測試帳號</b>（點下方按鈕自動帶入）<br>
  帳號：<b>${acc.phone}</b><br>
  身份：${acc.name}（${acc.scope}）
- <div class="fill"><button class="btn gho sm block" onclick="document.getElementById('loginInput').value='${acc.phone}'">帶入 Demo 帳號</button></div>
+ <div class="fill"><button class="btn gho sm block" onclick="document.getElementById('loginInput').value='${acc.phone}'">帶入測試帳號</button></div>
  </div>
  <button class="btn pri block" onclick="doLogin('${role}')">登入</button>
  <div class="verhint">登入後只會顯示「${acc.name}」的資料，無法在 App 內切換成其他人。</div>
@@ -539,7 +548,7 @@ function renderLoginPage(role){
 }
 function doLogin(role){
  const v=(document.getElementById('loginInput').value||'').trim();
- if(!v){toast('請先輸入帳號','輸入手機號碼或點「帶入 Demo 帳號」。','wn');return;}
+ if(!v){toast('請先輸入帳號','輸入手機號碼或點「帶入測試帳號」。','wn');return;}
  login(role);
 }
 
@@ -562,17 +571,15 @@ const aiAutoMeta={
 };
 // 老闆端「AI 與負責人今日已自動處理」摘要（唯讀，件數會依授權開關變動）
 function autoSummaryItems(){
- const items=[];
- if(aiAuto.warn)items.push({n:3,t:"對 3 台超速/急煞車即時事前預警",by:"AI"});
- if(aiAuto.voice)items.push({n:2,t:"對 2 位高風險駕駛自動語音關懷",by:"AI"});
- if(aiAuto.inspect)items.push({n:5,t:"提醒 5 位駕駛補出車前點檢",by:"AI"});
- items.push({n:2,t:"替 2 位疲勞駕駛媒合並派遣交接",by:"總負責人"});
- if(aiAuto.dispatch)items.push({n:3,t:"替 3 台 DTC 故障車預約進廠",by:"AI"});
- if(aiAuto.route)items.push({n:2,t:"繞行超標 2 條路線自動套用優化方案（負責人監督）",by:"AI"});
- if(aiAuto.overload)items.push({n:1,t:"超載車自動停派並由調度代理重配貨物（負責人監督）",by:"AI"});
- if(aiAuto.mail)items.push({n:7,t:"對 2 個低分車隊 7 位駕駛寄限期改善信（總負責人具名）",by:"AI"});
- items.push({n:6,t:"依年度訓練預算排入 6 名高風險駕駛安全訓練（額度內）",by:"AI"});
- items.push({n:2,t:"回覆並致歉 2 件到貨延誤客訴（補償額度內）",by:"客服負責人"});
+ const data=window.HINO_EXCEL_DATA, vehicles=data.vehicleSnapshot;
+ const topSpeed=vehicles.slice().sort((a,b)=>b.overspeed_count-a.overspeed_count)[0];
+ const topDtc=vehicles.filter(item=>item.dtc_count).length;
+ const items=[
+  {n:data.meta.records,t:`已彙整 ${data.meta.period} 的車聯網紀錄（最後一筆 ${data.meta.lastRecord}）`,by:"資料"},
+  {n:topSpeed?topSpeed.overspeed_count:0,t:topSpeed?`${topSpeed.c} 的超速紀錄最高，已列入人工覆核優先序`:'來源未發現超速紀錄',by:"AI"},
+  {n:topDtc,t:`${topDtc} 台車有 DTC code 紀錄，待保修人員判讀`,by:"AI"},
+  {n:data.meta.vehicles,t:"來源未提供駕駛、人資、工時與訂單欄位；系統不會假造或自動做出人事處置",by:"資料"},
+ ];
  simLog.forEach(x=>items.push({n:1,t:x.t,by:x.by}));
  return items;
 }
@@ -586,9 +593,9 @@ function autoSummaryCard(){
  </div>`).join("");
  return `<div class="card" style="border-left:4px solid var(--accent)">
  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
- <div style="font-weight:850;font-size:14.5px">今日 AI 與負責人已自動處理 <b style="color:var(--accent)">${total}</b> 件</div>
+ <div style="font-weight:850;font-size:14.5px">Excel 資料與 AI 處理摘要</div>
  <span class="aibadge" style="margin-left:auto"><span class="sp"></span>唯讀摘要</span></div>
- <div style="font-size:11.5px;color:var(--mut2);margin:2px 0 6px">前線執行已自動完成或委派，您不需逐一處理，往下只看「需要您拍板」的決策。</div>
+ <div style="font-size:11.5px;color:var(--mut2);margin:2px 0 6px">只列出來源可支持的遙測摘要與提醒草稿；不將原始資料不存在的工作、訂單或人資行動標成已完成。</div>
  <div style="border-top:1px solid var(--line);padding-top:4px">${rows}</div>
  <div style="margin-top:10px"><button class="btn gho sm block" onclick="gotoTab('settings')">調整 AI 自動化授權</button></div>
  </div>`;
@@ -611,7 +618,7 @@ function toggleAiAuto(k){aiAuto[k]=!aiAuto[k];const b=document.getElementById('s
  toast('已更新自動化授權',`「${aiAutoMeta[k].t}」已${aiAuto[k]?'開啟，AI 將自動執行':'關閉，改為需您手動核准'}。`,aiAuto[k]?'ok':'wn');}
 /* ---- shared TODO data ---- */
 // 老闆端：前線執行改為「已自動處理 / 已委派」狀態；按鈕只留「查看」與「決策/核准」層級
-const todos=[
+let todos=[
  {sev:"bad",cat:"駕駛異常",tt:"3 位駕駛有疲勞駕駛風險",dt:"即時偵測（行駛中）。中區 陳大文、北區 王建國、東區 蔡英傑。",
  status:{by:"總負責人",txt:"已媒合並派遣就近替班交接，2 位換手中、1 位就近休息"},
  acts:[{l:"查看駕駛",c:"gho",fn:"drillDrivers(['B0','A0','F0'],'疲勞風險駕駛')"}]},
@@ -632,7 +639,7 @@ const todos=[
  status:{by:"AI",txt:"已替 3 台車向最近和泰保修廠預約進廠（預算內）"},
  acts:[{l:"查看車輛",c:"gho",fn:"drillVehicle('DTC')"}]},
 ];
-const todoData=[
+let todoData=[
  `陳大文 連續 5.2h｜王建國 4.8h｜蔡英傑 5.5h（皆超 4h）。<br><b>決策：</b>先請就近休息，並派最近替班交接（莊承翰 9km／賴冠廷 6km／高志明 12km）。`,
  `台中港線 +21%、烏日線 +23% 偏離規劃路線。<br><b>自動處置：</b>依授權套用方案 A（改走 64 快速道路，里程 -14%），調度代理執行、中區負責人監督。`,
  `ABC-1301 蔡英傑(東) 估超 12%｜ABC-1302 鄭家豪(東) 估超 5%｜ABC-2201 陳大文(中) 估超 3%。<br><b>自動處置：</b>停派＋重配由調度代理完成。<b>待您拍板：</b>治本政策 — 更新派車規則＋裝載前強制過磅。`,
@@ -642,7 +649,7 @@ const todoData=[
 ];
 // 老闆端 AI 建議：撥打/語音/單一駕駛教練等前線動作已收進「AI 自動化授權」自動執行，
 // 這裡只呈現「AI 已自動做了什麼」＋需要老闆的決策層行動（對負責人下達 / 核准訓練預算）
-const advice=[
+let advice=[
  {f:"<b>王建國</b>（北區 ABC-1101）連續 3 週急煞偏高",why:"急減速較全隊平均高 64%，多集中市區下班尖峰。",
  status:{by:"AI",txt:"已自動語音關懷，並依年度訓練預算（額度內）排入本月安全訓練，總負責人安排上課"},
  acts:[{l:"檢視年度訓練預算",c:"gho",fn:"openTrainApprove()"}]},
@@ -693,7 +700,7 @@ function renderFleetTodo(){
  <div class="subt">AI 已自動處理前線動作，這裡只留需要您核准 / 下達的決策</div>
  <div class="advice">${adv}</div>
  </section>
- <div class="foot">HINO 省油 × 安全 AI 軍師 · 行動皆為原型模擬</div>`;
+ <div class="foot">HINO 省油 × 安全 AI 軍師 · 依來源資料與人工覆核執行</div>`;
 }
 // 老闆決策 modal：年度訓練預算（額度內自動排訓，同「維修預算內自動進廠」邏輯）
 function openTrainApprove(){showModal(`<h3>年度安全訓練預算</h3>
@@ -709,7 +716,7 @@ function openCompApprove(){showModal(`<h3>客訴補償上限（政策）</h3>
 function toggleTodo(i){const p=document.getElementById("tp_"+i),a=document.getElementById("ta_"+i),o=p.style.display==="none";p.style.display=o?"block":"none";a.textContent=o?"▾":"▸";}
 
 /* ---- fleet analytics tab: trend+cause + ranking ---- */
-const metrics=[
+let metrics=[
  {key:"safety",name:"平均安全分",unit:"分",data:aggSafety,min:40,max:90,
  cause:{t:"為什麼安全分持續下滑？",rs:["新增 3 名新進駕駛仍在適應期","新增市區配送路線，停等與急煞增加","車流量上升、尖峰壅塞"],act:[{l:"設定全隊安全目標",c:"pri",fn:"act('已設定全隊安全分目標並分派各區負責人，AI 追蹤達成率。','ok')"},{l:"查看自動改善信",c:"gho",fn:"openBatchApprove()"}]}},
  {key:"brake",name:"急煞事件",unit:"次",data:aggBrake,
@@ -725,7 +732,7 @@ const metrics=[
  {key:"fuel",name:"百公里油耗",unit:"L",data:[31,31.2,31.4,31.5,31.7,31.8,31.9,32,32,32.1,31.9],
  cause:{t:"為什麼油耗上升？",rs:["怠速比上升、空轉燒油","急加速/急煞增加","繞行里程與載重增加"],act:[{l:"設全隊省油政策",c:"pri",fn:"act('已設定全隊省油政策，AI 自動對符合條件駕駛啟動省油教練。','ok')"},{l:"查看路線優化報告",c:"gho",fn:"openRoutePlan()"}]}},
 ];
-const factMap={
+let factMap={
  safety:"下滑集中在中區/北區，與該區急煞、超速上升同步",
  brake:"急煞集中在 3 台車、市區尖峰(17–19時)、特定路段",
  speed:"超速多發生在夜間與特定快速道路路段",
@@ -734,7 +741,7 @@ const factMap={
  seatbelt:"未繫多為短程多停的市區配送車",
  fuel:"高油耗車與高怠速、急加速車高度重疊",
 };
-const dims=[
+let dims=[
  {key:"safety",name:"綜合安全分",high:true,unit:"分",val:r=>r.safety.at(-1),hint:"分數越高越好"},
  {key:"speed",name:"急煞次數",high:false,unit:"次",val:r=>r.brake.at(-1),hint:"越少越好"},
  {key:"idle",name:"怠速佔比",high:false,unit:"%",val:r=>r.idlePct,hint:"越低越省油"},
@@ -742,7 +749,7 @@ const dims=[
  {key:"seatbelt",name:"未繫安全帶",high:false,unit:"次",val:r=>r.seatbelt,hint:"越少越好"},
  {key:"fuel",name:"百公里油耗",high:false,unit:"L",val:r=>r.fuel,hint:"越低越省"},
 ];
-const dimSolData={
+let dimSolData={
  safety:{t:"綜合安全分偏低，怎麼解？",pts:["低分車隊自動限期改善信（AI 擬信、負責人具名，已政策化）","高風險駕駛依年度預算自動排入安全訓練","安全分納入績效獎懲"],btn:[{l:"查看自動改善信",c:"pri",fn:"openBatchApprove()"},{l:"檢視年度訓練預算",c:"gho",fn:"openTrainApprove()"}]},
  speed:{t:"急煞次數過高，怎麼解？",pts:["市區下班尖峰預警＋路線調整（AI 依授權自動）","急煞排行推播給負責人","結合路線找急煞熱點加強"],btn:[{l:"查看路線優化報告",c:"pri",fn:"openRoutePlan()"},{l:"查看自動改善信",c:"gho",fn:"openBatchApprove()"}]},
  idle:{t:"怠速佔比過高，怎麼解？",pts:["設怠速上限 ≤8%＋每日追蹤排行","怠速超 3 分鐘即時提醒熄火（AI 自動）","AI 每日自動催辦未達標區負責人","納入省油績效獎懲"],btn:[{l:"設定怠速目標",c:"pri",fn:"act('已設定全隊怠速目標 ≤8%，AI 每日自動催辦各區。','ok')"},{l:"查看 AI 催辦狀態",c:"gho",fn:"openIdleMessage()"}]},
@@ -750,6 +757,19 @@ const dimSolData={
  seatbelt:{t:"未繫安全帶，怎麼解？",pts:["未繫即時車內語音提醒（DMS，AI 自動）","每日未繫排行推播負責人","列入安全分與獎懲、累犯約談"],btn:[{l:"列入績效政策",c:"pri",fn:"act('已將未繫安全帶納入全隊駕駛績效政策。','ok')"},{l:"檢視年度訓練預算",c:"gho",fn:"openTrainApprove()"}]},
  fuel:{t:"百公里油耗偏高，怎麼解？",pts:["AI 省油教練：急加速/怠速/超速個人化建議（AI 自動）","油耗排行＋向南區標竿學習","高油耗車檢查胎壓/空濾/載重","路線最佳化減里程"],btn:[{l:"設全隊省油政策",c:"pri",fn:"act('已設定全隊省油政策，AI 自動對符合條件駕駛啟動省油教練。','ok')"},{l:"發起省油競賽",c:"gho",fn:"act('已發起全隊省油競賽。','ok')"}]},
 };
+/* Every visible metric below is compiled from output data_Hotai_20260511.xlsx.
+   The historical literals above remain only as development fallback text and are
+   replaced before any screen can render. */
+todos=window.HINO_EXCEL_DATA.todos;
+todoData=window.HINO_EXCEL_DATA.todoData;
+advice=window.HINO_EXCEL_DATA.advice;
+metrics=window.HINO_EXCEL_DATA.metrics;
+factMap=window.HINO_EXCEL_DATA.factMap;
+dims=window.HINO_EXCEL_DATA.dims.map(item=>({
+ ...item,
+ val:region=>item.key==='safety'?region.safety.at(-1):region.series[item.key].at(-1)
+}));
+dimSolData=window.HINO_EXCEL_DATA.dimSolData;
 function lineChart(series,opts){
  opts=opts||{};
  const pred=opts.predict||[]; // 未來預測值（接在歷史後面）
@@ -845,23 +865,22 @@ function renderFleetTeam(){
  const sorted=regions.slice().sort((a,b)=>b.anomaly-a.anomaly);
  const cards=sorted.map(r=>{
  const ac=r.anomaly>=8?"var(--bad)":r.anomaly>=5?"var(--warn)":"var(--good)";
- const oc=r.onTime>=95?"var(--good)":r.onTime>=90?"var(--warn)":"var(--bad)";
  return `<div class="litem">
  <div class="lh" onclick="toggleReg('${r.id}')">
  <span class="dot" style="background:${r.color}"></span>
  <span class="nm">${r.name}車隊</span>
  <span class="chev" id="rt_${r.id}">展開 ▸</span></div>
  <div class="stats">
- <span>駕駛 <b>${r.drivers.length}</b></span>
+ <span>車號 <b>${r.drivers.length}</b></span>
  <span>安全分 <b style="color:${scoreColor(r.safety.at(-1))}">${r.safety.at(-1)}</b></span>
- <span>異常率 <b style="color:${ac}">${r.anomaly}%</b></span>
- <span>準時率 <b style="color:${oc}">${r.onTime}%</b></span></div>
+ <span>遙測風險率 <b style="color:${ac}">${r.anomaly}%</b></span>
+ <span>DTC <b>${r.seatbelt}</b> 筆</span></div>
  <div class="regdet" id="rd_${r.id}"><div id="db_${r.id}">${driverLines(r)}</div></div>
  </div>`;}).join("");
  screen.innerHTML=`
  <section id="region">
  <div class="sh"><h2>區域比較</h2></div>
- <div class="subt">依異常率排序 · 點卡片看該區駕駛紅黃綠（通知由 AI/總負責人執行，此處唯讀）</div>
+ <div class="subt">依遙測風險率排序 · 點卡片看該區車號的計算安全分（來源未提供駕駛姓名）</div>
  ${cards}
  <div class="quickacts">
  <button class="btn pri block" onclick="openBatchApprove()">低分車隊改善信（已自動化）· 查看狀態</button>
@@ -870,42 +889,36 @@ function renderFleetTeam(){
  </div>
  </section>
  <section id="staffing">
- <div class="sh"><h2 class="sm">人力配置與招募</h2><span class="newbadge">新增</span></div>
- <div class="subt">單量 vs 駕駛數 · 決定招新比例</div>
+ <div class="sh"><h2 class="sm">營運量能參考</h2><span class="newbadge">資料限制</span></div>
+ <div class="subt">journeyCode 數 vs 車號數；可供調度覆核，不可用來推導招募人數</div>
  <div class="card">
- <div style="font-weight:800;font-size:14.5px">建議招募 2 名駕駛（北區 +1、中區 +1）</div>
+ <div style="font-weight:800;font-size:14.5px">人資資料未提供，系統不提出招募／加薪／裁員建議</div>
  <div class="dt" id="staffInsight" style="font-size:12.5px;color:var(--mut);margin-top:5px"></div>
  <div class="acts" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px">
  <button class="btn gho sm" onclick="toggleStaff()"><span id="staffArr">▸</span>看數據</button>
- <button class="btn pri sm" onclick="act('已核准招募需求：北區 +1、中區 +1，送 HR。','ok')">核准招募 2 名</button>
- <button class="btn gho sm" onclick="act('跨區支援由 AI 調度代理依規則自動執行、負責人監督；本週已自動支援 3 趟次。','ok')">查看跨區調度（自動）</button></div>
+ <button class="btn pri sm" onclick="act('已標記需補齊人員主檔、班表、出勤與訂單資料。','ok')">建立資料串接需求</button>
+ <button class="btn gho sm" onclick="act('已建立以 journeyCode 為單位的車輛調度覆核清單。','ok')">查看調度覆核</button></div>
  <div id="staffPanel" style="display:none;margin-top:11px;border-top:1px solid var(--line);padding-top:8px"></div>
  </div>
  </section>
- <div class="foot">火箭隊 · 行動皆為原型模擬</div>`;
+ <div class="foot">HINO × GenAI · 僅以來源提供的車聯網資料呈現</div>`;
  renderStaffing();
 }
 function toggleReg(id){const d=document.getElementById("rd_"+id),t=document.getElementById("rt_"+id),o=!d.classList.contains('on');d.classList.toggle('on',o);t.textContent=o?"收合 ▾":"展開 ▸";}
 function toggleStaff(){const p=document.getElementById("staffPanel"),a=document.getElementById("staffArr"),o=p.style.display==="none";p.style.display=o?"block":"none";a.textContent=o?"▾":"▸";}
 function renderStaffing(){
  const rows=regions.map(r=>{const o=ordersByRegion[r.id],dn=r.drivers.length,per=Math.round(o/dn),load=per/TARGET_PER_DRIVER;
- const need=Math.max(0,Math.ceil(o/TARGET_PER_DRIVER)-dn),sur=Math.max(0,dn-Math.ceil(o/TARGET_PER_DRIVER));
- return {r,o,dn,per,load,need,sur};});
+ return {r,o,dn,per,load};});
  rows.sort((a,b)=>b.load-a.load);
- let totalNeed=0;
  const body=rows.map(x=>{
- let badge,col;
- if(x.need>0){badge=`招募 +${x.need}`;col="var(--bad)";totalNeed+=x.need;}
- else if(x.sur>0){badge=`可支援`;col="var(--good)";}
- else{badge="適中";col="var(--mut)";}
  const lc=x.load>=1.15?"var(--bad)":x.load>=0.95?"var(--warn)":"var(--good)";
  return `<div class="staffrow"><div class="nm"><span class="dot" style="background:${x.r.color}"></span>${x.r.name}</div>
- <div class="mid">${x.o} 單 / ${x.dn} 人 · 人均 <b style="color:${lc}">${x.per}</b>· 負荷 <b style="color:${lc}">${Math.round(x.load*100)}%</b></div>
- <div class="bd" style="color:${col}">${badge}</div></div>`;}).join("");
+ <div class="mid">${x.o} 個 journeyCode / ${x.dn} 台車 · 每車 <b style="color:${lc}">${x.per}</b> 個歷程</div>
+ <div class="bd" style="color:var(--mut)">需人工覆核</div></div>`;}).join("");
  const staffPanel=document.getElementById("staffPanel");if(staffPanel)staffPanel.innerHTML=body;
  const hi=rows[0];
  const ins=document.getElementById("staffInsight");
- if(ins)ins.innerHTML=`以每人月承載 ${TARGET_PER_DRIVER} 單為基準：<b style="color:var(--txt)">${hi.r.name}</b>人均 ${hi.per} 單、負荷 ${Math.round(hi.load*100)}% 最吃緊。全隊建議優先招募 <b style="color:var(--bad)">${totalNeed} 名</b>駕駛（集中高負荷區），低負荷區可調度支援。`;
+ if(ins)ins.innerHTML=`${hi.r.name}每車有 <b style="color:var(--txt)">${hi.per}</b> 個 journeyCode，為三區中最高。這只是車聯網歷程量，不能代表人均工作量或推導招募人數；需串接人員主檔、工時與真實訂單後才能判讀。`;
 }
 
 // 全隊省油目標進度（老闆設目標→負責人分解→駕駛執行 的追蹤儀表）
@@ -977,14 +990,15 @@ function renderFleetMe(){
  </div>
  </div>
  </section>
- <div class="foot">HINO × GenAI Demo · 火箭隊</div>`;
+ <div class="foot">HINO × GenAI · 車隊管理帳號</div>`;
 }
 
 /* =====================================================================
  ROLE: 總負責人 (lead — 陳國華, 中區 only) 3 tabs
  — no region switcher; region fixed to session account —
 ===================================================================== */
-const fatigueSet=new Set(["B0","A0","F0"]);
+/* Workbook has no work-hours or fatigue field, so the app must not manufacture a fatigue list. */
+const fatigueSet=new Set();
 function myRegion(){return regions.find(r=>r.id===SESSION.acc.region);}
 function driverLines2(r){return r.drivers.map((d,i)=>{const[lv,col]=lvl(d.s);const n=notify[r.id+'_'+i]||0;const nc=n>=2?"var(--bad)":n===1?"var(--warn)":"var(--mut2)";const fat=fatigueSet.has(r.id+i);
  return `<div class="drvline">
@@ -1180,7 +1194,7 @@ function renderDriverAlerts(){
  — no company switcher; company fixed to session account —
 ===================================================================== */
 // 真實經緯度路線（台灣 demo 座標，供 Leaflet 畫真實 polyline 與卡車移動）
-const shippers=[
+let shippers=[
  {id:"tsmc",name:"台積電 中科廠",contact:"王採購",orders:[
  {id:"#A2301",to:"台積電 中科廠",from:"台中港倉",driver:"林佳穎",car:"ABC-1501 · HINO 500",etaMin:14,progress:.62,status:"運送中",cur:"國道一號 大雅段",risk:false,
  fromLL:[24.2862,120.5352],toLL:[24.2360,120.6150],
@@ -1197,9 +1211,12 @@ const shippers=[
  fromLL:[23.0010,120.2270],toLL:[22.9930,120.2010],
  routeLL:[[23.0010,120.2270],[22.9990,120.2190],[22.9970,120.2110],[22.9950,120.2050],[22.9930,120.2010]]}]},
 ];
+/* The workbook has no customer or order data. These are real journey IDs and
+   last telemetry records, intentionally labelled as such in the shipper view. */
+shippers=window.HINO_EXCEL_DATA.shippers;
 let curOrder=null,animTimer=null;
 function myShipper(){return shippers.find(x=>x.id===SESSION.acc.shipperId);}
-function myOrders(){return myShipper().orders.slice().sort((a,b)=>(b.risk-a.risk)||(a.etaMin-b.etaMin));}
+function myOrders(){return myShipper().orders.slice().sort((a,b)=>(b.risk-a.risk)||String(b.cur).localeCompare(String(a.cur)));}
 /* ---- Leaflet 真實地圖引擎（OpenStreetMap 免金鑰） ---- */
 let shipMap=null,truckMarker=null;
 // 純色圓點 marker（L.divIcon，無 emoji）
@@ -1395,7 +1412,6 @@ const tourStepsByRole={
  {tab:'me',sel:'#fleet_goal',t:'省油：團隊目標協同',x:'省油從駕駛一人 → 駕駛+車隊+AI 協同：老闆設目標→各區分解→駕駛看到自己任務，AI 全程追蹤達成率。'},
  {tab:'me',sel:'#fleet_auto',t:'AI 自動化授權',x:'老闆一次設定：低風險提醒／事前預警／逾時停派／預約進廠交給 AI 自動執行，之後前線動作全部標「AI 自動」，你只管決策。'},
  {tab:'me',sel:'#fleet_benefit',t:'量化預期效益',x:'油耗 -8%、事故風險 -25%、管理工時 -40%、年省 NT$180 萬… 每項都附推估依據。'},
- {tab:'todo',sel:'#simfab',t:'事件模擬器（Demo）',x:'比賽現場沒有真實車輛事件 — 點左下角「模擬事件」手動觸發疲勞／繞行／超載／故障等事件，現場觀察 AI 自動處理管線與授權機制怎麼運作。'},
  ],
  driver:[
  {tab:'home',sel:'#drv_coach',t:'你的安全叮嚀在這',x:'AI 依你今天的 iTRAQ 數據，事前評估風險時段並生成省油與安全叮嚀，出車前先看一眼。'},
@@ -1476,9 +1492,11 @@ function riskCard(f,forLead){
  </div>`;
 }
 function renderRiskForecast(forLead){
- const list=forLead?riskForecast.filter(f=>f.r===myRegion().name):riskForecast;
- if(!list.length)return `<div class="card"><div class="dt">今日本區無高風險預測，狀況良好。</div></div>`;
- return list.map(f=>riskCard(f,forLead)).join('');
+ const scoped=forLead?myRegion().drivers:regions.flatMap(region=>region.drivers);
+ const list=scoped.slice().sort((a,b)=>a.s-b.s).slice(0,3);
+ if(!list.length)return `<div class="card"><div class="dt">沒有可判讀的 Excel 車聯網紀錄。</div></div>`;
+ return `<div class="private-note"><b>資料限制：</b>來源未提供事故、疲勞、急煞或即時風險預測欄位；以下僅依 Excel 計算安全分排序，作為人工覆核優先序。</div>`+
+   list.map(vehicle=>`<div class="riskcard ${vehicle.s<55?'bad':vehicle.s<70?'mid':'low'}"><div class="rtop"><span class="rname">${vehicle.c}</span><span class="stpill" style="background:var(--card2);color:var(--mut)">計算安全分 ${vehicle.s}</span></div><div class="rwhy">超速 ${vehicle.overspeed_count.toLocaleString()} 筆 · 怠速 ${vehicle.idle_pct}% · 高引擎負載 ${vehicle.high_load_count.toLocaleString()} 筆 · DTC ${vehicle.dtc_count.toLocaleString()} 筆</div><div class="rwhy" style="margin-top:5px">優先覆核：${vehicle.i}</div>${forLead?`<div class="racts"><button class="btn pri sm" onclick="act('已建立 ${vehicle.c} 的遙測資料覆核提醒。','wn')">建立覆核提醒</button></div>`:`<div class="autoline" style="margin-top:11px"><span class="abadge">AI 草稿</span><span>可建立提醒草稿；發送前需確認車況、路況與派車情境。</span></div>`}</div>`).join('');
 }
 
 /* =====================================================================
@@ -1495,20 +1513,8 @@ const benefits=[
  {v:"+11 分",k:"平均安全分",w:"預估 3 個月，帶動保險/賠付下降"},
 ];
 function benefitCard(){
- const cells=benefits.map(b=>`<div class="bcell"><div class="bv">${b.v}</div><div class="bk">${b.k}</div><div class="bw">${b.w}</div></div>`).join('');
- return `<div class="benefit">${cells}</div>
- <div class="card" style="margin-top:10px">
- <button class="btn gho sm" onclick="toggleBenefitCalc()"><span id="bcArr">▸</span>年省 NT$180 萬 試算明細</button>
- <div id="benefitCalc" style="display:none;margin-top:9px;font-size:12px;color:var(--mut);line-height:1.9;border-top:1px solid var(--line);padding-top:9px">
- <div>· 車隊：<b>20</b> 車，年里程/車：<b>60,000</b> km</div>
- <div>· 基準油耗：<b>32 L/100km</b> → 年耗油 ≈ 20×60,000/100×32 = <b>384,000 L</b></div>
- <div>· 油耗降 <b>8%</b> → 年省 ≈ 384,000×8% = <b>30,720 L</b></div>
- <div>· 油價 <b>NT$32/L</b> → 年省 ≈ 30,720×32 ≈ <b style="color:var(--accent)">NT$98 萬(純里程)</b></div>
- <div>· 加計怠速空轉燒油（14%→8%，20 車 ≈1,150 空轉小時）節省 → 合計約 <b style="color:var(--accent)">NT$180 萬</b></div>
- <div>· 減碳：年省油 30,720 L × 柴油 2.6 kg CO₂/L ≈ 80 噸，含空轉估 <b>96 噸</b></div>
- </div>
- <div style="font-size:12px;color:var(--mut);line-height:1.7;margin-top:9px">數字為原型推估，依 20 車、月里程與 iTRAQ 歷史事件外推；降幅相對導入前 3 個月；正式導入以實際車隊數據校準。省油＋安全雙軸並進，ROI 約 <b style="color:var(--accent)">6–9 個月</b>回收。</div>
- </div>`;
+ const source=window.HINO_EXCEL_DATA.meta, aggregate=window.HINO_EXCEL_DATA.aggregate;
+ return `<div class="card" id="fleet_benefit"><div class="sh"><h3>營運效益資料需求</h3><span class="newbadge">待串接</span></div><div style="font-size:12px;color:var(--mut);line-height:1.8">目前可確認 ${source.vehicles} 台車、${source.records.toLocaleString()} 筆車聯網紀錄與 ${aggregate.journeys.toLocaleString()} 個 journeyCode。原始檔未含油價、維修費、事故成本、薪資或導入前基線，系統不會計算省油金額、ROI、減碳量或人力效益。</div><div class="acts" style="margin-top:10px"><button class="btn pri sm" onclick="act('已建立油價、成本與基線資料的串接需求。','ok')">建立效益資料需求</button></div></div>`;
 }
 function toggleBenefitCalc(){const p=document.getElementById("benefitCalc"),a=document.getElementById("bcArr"),o=p.style.display==="none";p.style.display=o?"block":"none";a.textContent=o?"▾":"▸";}
 
@@ -1630,7 +1636,7 @@ function aiGenerate(q){
  return `${AI_TAG} 把全隊怠速從 ${N('14%')} 降到 ${N('8%')}，路徑：\n\n· 老闆設全隊目標 ≤8% → 各區負責人分解 → 駕駛端顯示個人任務\n· 怠速超 3 分鐘即時提醒熄火 + 每日排行\n· 向標竿（南區 8%）學習\n\n達標後預估年省油 ${N('NT$180 萬')}、減碳 ${N('96 噸')}、油耗 ${N('-8%')}。`;
  }
  if(has('效益','省多少','事故','降多少','ROI','導入')){
- return `${AI_TAG} 導入後預期效益（原型推估）：\n\n· 油耗 ${N('-8%')}、怠速 ${N('14%→8%')} → 年省油 ${N('NT$180 萬')}、減碳 ${N('96 噸')}\n· 異常駕駛事件 ${N('-30%')}、事故風險 ${N('-25%')}\n· 一鍵決策 vs 人工 → 管理工時 ${N('-40%')}（每週省約 8 小時）\n\n完整版可到「我的 → 導入後預期效益」看每項依據。`;
+ return `${AI_TAG} 目前來源未提供油價、維修費、事故成本、工時、人資或導入前基線，因此不能估算節省金額、事故降幅、管理工時或 ROI。串接上述欄位後，才可建立可驗證的效益報表。`;
  }
  return `${AI_TAG} 我是全隊的省油＋安全 AI 軍師。我讀得到 iTRAQ 全隊數據（怠速 ${N('14%')}、安全分 ${N(c.aggSafe)}、各區排行、事故熱點）。\n\n可以問我「哪台車最耗油怎麼改」「今天誰事故風險最高」「怎麼把怠速降到 8%」「導入後能省多少」。`;
 }
@@ -1830,7 +1836,7 @@ function openSafetyCoach(name){
 }
 
 /* =====================================================================
- 事件模擬器（比賽 Demo 用，左下角浮動按鈕）
+ 事件測試入口（預設隱藏）
  — 現場無真實車輛事件，手動觸發後觀察 AI 自動處理管線：
  授權開啟 → AI 代理執行、負責人監督、進「已自動處理」摘要；
  授權關閉 → 事件改走「需您拍板」流程，展示授權機制的差異。
@@ -1872,7 +1878,7 @@ function openSimPanel(){
  const rows=SIMS.map(s=>{const on=!s.sw||aiAuto[s.sw];
  return `<div class="simrow"><div class="si2"><div class="st2">${s.t}</div><div class="sd2">${s.d} · ${on?'<b style="color:#4e7d1f">授權開啟 → AI 自動處理</b>':'<b style="color:var(--bad)">授權關閉 → 轉需您拍板</b>'}</div></div>
  <button class="btn pri sm" onclick="runSim('${s.k}')">觸發</button></div>`;}).join('');
- showModal(`<h3>事件模擬器 <span class="aibadge"><span class="sp"></span>比賽 Demo 用</span></h3>
+ showModal(`<h3>事件測試入口 <span class="aibadge"><span class="sp"></span>預設隱藏</span></h3>
  <p>比賽現場沒有真實車輛事件 — 點「觸發」模擬事件發生，觀察 AI 依您的自動化授權即時處理（調度層動作由 AI 代理執行、負責人監督）。把「我的 → AI 自動化授權」關掉再觸發，同一事件會改走「需您拍板」流程。</p>
  ${rows}
  <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="closeOv();gotoTab('settings')">調整自動化授權</button></div>`);
