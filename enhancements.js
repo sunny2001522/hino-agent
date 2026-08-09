@@ -93,14 +93,16 @@
   let currentItraqSection = 'monitor';
   function sectionForPage(pageNo) { return Object.keys(itraqSections).find(key => itraqSections[key].includes(pageNo)) || 'monitor'; }
   function renderItraqPage(pageNo, section) { currentManualPage = pageNo; currentItraqSection = section || sectionForPage(pageNo); renderItraqWorkspace(); }
-  const nativeVehicles = [
-    ['683-M6','陳興明','行駛中','0912-345-678','70','新北市板橋區南雅東路255號2樓'],
-    ['KNA-1368','陳興明','行駛中','0912-345-678','70','-19.50289, 175.41761'],
-    ['LAD-800','陳興明','失聯','0912-345-678','--','臺中市台灣大道六段407號14樓'],
-    ['KNA-1365','陳興明','失聯','0912-345-678','--','1.91709, 6.05392'],
-    ['LAD-005','陳興明','怠速30分','0912-345-678','0','新北市土城區國道南339號7樓'],
-    ['KLA-5665','陳興明','怠速30分','0912-345-678','0','高雄市楠梓區楠梓路209號5樓']
+  const excelSource = { file:'output data_Hotai_20260511.xlsx', records:487510, vehicles:20, period:'2025-01-01 至 2025-11-30', driving:415256, idling:68551, parking:3703, speeding:57259 };
+  const excelVehicleSnapshot = [
+    { car:'ABC-5310', time:'2025-11-30 23:53:54', status:'停車', speed:0, limit:30, position:'121.283089, 25.086189', mileage:52356, fuel:11589, engine:3139.3 },
+    { car:'ABC-6776', time:'2025-11-30 18:37:32', status:'停車', speed:0, limit:25, position:'121.073257, 24.778786', mileage:83474, fuel:36063.5, engine:3884.3 },
+    { car:'ABC-7610', time:'2025-11-30 17:50:57', status:'停車', speed:0, limit:30, position:'121.549294, 23.861162', mileage:39098, fuel:18132.5, engine:3174.5 },
+    { car:'ABC-7569', time:'2025-11-30 18:39:36', status:'停車', speed:0, limit:30, position:'120.313835, 23.101540', mileage:32244.1, fuel:4916.5, engine:878 },
+    { car:'ABC-1999', time:'2025-11-21 18:07:11', status:'停車', speed:0, limit:50, position:'121.586815, 23.935158', mileage:20029.5, fuel:5555, engine:1560 },
+    { car:'ABC-6325', time:'2025-11-21 17:00:13', status:'停車', speed:0, limit:30, position:'120.496475, 24.153843', mileage:28447.3, fuel:5156.5, engine:1119.8 }
   ];
+  const nativeVehicles = excelVehicleSnapshot.map(vehicle => [vehicle.car,'—',vehicle.status,'—',vehicle.speed,vehicle.position,vehicle.time]);
   const nativeTasks = [
     ['執行中','20211115001','2/5','王曉明 / 0911-111-111','KLA-1111','綠豆糕','宏台 (10:00)'],
     ['調度中','20211115002','10/12','李曉明 / 0911-111-111','KLA-9999','文宣稿','和泰本場 (13:00)'],
@@ -119,7 +121,10 @@
     return `<div class="native-filter"><button type="button" class="native-input" data-itraq-filter="date">◫&nbsp; ${date}</button><button type="button" class="native-input" data-itraq-filter="department">部門 (all)⌄</button><label class="native-search">⌕ <input value="" placeholder="${search}" aria-label="${search}"></label>${actions}</div>`;
   }
   function nativePager() { return `<div class="native-pager"><button type="button" class="native-page-size" data-itraq-action="page-size">每頁資料筆數: 10⌄</button><span><button type="button" data-itraq-page="prev">‹</button><button type="button" class="on" data-itraq-page="1">1</button><button type="button" data-itraq-page="2">2</button><button type="button" data-itraq-page="3">3</button><button type="button" data-itraq-page="4">4</button><button type="button" data-itraq-page="next">›</button></span></div>`; }
-  function nativePageTitle(title, trail) { return `<div class="native-breadcrumb">${trail || '車隊管理'} <span>›</span> ${title}</div>`; }
+  function nativePageTitle(title, trail) {
+    const pageCount = (itraqSections[currentItraqSection] || []).length;
+    return `<div class="native-breadcrumb"><span class="native-crumb-text">${trail || '車隊管理'} <i>›</i> ${title}</span>${pageCount > 1 ? '<button type="button" class="native-page-menu" onclick="openItraqPageMenu()">切換功能⌄</button>' : ''}</div>`;
+  }
   function nativeSectionLabel(pageNo) {
     if ([2, 3].includes(pageNo)) return '即時監控';
     if ([4, 5].includes(pageNo)) return '歷史車輛';
@@ -133,10 +138,10 @@
     return `<div class="native-map"><i class="road road-a"></i><i class="road road-b"></i><i class="road road-c"></i><i class="water"></i><span class="map-label label-a">新莊生命禮儀</span><span class="map-label label-b">大立企業社</span><button type="button" class="map-pin pin-run" data-itraq-action="vehicle">▶</button><button type="button" class="map-pin pin-idle" data-itraq-action="vehicle">Ⅱ</button><button type="button" class="map-pin pin-off" data-itraq-action="vehicle">×</button><button type="button" class="map-fence" data-itraq-action="fence">北部PDS</button></div>`;
   }
   function nativeMonitor() {
-    return `<div class="native-workspace"><div class="native-monitor-layout"><div><div class="native-map-switch"><button class="on">車號</button><button class="on">駕駛</button><button class="on">速度</button><button class="on">電子圍籬</button></div>${nativeMap()}</div><div class="native-list-panel"><b>搜尋結果：部門 (all) / 總計23筆</b>${nativeTable(['車號 ↕','駕駛 ↕','行駛狀態 ↕','手機號碼 ↕','車速(km/h) ↕','位置 ↕'], nativeVehicles, state => state.includes('行駛') ? 'run' : state.includes('怠速') ? 'idle' : 'lost')}</div></div></div>`;
+    return `<div class="native-workspace"><div class="native-monitor-layout"><div><div class="native-map-switch"><button class="on">車號</button><button class="on">駕駛</button><button class="on">速度</button><button class="on">電子圍籬</button></div>${nativeMap()}</div><div class="native-list-panel"><b>Excel 資料：${excelSource.vehicles} 台車輛 / ${excelSource.records.toLocaleString()} 筆紀錄</b>${nativeTable(['車號 ↕','駕駛 ↕','車輛狀態 ↕','手機號碼 ↕','車速(km/h) ↕','經緯度 ↕','最後紀錄時間 ↕'], nativeVehicles, state => state === '行駛中' ? 'run' : state.includes('怠速') ? 'idle' : 'lost')}</div></div></div>`;
   }
   function nativeVideoLive() {
-    return `<div class="native-workspace"><div class="native-video-layout"><div class="native-video-grid"><div class="video-tile v1"><b>①</b><span>前鏡頭 · 683-M6</span></div><div class="video-tile v2"><b>②</b><span>右側鏡頭</span></div><div class="video-tile v3"><b>③</b><span>左側鏡頭</span></div><div class="video-tile v4"><b>④</b><span>後鏡頭</span></div></div><div class="native-list-panel"><b>雙擊車輛即可查看即時影像</b>${nativeTable(['車號','駕駛','行駛狀態','手機號碼','車速(km/h)','位置'], nativeVehicles.slice(0,4), state => state.includes('行駛') ? 'run' : 'lost')}</div></div></div>`;
+    return `<div class="native-workspace"><div class="native-video-layout"><div class="native-video-grid"><div class="video-tile v1"><b>①</b><span>前鏡頭 · ABC-5310</span></div><div class="video-tile v2"><b>②</b><span>右側鏡頭</span></div><div class="video-tile v3"><b>③</b><span>左側鏡頭</span></div><div class="video-tile v4"><b>④</b><span>後鏡頭</span></div></div><div class="native-list-panel"><b>雙擊車輛即可查看即時影像</b>${nativeTable(['車號','駕駛','車輛狀態','手機號碼','車速(km/h)','經緯度','最後紀錄時間'], nativeVehicles.slice(0,4), state => state === '行駛中' ? 'run' : 'lost')}</div></div></div>`;
   }
   function nativeJourneyHierarchy() {
     return `<div class="native-workspace"><div class="journey-flow"><article><b>第一層</b><div><strong>單日車隊內所有車輛歷史軌跡列表</strong><span>車號、駕駛、累積里程數、行駛總時長</span></div></article><article><b>第二層</b><div><strong>單日單一車輛的所有軌跡列表</strong><span>每一行程的啟動與熄火時間、累積時長及起訖點</span></div></article><article><b>第三層</b><div><strong>單日單一車輛單一軌跡的各點位列表</strong><span>點位時間、位置、車輛狀態、觸發事件</span></div></article></div></div>`;
@@ -157,16 +162,16 @@
     return `<div class="native-workspace">${nativeFilter({date:'2020-11-11 - 2020-11-11',actions:'<button type="button" class="native-action">⇩ 匯出資料</button><button type="button" class="native-action">◷ 預約原廠</button>'})}<div class="native-tabs"><button type="button" data-itraq-page="7">車輛週期一覽</button><button type="button" class="on">預約資料</button><button type="button" data-itraq-view="work-order">工單資料</button></div>${nativeTable(['狀態 ↕','類別 ↕','車號 ↕','聯絡人 ↕','預約日期 ↕','預約編號 ↕','服務廠 ↕','預計進廠時段 ↕','派工項目 ↕','操作'],rows, state => state === '已預約' ? 'pending' : state === '已進廠' ? 'running' : 'stopped')}${nativePager()}</div>`;
   }
   function nativeEvents() {
-    const rows = [['KLA-9999','陳曉明','122','4','2','5','5','2','46','46'],['KLA-9999','王曉明','116','12','3','3','9','8','12','12'],['KLA-9999','--','99','42','5','5','2','2','2','2'],['KLA-9999','洪曉明','116','12','7','2','5','1','12','12']];
-    return `<div class="native-workspace">${nativeFilter({actions:'<button type="button" class="native-action">⇩ 匯出報表</button>'})}${nativeTable(['車號 ↕','駕駛 ↕','全部事件 ↕','圍籬進出 ↕','行駛軌跡異常 ↕','引擎異常通知 ↕','速度異常通知 ↕','DTC錯誤通知 ↕','外接設備 ↕','駕駛異常警示 ↕'],rows)}${nativePager()}</div>`;
+    const rows = [['事件類型 8','26,428','event[0..2].type','2025-01-01 ～ 2025-11-30'],['事件類型 11','20,457','event[0..2].type','2025-01-01 ～ 2025-11-30'],['事件類型 7','18,470','event[0..2].type','2025-01-01 ～ 2025-11-30'],['事件類型 13','13,549','event[0..2].type','2025-01-01 ～ 2025-11-30'],['事件類型 16','4,998','event[0..2].type','2025-01-01 ～ 2025-11-30'],['事件類型 20','4,025','event[0..2].type','2025-01-01 ～ 2025-11-30']];
+    return `<div class="native-workspace">${nativeFilter({date:'2025-01-01 - 2025-11-30',actions:'<button type="button" class="native-action">⇩ 匯出報表</button>'})}<div class="native-list-panel"><b>Excel 事件欄位彙整 · ${excelSource.records.toLocaleString()} 筆行車紀錄</b>${nativeTable(['事件類型 ↕','發生筆數 ↕','來源欄位 ↕','統計期間 ↕'],rows)}${nativePager()}</div></div>`;
   }
   function nativeReport() {
-    const bars = [18,65,28,82,42,91,37,76,52,69,20,84,49,57,72,35,88,61,45,76,30,66,50,93,27,52,40,71,31,62];
-    return `<div class="native-workspace report-page"><div class="report-head"><button type="button" class="native-input" data-itraq-filter="month">‹　2022-04　›</button><span>統計時間：2022-04-01 - 2022-04-30</span><button type="button" class="native-action">⇩ 匯出月報</button></div><div class="report-kpis"><div><span>總開車時間</span><b>180小時</b></div><div><span>總怠速時間</span><b>30小時</b></div><div><span>車輛稼動率</span><b>83.3%</b></div><div><span>累積里程數</span><b>394,300公里</b></div><div><span>累積油耗量</span><b>3,291公升</b></div><div><span>平均油耗</span><b>20公里/公升</b></div><div><span>預估油錢</span><b>40,201元</b></div></div><div class="report-grid"><article><h3>車輛稼動率</h3><div class="native-bars">${bars.map((h,i)=>`<i style="height:${h}%" title="${i+1}日"></i>`).join('')}</div></article><article><h3>車輛行駛數據</h3><div class="native-line"><i></i><i></i><i></i><i></i><i></i><i></i></div><p>每日累積里程數、累積油耗量、平均油耗</p></article><article><h3>保養維修概況</h3><div class="report-maint"><b>預約維修 20筆</b><b>維修率 10%</b><b>保修總額 24,000元</b><span class="pie"></span></div></article><article><h3>任務執行概率</h3><div class="report-task"><b>任務數 100個</b><b>完成率 / 準時達成率 90% / 100%</b><b>平均誤差 5%</b></div></article></div></div>`;
+    const bars = [85.2,14.1,.8];
+    return `<div class="native-workspace report-page"><div class="report-head"><button type="button" class="native-input" data-itraq-filter="month">2025-01 ～ 2025-11</button><span>Excel 資料期間：${excelSource.period}</span><button type="button" class="native-action">⇩ 匯出月報</button></div><div class="report-kpis"><div><span>納管車輛</span><b>${excelSource.vehicles}台</b></div><div><span>行車紀錄</span><b>${excelSource.records.toLocaleString()}筆</b></div><div><span>行駛中</span><b>${excelSource.driving.toLocaleString()}筆</b></div><div><span>怠速</span><b>${excelSource.idling.toLocaleString()}筆</b></div><div><span>停車</span><b>${excelSource.parking.toLocaleString()}筆</b></div><div><span>超速紀錄</span><b>${excelSource.speeding.toLocaleString()}筆</b></div><div><span>資料來源</span><b>Excel</b></div></div><div class="report-grid"><article><h3>車輛狀態占比</h3><div class="native-bars">${bars.map((h,i)=>`<i style="height:${h}%" title="${['行駛中 85.2%','怠速 14.1%','停車 0.8%'][i]}"></i>`).join('')}</div><p>行駛中 85.2% · 怠速 14.1% · 停車 0.8%</p></article><article><h3>超速風險摘要</h3><div class="report-task"><b>${excelSource.speeding.toLocaleString()} 筆 GPS 速度高於路段限速</b><b>資料以 GPS 速度與 speedLimit 欄位比對</b><b>須再由車隊依路況與設備資料複核</b></div></article><article><h3>最新車況</h3><div class="report-maint"><b>${excelVehicleSnapshot[0].car} · ${excelVehicleSnapshot[0].mileage.toLocaleString()} km</b><b>${excelVehicleSnapshot[1].car} · ${excelVehicleSnapshot[1].mileage.toLocaleString()} km</b><b>${excelVehicleSnapshot[2].car} · ${excelVehicleSnapshot[2].mileage.toLocaleString()} km</b></div></article><article><h3>資料欄位</h3><div class="report-task"><b>車號、時間、狀態、GPS、里程、油耗、引擎時數</b><b>以及事件類型與事件發生時間</b><b>資料檔：${excelSource.file}</b></div></article></div></div>`;
   }
   function nativeVehiclesPage() {
-    const rows = Array.from({length:7}, (_,i) => ['KLA-9999','王曉明','神台汽車組','2021-08','貨運廂式車','聯結車','17T','98無鉛','SSASA1-123593',i < 4 ? '12312ADSFAF' + (134+i) : '--',nativeIconActions(['edit','✎','編輯車輛'],['refresh','♲','重新納管'],['delete','▢','刪除車輛'])]);
-    return `<div class="native-workspace">${nativeFilter({search:'搜尋車號/所屬廠牌/關鍵詞…',actions:'<button type="button" class="native-action">＋ 新增車輛</button>'})}${nativeTable(['車號 ↕','所屬駕駛 ↕','歸屬部門 ↕','出廠年月 ↕','車種 ↕','ETC車型 ↕','噸位 ↕','燃料種類 ↕','車輛識別碼 ↕','納管碼 ↕','操作'],rows)}${nativePager()}</div>`;
+    const rows = excelVehicleSnapshot.map(vehicle => [vehicle.car,vehicle.status,vehicle.time,vehicle.speed,vehicle.limit,vehicle.mileage.toLocaleString(),vehicle.fuel.toLocaleString(),vehicle.engine.toLocaleString(),vehicle.position,nativeIconActions(['edit','✎','編輯車輛'],['refresh','♲','重新納管'],['delete','▢','刪除車輛'])]);
+    return `<div class="native-workspace">${nativeFilter({search:'搜尋車號／狀態／經緯度…',actions:'<button type="button" class="native-action">＋ 新增車輛</button>'})}${nativeTable(['車號 ↕','車輛狀態 ↕','最後紀錄時間 ↕','GPS速度 ↕','路段限速 ↕','總里程(km) ↕','總油耗(L) ↕','引擎時數 ↕','經緯度 ↕','操作'],rows)}${nativePager()}</div>`;
   }
   function nativeDriversPage() {
     const rows = [['0911-389-291','陳曉明','專案部','A102******','KLA-9312','80',nativeIconActions(['edit','✎','編輯駕駛'],['delete','▢','刪除駕駛'])],['0911-389-291','陳志明','專案部','A102******','KLA-9312','79',nativeIconActions(['edit','✎','編輯駕駛'],['delete','▢','刪除駕駛'])],['0911-389-291','陳志明','專案部','A102******','KLA-9312','73',nativeIconActions(['edit','✎','編輯駕駛'],['delete','▢','刪除駕駛'])],['0911-389-291','陳曉明','專案部','A102******','KLA-9312','87',nativeIconActions(['edit','✎','編輯駕駛'],['delete','▢','刪除駕駛'])],['0911-389-291','陳曉明','專案部','A102******','KLA-9312','88',nativeIconActions(['edit','✎','編輯駕駛'],['delete','▢','刪除駕駛'])],['0911-223-344','王曉明','研發部','A102******','KLA-1294','64',nativeIconActions(['edit','✎','編輯駕駛'],['delete','▢','刪除駕駛'])]];
@@ -194,8 +199,7 @@
     const pageIds = itraqSections[currentItraqSection] || itraqSections.monitor;
     const pages = pageIds.map(pageNo => manualPages.find(item => item.p === pageNo)).filter(Boolean);
     const page = pages.find(item => item.p === currentManualPage) || pages[0];
-    const tabs = pages.map(item => `<button class="itraq-web-tab ${item.p === page.p ? 'on' : ''}" onclick="selectManualPage(${item.p})">${item.t}</button>`).join('');
-    screen.innerHTML = `<section class="itraq-native"><div class="itraq-web-tabs">${tabs}</div>${nativePageTitle(page.t, nativeSectionLabel(page.p))}${renderItraqNative(page.p)}</section>`;
+    screen.innerHTML = `<section class="itraq-native">${nativePageTitle(page.t, nativeSectionLabel(page.p))}${renderItraqNative(page.p)}</section>`;
   }
   function nativeForm(title, hint, confirmLabel='儲存') {
     showModal(`<h3>${title}</h3><p>${hint}</p><div class="native-modal-fields"><label>名稱／車號<input type="text" placeholder="請輸入資料"></label><label>備註<textarea placeholder="可補充說明（選填）"></textarea></label></div><div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="closeOv();toast('${title}已送出','這是原型操作，資料不會覆蓋原始紀錄。','ok')">${confirmLabel}</button></div>`);
@@ -359,6 +363,10 @@
   window.openWorkforceGuardrail = function () { showModal(`<h3>人資決策覆核流程</h3><p>1. 檢視單量、車況與班表；2. 提供轉調／訓練／合理調整；3. 設定改善目標與申訴管道；4. 人資與主管依適用法規個案核准。</p><div class="guardrail">安全分是輔助訊號，不是裁員按鈕。所有解約／裁撤均須人為審核與法遵確認。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`); };
   window.openManualChecklist = function () { gotoTab('monitor'); };
   window.selectManualPage = function (page) { renderItraqPage(page, sectionForPage(page)); };
+  window.openItraqPageMenu = function () {
+    const pages = (itraqSections[currentItraqSection] || []).map(pageNo => manualPages.find(item => item.p === pageNo)).filter(Boolean);
+    showModal(`<h3>切換功能</h3><div class="native-page-menu-list">${pages.map(page => `<button class="btn ${page.p === currentManualPage ? 'pri' : 'gho'} block" onclick="selectManualPage(${page.p});closeOv()">${page.t}</button>`).join('')}</div><div class="mb"><button class="btn gho" onclick="closeOv()">取消</button></div>`);
+  };
   window.openItraqNotifications = function () {
     if (!SESSION || SESSION.role !== 'fleet') { toast('通知中心', '請由目前身份可見的通知頁面查看。', 'in'); return; }
     curTab = null;
