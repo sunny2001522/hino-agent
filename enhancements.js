@@ -81,13 +81,15 @@
     16:[['未讀通知','12 則'],['事件通知','6 則'],['保修／任務','3／3 則']]
   };
   let currentManualPage = 2;
+  function renderItraqPage(pageNo) { currentManualPage = pageNo; renderItraqWorkspace(); }
   function renderItraqWorkspace() {
     const pages = manualPages.filter(item => item.p > 1);
     const page = pages.find(item => item.p === currentManualPage) || pages[0];
     const tabs = pages.map(item => `<button class="itraq-web-tab ${item.p === page.p ? 'on' : ''}" onclick="selectManualPage(${item.p})">${item.t}</button>`).join('');
     const live = (manualLiveData[page.p] || []).map(([label,value]) => `<div><span>${label}</span><b>${value}</b></div>`).join('');
+    const localTabs = SESSION.role === 'fleet' ? '' : `<div class="itraq-web-tabs">${tabs}</div>`;
     screen.innerHTML = `
-      <section class="itraq-workspace"><div class="itraq-web-tabs">${tabs}</div><div class="itraq-view"><div class="itraq-canvas"><img src="assets/itraq-manual/manual-${String(page.p).padStart(2,'0')}.jpg" alt="iTRAQ ${page.t}"></div><aside class="itraq-sidepanel"><div class="module-kicker">iTRAQ WEB</div><h2>${page.t}</h2><p>${page.d}</p><div class="status-tile">${live}</div><ul>${page.b.map(item => `<li>${item}</li>`).join('')}</ul><div class="connected-note"><b>管理連動：</b>${page.m}可供風險預警、車隊決策、競賽與 AI 問答依權限使用。</div><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn pri sm" onclick="openItraqDataDetail(${page.p})">查看數據</button><button class="btn gho sm" onclick="gotoTab('${SESSION.role === 'fleet' ? 'analytic' : 'focus'}')">AI 分析</button></div></aside></div></section>`;
+      <section class="itraq-workspace">${localTabs}<div class="itraq-view"><div class="itraq-canvas"><img src="assets/itraq-manual/manual-${String(page.p).padStart(2,'0')}.jpg" alt="iTRAQ ${page.t}"></div><aside class="itraq-sidepanel"><div class="module-kicker">iTRAQ WEB</div><h2>${page.t}</h2><p>${page.d}</p><div class="status-tile">${live}</div><ul>${page.b.map(item => `<li>${item}</li>`).join('')}</ul><div class="connected-note"><b>管理連動：</b>${page.m}可供風險預警、車隊決策、競賽與 AI 問答依權限使用。</div><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn pri sm" onclick="openItraqDataDetail(${page.p})">查看數據</button><button class="btn gho sm" onclick="gotoTab('${SESSION.role === 'fleet' ? 'ai' : 'focus'}')">AI 分析</button></div></aside></div></section>`;
   }
   function renderFleetCompetition() {
     screen.innerHTML = `
@@ -139,7 +141,7 @@
   function renderFleetSettingsEnhanced() {
     baseFleetMe();
     const foot = screen.querySelector('.foot');
-    foot.insertAdjacentHTML('beforebegin', `<section><div class="sh"><h2 class="sm">iTRAQ WEB 功能</h2><span class="tag">監控、車務、保修與通知</span></div><div class="module-grid"><div class="module-chip"><b>監控地圖 / 車輛定位</b><span>位置、狀態與基本車輛資訊</span></div><div class="module-chip"><b>即時影像 / 軌跡回放</b><span>行車影像調閱與歷史軌跡</span></div><div class="module-chip"><b>任務 / 事件 / 通知</b><span>任務派發、異常事件與推播中心</span></div><div class="module-chip"><b>保修 / 車輛 / 駕駛</b><span>保修履歷、車輛資料與駕駛管理</span></div><div class="module-chip"><b>營運月報 / 駕駛成績</b><span>月報圖表與安全駕駛成績</span></div><div class="module-chip"><b>管理行程 / 圍籬</b><span>工作流程、電子圍籬與進出通知</span></div></div><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn pri sm" onclick="gotoTab('itraq')">開啟 iTRAQ WEB</button></div></section>`);
+    foot.insertAdjacentHTML('beforebegin', `<section><div class="sh"><h2 class="sm">iTRAQ WEB 功能</h2><span class="tag">監控、車務、保修與通知</span></div><div class="module-grid"><div class="module-chip"><b>監控地圖 / 車輛定位</b><span>位置、狀態與基本車輛資訊</span></div><div class="module-chip"><b>即時影像 / 軌跡回放</b><span>行車影像調閱與歷史軌跡</span></div><div class="module-chip"><b>任務 / 事件 / 通知</b><span>任務派發、異常事件與推播中心</span></div><div class="module-chip"><b>保修 / 車輛 / 駕駛</b><span>保修履歷、車輛資料與駕駛管理</span></div><div class="module-chip"><b>營運月報 / 駕駛成績</b><span>月報圖表與安全駕駛成績</span></div><div class="module-chip"><b>管理行程 / 圍籬</b><span>工作流程、電子圍籬與進出通知</span></div></div><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn pri sm" onclick="gotoTab('monitor')">開啟 iTRAQ WEB</button></div></section>`);
   }
   function renderDriverHomeEnhanced() {
     baseDriverHome();
@@ -189,7 +191,7 @@
   window.openRaiseReview = function () { const list = allDrivers().filter(x => x.driver.s >= 80).sort((a,b) => b.driver.s-a.driver.s).slice(0,3); showModal(`<h3>薪酬與留任覆核</h3><p>候選：${list.map(x => x.driver.n + '（' + x.region.name + '，安全 ' + x.driver.s + ' 分）').join('、')}。</p><div class="guardrail">建議將安全表現與出勤、客訴、技術、資歷及同工同酬一併評估；不以單月排名直接加薪。</div><div class="mb"><button class="btn gho" onclick="closeOv()">返回</button><button class="btn pri" onclick="act('已建立薪酬覆核清單，送主管與人資共同審查。','ok');closeOv()">送薪酬會議</button></div>`); };
   window.openPerformanceReview = function () { showModal(`<h3>啟動安全改善與個案審查</h3><p>先由總負責人確認車況、排班、訓練與健康／工時風險，再給 30 天改善計畫、必要支持與申訴管道。</p><div class="guardrail"><b>不啟動自動裁員：</b>若改善未達成，仍須由人資依勞動法規、績效紀錄與合理調整程序進行個案審查。</div><div class="mb"><button class="btn gho" onclick="closeOv()">返回</button><button class="btn warnb" onclick="act('已建立 30 天安全改善計畫與人資個案覆核，不執行自動裁員。','wn');closeOv()">建立改善計畫</button></div>`); };
   window.openWorkforceGuardrail = function () { showModal(`<h3>人資決策覆核流程</h3><p>1. 檢視單量、車況與班表；2. 提供轉調／訓練／合理調整；3. 設定改善目標與申訴管道；4. 人資與主管依適用法規個案核准。</p><div class="guardrail">安全分是輔助訊號，不是裁員按鈕。所有解約／裁撤均須人為審核與法遵確認。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`); };
-  window.openManualChecklist = function () { gotoTab('itraq'); };
+  window.openManualChecklist = function () { gotoTab('monitor'); };
   window.selectManualPage = function (page) { currentManualPage = page; renderItraqWorkspace(); };
   window.openItraqDataDetail = function (pageNo) { const page = manualPages.find(item => item.p === pageNo); showModal(`<h3>${page.t}｜資料欄位</h3><p>${page.d}</p><ul class="mini-checks">${page.b.map(item => `<li>${item}</li>`).join('')}</ul><div class="source-note"><b>使用方式：</b>${page.m}會回填到車隊決策、AI 問答、風險預警與競賽改善計畫；資料仍依登入身份限縮可見範圍。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`); };
   window.openDriverSafetyPlan = function () { const {r,d} = myDriver(), p = improvementPlan(d,r); showModal(`<h3>${d.n} 的 7 天安全提分計畫</h3><p>目標：安全分 ${d.s} → ${Math.min(100,d.s+p.gain)}，${p.forward ? '預估前進 ' + p.forward + ' 名' : '先穩定降低事件'}。</p><ul class="mini-checks">${p.reasons.map((item,i)=>`<li>第 ${i+1} 項：${item}</li>`).join('')}<li>每天結束前查看自己的事件摘要；有車況或工時問題直接回報。</li></ul><div class="mb"><button class="btn gho" onclick="closeOv()">稍後再說</button><button class="btn pri" onclick="act('已啟動 7 天安全提分計畫，提醒不影響休息與安全判斷。','ok');closeOv()">開始計畫</button></div>`); };
@@ -238,12 +240,18 @@
   window.addChatActions = function (bubble, question) { if (SESSION && SESSION.role === 'shipper') { bubble.appendChild(el(`<div style="margin-top:9px"><button class="btn pri sm" onclick="act('已開啟貨件 ETA 與延誤推播。','ok')">開啟到貨推播</button></div>`)); document.getElementById('chatlog').scrollTop = 99999; return; } baseAddChatActions(bubble, question); };
 
   TABS.fleet.splice(0, TABS.fleet.length,
-    { id:'todo', l:'決策', render:renderFleetTodo },
-    { id:'itraq', l:'iTRAQ', render:renderItraqWorkspace },
-    { id:'analytic', l:'分析', render:renderFleetAnalytics },
-    { id:'people', l:'人力', render:renderPeopleDecision },
-    { id:'competition', l:'競賽', render:renderFleetCompetition },
-    { id:'me', l:'設定', render:renderFleetSettingsEnhanced }
+    { id:'monitor', l:'即時監控', render:() => renderItraqPage(2) },
+    { id:'history', l:'歷史車輛', render:() => renderItraqPage(4) },
+    { id:'task', l:'任務派遣', render:() => renderItraqPage(6) },
+    { id:'maintenance', l:'保修系統', render:() => renderItraqPage(7) },
+    { id:'data', l:'數據中心', render:() => renderItraqPage(10) },
+    { id:'vehicles', l:'車輛管理', render:() => renderItraqPage(11) },
+    { id:'drivers', l:'駕駛管理', render:() => renderItraqPage(12) },
+    { id:'settings', l:'系統設定', render:renderFleetSettingsEnhanced },
+    { id:'decision', l:'管理決策', render:renderFleetTodo },
+    { id:'people', l:'人力管理', render:renderPeopleDecision },
+    { id:'competition', l:'安全競賽', render:renderFleetCompetition },
+    { id:'ai', l:'AI 分析', render:renderFleetAnalytics }
   );
   TABS.lead.splice(3, 0, { id:'itraq', l:'iTRAQ', render:renderItraqWorkspace }, { id:'competition', l:'競賽', render:renderLeadCompetition });
   TABS.driver.splice(3, 0, { id:'competition', l:'排名', render:renderDriverCompetition });

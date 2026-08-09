@@ -27,14 +27,17 @@
  }
  /* ---------- app bar ---------- */
  .appbar{position:sticky;top:0;z-index:30;background:var(--teal);border-bottom:3px solid var(--accent);
- padding:11px 14px;display:flex;align-items:center;gap:11px;min-height:56px}
- .logo{height:32px;border-radius:8px;background:var(--accent);color:var(--teal);display:grid;place-items:center;
- font-size:14px;font-weight:900;letter-spacing:.5px;padding:0 10px;flex:0 0 auto}
- .whoami{flex:1;min-width:0}
- .whoami .nm{font-size:14px;font-weight:850;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- .whoami .rl{font-size:11px;color:#a9c6bf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- .barbtn{font:inherit;font-size:12px;font-weight:700;color:#dcecc9;background:rgba(255,255,255,.12);
- border:1px solid rgba(255,255,255,.2);padding:6px 11px;border-radius:9px;cursor:pointer;flex:0 0 auto}
+ padding:0 20px;display:flex;align-items:center;gap:22px;min-height:68px}
+ .logo{height:32px;border-radius:0;background:transparent;color:#fff;display:grid;place-items:center;
+ font-size:19px;font-weight:900;letter-spacing:.5px;padding:0;flex:0 0 auto}
+ .whoami{flex:0 0 auto;min-width:0}
+ .whoami .nm{font-size:13px;font-weight:850;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .whoami .nm::after{content:"⌄";font-size:12px;color:#b9cdd0;margin-left:6px}
+ .whoami .rl{display:none}
+ .noticebtn{position:relative;display:grid;place-items:center;width:28px;height:34px;border:0;background:transparent;color:#dcecc9;font:inherit;font-size:20px;cursor:pointer;flex:0 0 auto}
+ .noticebtn span{position:absolute;top:5px;right:0;width:7px;height:7px;border-radius:50%;background:#ef5b58;border:1px solid var(--teal)}
+ .barbtn{font:inherit;font-size:11px;font-weight:700;color:#dcecc9;background:rgba(255,255,255,.08);
+ border:1px solid rgba(255,255,255,.16);padding:6px 11px;border-radius:6px;cursor:pointer;flex:0 0 auto}
  /* ---------- scroll body ---------- */
  .screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px 22px}
  section{margin-top:20px;scroll-margin-top:70px}
@@ -202,12 +205,12 @@
  .demohint b{color:#2e4d0f}
  .demohint .fill{margin-top:9px}
  /* ---------- top navigation ---------- */
- .tabbar{position:relative;z-index:25;display:flex;align-items:stretch;gap:3px;overflow-x:auto;background:var(--teal);border-bottom:1px solid rgba(255,255,255,.16);
- box-shadow:0 3px 10px rgba(20,65,79,.12);min-height:50px;flex:0 0 auto;padding:7px 10px;scrollbar-width:none}
+ .tabbar{position:relative;z-index:25;display:flex;align-self:stretch;align-items:center;justify-content:center;gap:4px;min-width:0;overflow-x:auto;background:transparent;border:0;
+ box-shadow:none;min-height:65px;flex:1 1 auto;padding:0;scrollbar-width:none}
  .tabbar::-webkit-scrollbar{display:none}
- .tabbar button{flex:0 0 auto;background:transparent;border:none;border-radius:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;
- font:inherit;color:#bed0d0;padding:7px 13px;white-space:nowrap}
- .tabbar button .l{font-size:12.5px;font-weight:750}
+ .tabbar button{flex:0 0 auto;background:transparent;border:none;border-radius:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+ font:inherit;color:#c7d7d9;padding:9px 15px;white-space:nowrap}
+ .tabbar button .l{font-size:13px;font-weight:750}
  .tabbar button.on{background:var(--accent);color:#123d49}
  .tabbar button.on .l{color:#123d49}
  /* ---------- tour ---------- */
@@ -314,12 +317,12 @@
  <!-- ===== app bar ===== -->
  <div class="appbar" id="appbar" style="display:none">
  <div class="logo">iTRAQ</div>
+ <!-- ===== top tab bar ===== -->
+ <nav class="tabbar" id="tabbar" style="display:none"></nav>
+ <button class="noticebtn" type="button" aria-label="通知中心" onclick="gotoTab('settings')">♧<span></span></button>
  <div class="whoami"><div class="nm" id="waName">—</div><div class="rl" id="waRole">—</div></div>
  <button class="barbtn" onclick="logout()">登出</button>
  </div>
-
- <!-- ===== top tab bar ===== -->
- <nav class="tabbar" id="tabbar" style="display:none"></nav>
 
  <!-- ===== screen container ===== -->
  <div class="screen" id="screen"></div>
@@ -587,7 +590,7 @@ function autoSummaryCard(){
  <span class="aibadge" style="margin-left:auto"><span class="sp"></span>唯讀摘要</span></div>
  <div style="font-size:11.5px;color:var(--mut2);margin:2px 0 6px">前線執行已自動完成或委派，您不需逐一處理，往下只看「需要您拍板」的決策。</div>
  <div style="border-top:1px solid var(--line);padding-top:4px">${rows}</div>
- <div style="margin-top:10px"><button class="btn gho sm block" onclick="gotoTab('me')">調整 AI 自動化授權</button></div>
+ <div style="margin-top:10px"><button class="btn gho sm block" onclick="gotoTab('settings')">調整 AI 自動化授權</button></div>
  </div>`;
 }
 // AI 自動化授權面板（老闆一次設定，之後 AI 自動執行前線動作）
@@ -1359,7 +1362,7 @@ function openRoutePlan(){showModal(`<h3>路線優化報告 — 中區繞行 +22%
  <div class="plan rec"><div class="ph">方案 A <span class="rb">已自動套用</span></div><div class="pd">改走 64 快速道路避開市區 → 里程 -14%、預估準時率 +6%、油耗 -9%。已通知調度與駕駛。</div></div>
  <div class="plan"><div class="ph">方案 B（未採用）</div><div class="pd">調整配送順序（先南後北）→ 里程 -8%、準時率 +3%，效益低於方案 A。</div></div>
  <div class="plan"><div class="ph">方案 C（未採用）</div><div class="pd">尖峰改派 2 車分流 → 準時率 +9%，但成本增加、不符自動套用門檻。</div></div>
- <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="closeOv();gotoTab('me')">調整自動化授權</button></div>`);}
+ <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="closeOv();gotoTab('settings')">調整自動化授權</button></div>`);}
 function openFleetMail(id){const f=regions.find(r=>r.id===id);const rows=f.drivers.map((d,di)=>`<label class="mrow" style="cursor:pointer"><input type="checkbox" checked data-i="${di}"><div style="flex:1"><div class="nm">${d.n} <span class="mt">· ${f.name}區 · ${d.c} · 安全分 ${d.s}</span></div><div class="mt">${d.i}</div></div></label>`).join("");
  showModal(`<h3>寄信限期改善 — ${f.name}車隊</h3><p>以下為 ${f.name}區 駕駛（預設全選），確認後寄出 7 天限期改善通知。</p>${rows}<div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="confirmFleetMail('${id}')">確認寄信</button></div>`);}
 function confirmFleetMail(id){const f=regions.find(r=>r.id===id);let n=0;modal.querySelectorAll('input').forEach(c=>{if(c.checked){notify[id+'_'+c.dataset.i]=(notify[id+'_'+c.dataset.i]||0)+1;n++;}});warnState[id]=(warnState[id]||0)+1;closeOv();
@@ -1372,7 +1375,7 @@ function openBatchApprove(){const t=regions.filter(r=>r.safety.at(-1)<65);let to
  showModal(`<h3>低分車隊限期改善信（已自動化）</h3>
  <p>此流程已政策化：安全分 &lt; 65 即自動觸發，AI 擬信、各區總負責人具名寄出，您不需逐次核准。本月已自動寄出 ${t.length} 個車隊、共 ${total} 位駕駛。</p>
  ${list}
- <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="closeOv();gotoTab('me')">調整自動化授權</button></div>`);}
+ <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="closeOv();gotoTab('settings')">調整自動化授權</button></div>`);}
 // 怠速催辦：目標設定後由 AI 每日自動追蹤催辦，這裡只看狀態
 function openIdleMessage(){const s=regions.slice().sort((a,b)=>b.idlePct-a.idlePct);const rows=s.map(f=>{const ok=f.idlePct<=8;
  return `<div class="mrow"><div style="flex:1"><div class="nm">${f.name}車隊 <span class="mt">· ${f.lead}</span></div><div class="mt">怠速 <b style="color:${f.idlePct>=14?'var(--bad)':f.idlePct>=10?'var(--warn)':'var(--good)'}">${f.idlePct}%</b>→ 目標 ≤8%</div>
@@ -1776,8 +1779,8 @@ function addChatActions(bub,q){
  else if(q.includes('提醒')||q.includes('擬'))btns=`<button class="btn pri sm" onclick="act('已群發省油提醒給本區駕駛。','ok');closeOv()">一鍵群發</button>`;
  }else{
  if(q.includes('耗油')||q.includes('油'))btns=`<button class="btn pri sm" onclick="act('已對高耗油區發起全隊省油競賽。','ok');closeOv()">發起省油競賽</button>`;
- else if(q.includes('風險')||q.includes('事故'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('todo')">查看預警與介入狀態</button>`;
- else if(q.includes('效益')||q.includes('導入'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('me')">看完整效益</button>`;
+ else if(q.includes('風險')||q.includes('事故'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('decision')">查看預警與介入狀態</button>`;
+ else if(q.includes('效益')||q.includes('導入'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('settings')">看完整效益</button>`;
  }
  if(btns)bub.appendChild(el(`<div style="margin-top:9px">${btns}</div>`));
  document.getElementById('chatlog').scrollTop=99999;
@@ -1872,7 +1875,7 @@ function openSimPanel(){
  showModal(`<h3>事件模擬器 <span class="aibadge"><span class="sp"></span>比賽 Demo 用</span></h3>
  <p>比賽現場沒有真實車輛事件 — 點「觸發」模擬事件發生，觀察 AI 依您的自動化授權即時處理（調度層動作由 AI 代理執行、負責人監督）。把「我的 → AI 自動化授權」關掉再觸發，同一事件會改走「需您拍板」流程。</p>
  ${rows}
- <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="closeOv();gotoTab('me')">調整自動化授權</button></div>`);
+ <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="closeOv();gotoTab('settings')">調整自動化授權</button></div>`);
 }
 function runSim(k){
  const s=SIMS.find(x=>x.k===k);if(!s)return;
