@@ -36,7 +36,7 @@
  .barbtn{font:inherit;font-size:12px;font-weight:700;color:#dcecc9;background:rgba(255,255,255,.12);
  border:1px solid rgba(255,255,255,.2);padding:6px 11px;border-radius:9px;cursor:pointer;flex:0 0 auto}
  /* ---------- scroll body ---------- */
- .screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--barh) + 22px)}
+ .screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px 22px}
  section{margin-top:20px;scroll-margin-top:70px}
  section:first-child{margin-top:4px}
  .sh{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
@@ -201,14 +201,15 @@
  .demohint{background:var(--goodbg);border:1px dashed var(--accent);border-radius:12px;padding:12px 14px;font-size:12.5px;color:#3c5b1c;margin:6px 0 18px;line-height:1.7}
  .demohint b{color:#2e4d0f}
  .demohint .fill{margin-top:9px}
- /* ---------- bottom tab bar ---------- */
- .tabbar{position:sticky;bottom:0;z-index:40;display:flex;background:#fff;border-top:1px solid var(--line);
- box-shadow:0 -2px 14px rgba(20,65,79,.07);height:var(--barh);flex:0 0 auto}
- .tabbar button{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
- font:inherit;color:var(--mut2);padding:6px 2px}
- .tabbar button .l{font-size:12.5px;font-weight:700}
- .tabbar button.on{color:var(--accent)}
- .tabbar button.on .l{color:var(--teal)}
+ /* ---------- top navigation ---------- */
+ .tabbar{position:relative;z-index:25;display:flex;align-items:stretch;gap:3px;overflow-x:auto;background:var(--teal);border-bottom:1px solid rgba(255,255,255,.16);
+ box-shadow:0 3px 10px rgba(20,65,79,.12);min-height:50px;flex:0 0 auto;padding:7px 10px;scrollbar-width:none}
+ .tabbar::-webkit-scrollbar{display:none}
+ .tabbar button{flex:0 0 auto;background:transparent;border:none;border-radius:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+ font:inherit;color:#bed0d0;padding:7px 13px;white-space:nowrap}
+ .tabbar button .l{font-size:12.5px;font-weight:750}
+ .tabbar button.on{background:var(--accent);color:#123d49}
+ .tabbar button.on .l{color:#123d49}
  /* ---------- tour ---------- */
  #tourMask{position:absolute;inset:0;z-index:80;display:none}#tourMask.on{display:block}
  #tourHole{position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(15,35,45,.72);pointer-events:none;transition:top .25s,left .25s,width .25s,height .25s}
@@ -317,11 +318,11 @@
  <button class="barbtn" onclick="logout()">登出</button>
  </div>
 
+ <!-- ===== top tab bar ===== -->
+ <nav class="tabbar" id="tabbar" style="display:none"></nav>
+
  <!-- ===== screen container ===== -->
  <div class="screen" id="screen"></div>
-
- <!-- ===== bottom tab bar ===== -->
- <nav class="tabbar" id="tabbar" style="display:none"></nav>
 
  <!-- ===== 生成式 AI 對話助理 浮動入口 ===== -->
  <button class="aifab" id="aifab" style="display:none" onclick="openAIChat()">AI<br>助理<span class="dt2"></span></button>
