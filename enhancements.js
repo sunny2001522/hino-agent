@@ -91,6 +91,7 @@
   };
   let currentManualPage = 2;
   let currentItraqSection = 'monitor';
+  let currentReportMonth = Math.max(0, window.HINO_EXCEL_DATA.months.length - 1);
   function sectionForPage(pageNo) { return Object.keys(itraqSections).find(key => itraqSections[key].includes(pageNo)) || 'monitor'; }
   function renderItraqPage(pageNo, section) { currentManualPage = pageNo; currentItraqSection = section || sectionForPage(pageNo); renderItraqWorkspace(); }
   const excelSource = { file:window.HINO_EXCEL_DATA.meta.sourceFile, records:window.HINO_EXCEL_DATA.meta.records, vehicles:window.HINO_EXCEL_DATA.meta.vehicles, period:window.HINO_EXCEL_DATA.meta.period };
@@ -170,9 +171,27 @@
     return `<div class="native-workspace">${nativeFilter({date:'2025-01-01 - 2025-11-30',actions:'<button type="button" class="native-action">⇩ 匯出報表</button>'})}<div class="native-list-panel"><b>Excel 事件欄位彙整 · ${excelSource.records.toLocaleString()} 筆行車紀錄</b>${nativeTable(['事件類型 ↕','發生筆數 ↕','來源欄位 ↕','統計期間 ↕'],rows)}${nativePager()}</div></div>`;
   }
   function nativeReport() {
-    const sum = field => telemetryVehicles.reduce((total, vehicle) => total + (Number(vehicle[field]) || 0), 0);
-    const overspeed = sum('overspeed_count'), idle = sum('idle_count'), load = sum('high_load_count'), dtc = sum('dtc_count');
-    return `<div class="native-workspace report-page"><div class="report-head"><button type="button" class="native-input" data-itraq-filter="month">2025-01 ～ 2025-11</button><span>Excel 資料期間：${excelSource.period}</span><button type="button" class="native-action">⇩ 匯出月報</button></div><div class="report-kpis"><div><span>納管車輛</span><b>${excelSource.vehicles}台</b></div><div><span>行車紀錄</span><b>${excelSource.records.toLocaleString()}筆</b></div><div><span>journeyCode</span><b>${window.HINO_EXCEL_DATA.aggregate.journeys.toLocaleString()}個</b></div><div><span>超速紀錄</span><b>${overspeed.toLocaleString()}筆</b></div><div><span>怠速紀錄</span><b>${idle.toLocaleString()}筆</b></div><div><span>高引擎負載</span><b>${load.toLocaleString()}筆</b></div><div><span>DTC</span><b>${dtc.toLocaleString()}筆</b></div></div><div class="report-grid"><article><h3>可驗證的遙測摘要</h3><div class="report-task"><b>超速、怠速、高引擎負載與 DTC 均由 Excel 欄位彙整</b><b>未含油價、費用、任務準時率或事故成本</b><b>所有異常需再由車隊人工覆核</b></div></article><article><h3>超速風險摘要</h3><div class="report-task"><b>${overspeed.toLocaleString()} 筆 GPS 速度高於路段限速</b><b>資料以 GPS 速度與 speedLimit 欄位比對</b><b>須再由車隊依路況與設備資料複核</b></div></article><article><h3>最新車況</h3><div class="report-maint">${excelVehicleSnapshot.slice(0,3).map(vehicle => `<b>${vehicle.car} · 最後紀錄 ${vehicle.time}</b>`).join('')}</div></article><article><h3>資料欄位</h3><div class="report-task"><b>車號、時間、狀態、GPS、里程、油耗、引擎時數</b><b>以及事件類型與事件發生時間</b><b>資料檔：${excelSource.file}</b></div></article></div></div>`;
+    const metrics = Object.fromEntries(window.HINO_EXCEL_DATA.metrics.map(metric => [metric.key, metric.data]));
+    const month = currentReportMonth;
+    const monthLabel = window.HINO_EXCEL_DATA.months[month];
+    const value = key => Number(metrics[key]?.[month] || 0);
+    const fmt = number => Number(number).toLocaleString('zh-TW', { maximumFractionDigits: 2 });
+    const barChart = (values, color, suffix, title) => {
+      const max = Math.max(...values, 1), width = 720, height = 188, pad = { l: 35, r: 12, t: 16, b: 30 };
+      const graphW = width - pad.l - pad.r, graphH = height - pad.t - pad.b, step = graphW / values.length;
+      const grid = [0, .25, .5, .75, 1].map(ratio => `<line x1="${pad.l}" x2="${width-pad.r}" y1="${pad.t+graphH*(1-ratio)}" y2="${pad.t+graphH*(1-ratio)}" class="mr-grid"/>`).join('');
+      const columns = values.map((item, index) => { const h = Math.max(2, graphH * item / max), x = pad.l + index * step + step * .24, y = pad.t + graphH - h; return `<g><title>${window.HINO_EXCEL_DATA.months[index]}：${fmt(item)}${suffix}</title><rect x="${x}" y="${y}" width="${Math.max(5,step*.52)}" height="${h}" rx="2" fill="${color}"/><text x="${pad.l+index*step+step/2}" y="${height-9}" text-anchor="middle">${index+1}</text></g>`; }).join('');
+      return `<div class="mr-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${title}">${grid}<text x="${pad.l}" y="12" class="mr-unit">${suffix}</text>${columns}</svg><div class="mr-legend"><span><i style="background:${color}"></i>${title}</span><b>${monthLabel}：${fmt(values[month])}${suffix}</b></div></div>`;
+    };
+    const comboChart = () => {
+      const speed = metrics.speed, load = metrics.load, fuel = metrics.fuel, maxBars = Math.max(...speed, ...load, 1), maxFuel = Math.max(...fuel, 1), width = 720, height = 188, pad = { l: 35, r: 18, t: 16, b: 30 }, graphW = width-pad.l-pad.r, graphH = height-pad.t-pad.b, step = graphW / speed.length;
+      const grid = [0,.25,.5,.75,1].map(ratio => `<line x1="${pad.l}" x2="${width-pad.r}" y1="${pad.t+graphH*(1-ratio)}" y2="${pad.t+graphH*(1-ratio)}" class="mr-grid"/>`).join('');
+      const bars = speed.map((item,index) => { const x=pad.l+index*step+step*.13, sw=Math.max(3,step*.23), sh=Math.max(2,graphH*item/maxBars), lh=Math.max(2,graphH*load[index]/maxBars); return `<g><title>${window.HINO_EXCEL_DATA.months[index]}：超速 ${fmt(item)} 筆、高引擎負載 ${fmt(load[index])} 筆、百公里油耗 ${fmt(fuel[index])} L</title><rect x="${x}" y="${pad.t+graphH-sh}" width="${sw}" height="${sh}" rx="2" fill="#7ec6ca"/><rect x="${x+sw+2}" y="${pad.t+graphH-lh}" width="${sw}" height="${lh}" rx="2" fill="#f2b4bd"/><text x="${pad.l+index*step+step/2}" y="${height-9}" text-anchor="middle">${index+1}</text></g>`; }).join('');
+      const line = fuel.map((item,index) => `${pad.l+index*step+step/2},${pad.t+graphH-(item/maxFuel)*graphH}`).join(' ');
+      return `<div class="mr-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="每月超速、高引擎負載與油耗趨勢">${grid}${bars}<polyline points="${line}" class="mr-line"/>${fuel.map((item,index)=>`<circle cx="${pad.l+index*step+step/2}" cy="${pad.t+graphH-(item/maxFuel)*graphH}" r="3" class="mr-dot"/>`).join('')}</svg><div class="mr-legend"><span><i class="mr-a"></i>超速</span><span><i class="mr-b"></i>高引擎負載</span><span><i class="mr-c"></i>百公里油耗</span><b>${monthLabel}：${fmt(value('fuel'))} L/100km</b></div></div>`;
+    };
+    const actualMaintenance = telemetryVehicles.filter(vehicle => vehicle.dtc_count > 0).length;
+    return `<div class="native-workspace report-page monthly-report"><div class="mr-toolbar"><div class="mr-month"><button type="button" aria-label="上個月份" data-report-month="-1">‹</button><b>2025-${String(month+1).padStart(2,'0')}</b><button type="button" aria-label="下個月份" data-report-month="1">›</button></div><span>統計期間：${monthLabel}（Excel 資料期間 ${excelSource.period}）</span><button type="button" class="native-action" data-itraq-action="report-export">⇩ 匯出月報</button></div><div class="mr-sections"><article class="mr-panel mr-mobility"><h3>車輛移動率</h3><div class="mr-summary"><div><i>◷</i><span>計算安全分</span><b>${fmt(value('safety'))} 分</b></div><div><i>◫</i><span>怠速佔比</span><b>${fmt(value('idle'))}%</b></div><div><i>▣</i><span>高引擎負載</span><b>${fmt(value('load'))} 筆</b></div></div>${barChart(metrics.safety, '#61bfc2', ' 分', '每月計算安全分')}</article><article class="mr-panel mr-drive"><h3>車輛行駛數據</h3><div class="mr-summary mr-summary-four"><div><i>⌁</i><span>超速紀錄</span><b>${fmt(value('speed'))} 筆</b></div><div><i>◌</i><span>高引擎負載</span><b>${fmt(value('load'))} 筆</b></div><div><i>△</i><span>百公里油耗</span><b>${fmt(value('fuel'))} L</b></div><div><i>▧</i><span>DTC</span><b>${fmt(value('dtc'))} 筆</b></div></div>${comboChart()}</article><article class="mr-panel mr-maintenance"><h3>保養維修概況</h3><div class="mr-maint-body"><div class="mr-empty-donut"><b>待串接</b><span>工單／保養費</span></div><div><div class="mr-maint-stat"><i>▣</i><span>有 DTC 的車號</span><b>${actualMaintenance} 台</b></div><div class="mr-maint-stat"><i>◫</i><span>原廠工單／保養項目</span><b>來源未提供</b></div><div class="mr-maint-stat"><i>＄</i><span>保養花費</span><b>來源未提供</b></div></div></div><p class="mr-note">Excel 可提供 DTC 作為覆核候選，但未提供保養項目、筆數、費用與工單結果。</p></article><article class="mr-panel mr-task"><h3>任務執行概況</h3><div class="mr-summary mr-summary-three"><div><i>▤</i><span>journeyCode</span><b>${fmt(window.HINO_EXCEL_DATA.aggregate.journeys)} 個</b></div><div><i>✓</i><span>任務準時達成率</span><b>來源未提供</b></div><div><i>↔</i><span>平均延誤天數</span><b>來源未提供</b></div></div><div class="mr-task-empty"><b>任務、站點與 ETA 欄位尚未串接</b><span>目前可用 journeyCode 追溯車輛遙測，但不能推估任務執行率或準時率。</span><button type="button" class="native-text-action" data-itraq-action="report-task-request">建立任務資料串接需求</button></div></article></div><div class="mr-foot">月報圖表使用 Excel 月結遙測：超速、怠速、高引擎負載、DTC、計算安全分與百公里油耗。保修及任務資料不在來源中。</div></div>`;
   }
   function nativeVehiclesPage() {
     const rows = excelVehicleSnapshot.map(vehicle => [vehicle.car,vehicle.status,vehicle.time,vehicle.speed,vehicle.limit,vehicle.mileage.toLocaleString(),vehicle.fuel.toLocaleString(),vehicle.engine.toLocaleString(),vehicle.position,nativeIconActions(['edit','✎','編輯車輛'],['refresh','♲','重新納管'],['delete','▢','刪除車輛'])]);
@@ -234,6 +253,12 @@
     screen.addEventListener('click', event => {
       const button = event.target.closest('button');
       if (!button || !screen.contains(button) || button.classList.contains('itraq-web-tab')) return;
+      if (button.dataset.reportMonth) {
+        const next = currentReportMonth + Number(button.dataset.reportMonth);
+        currentReportMonth = Math.max(0, Math.min(window.HINO_EXCEL_DATA.months.length - 1, next));
+        renderItraqPage(10, 'data');
+        return;
+      }
       const pager = button.closest('.native-pager');
       if (pager && button.dataset.itraqPage) { updateNativePager(pager, button.dataset.itraqPage); return; }
       if (button.dataset.itraqPage && /^\d+$/.test(button.dataset.itraqPage)) { renderItraqPage(Number(button.dataset.itraqPage), sectionForPage(Number(button.dataset.itraqPage))); return; }
@@ -249,8 +274,23 @@
       if (button.closest('.native-map-switch')) { button.classList.toggle('on'); toast('地圖圖層已更新', `${button.textContent}顯示已${button.classList.contains('on') ? '開啟' : '關閉'}。`, 'ok'); return; }
       if (button.dataset.itraqFilter) { nativeFilterDialog(button.dataset.itraqFilter, button.textContent); return; }
       if (button.dataset.itraqAction) {
-        const labels = { edit:'編輯資料', copy:'已複製任務', refresh:'已更新納管狀態', delete:'刪除資料', save:'已儲存行程', open:'已開啟通知', vehicle:'車輛即時資訊', fence:'電子圍籬資訊', 'confirm-maintenance':'保修值已確認', 'page-size':'每頁資料筆數' };
+        const labels = { edit:'編輯資料', copy:'已複製任務', refresh:'已更新納管狀態', delete:'刪除資料', save:'已儲存行程', open:'已開啟通知', vehicle:'車輛即時資訊', fence:'電子圍籬資訊', 'confirm-maintenance':'保修值已確認', 'page-size':'每頁資料筆數', 'report-task-request':'任務資料串接需求' };
         const action = button.dataset.itraqAction;
+        if (action === 'report-export') {
+          const reportMonth = currentReportMonth;
+          const rows = [['月份','計算安全分','超速紀錄','怠速佔比','高引擎負載','DTC','百公里油耗']].concat(window.HINO_EXCEL_DATA.months.map((label, index) => {
+            const metrics = Object.fromEntries(window.HINO_EXCEL_DATA.metrics.map(metric => [metric.key, metric.data]));
+            return [label, metrics.safety[index], metrics.speed[index], metrics.idle[index], metrics.load[index], metrics.dtc[index], metrics.fuel[index]];
+          }));
+          const csv = '\ufeff' + rows.map(row => row.join(',')).join('\n');
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' }));
+          link.download = `iTRAQ-營運月報-2025-${String(reportMonth + 1).padStart(2,'0')}.csv`;
+          link.click();
+          URL.revokeObjectURL(link.href);
+          toast('月報已匯出', `已下載 ${window.HINO_EXCEL_DATA.months[reportMonth]} 的 Excel 遙測月報 CSV。`, 'ok');
+          return;
+        }
         if (action === 'delete') { showModal(`<h3>刪除資料</h3><p>系統不會直接刪除原始資料。確認後會送出刪除申請供主管覆核。</p><div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn dng" onclick="closeOv();toast('已送出刪除申請','原始資料未被刪除。','wn')">送出申請</button></div>`); return; }
         if (action === 'edit') { nativeForm('編輯資料', '請修改資料後送出；系統不會覆蓋原始紀錄。', '儲存變更'); return; }
         if (action === 'vehicle') { showModal(`<h3>車輛即時資訊</h3><p>683-M6 · 行駛中 · 70 km/h</p><p>可由此查看行駛狀態與安全事件摘要。</p><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`); return; }

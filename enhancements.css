@@ -180,3 +180,61 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
   .report-grid article { min-height: 185px; }
   .native-pager { padding-top: 10px; }
 }
+
+/* 營運月報：沿用 iTRAQ 月報的雙欄資訊結構，圖表只呈現 Excel 可計算指標。 */
+.monthly-report { padding: 16px; background: #f8faf9; }
+.mr-toolbar { display: flex; align-items: center; gap: 10px; min-height: 38px; margin-bottom: 15px; }
+.mr-toolbar > span { margin-left: auto; color: #8a9698; font-size: 11px; }
+.mr-month { display: inline-flex; align-items: center; overflow: hidden; border: 1px solid #e0e7e6; border-radius: 4px; background: #fff; }
+.mr-month button { width: 34px; height: 31px; border: 0; background: #fff; color: #66806e; font: inherit; font-size: 20px; line-height: 1; cursor: pointer; }
+.mr-month button:hover, .mr-month button:focus-visible { background: #eff7df; color: #4d7621; outline: 0; }
+.mr-month b { min-width: 88px; text-align: center; color: #4c5d61; font-size: 12px; }
+.mr-sections { display: grid; grid-template-columns: minmax(300px, .74fr) minmax(430px, 1.26fr); gap: 16px; }
+.mr-panel { overflow: hidden; border: 1px solid #e5eaea; border-radius: 3px; background: #fff; box-shadow: 0 1px 2px rgba(13,51,64,.025); }
+.mr-panel h3 { margin: 0; padding: 12px 14px 2px; color: #41565b; font-size: 14px; font-weight: 800; }
+.mr-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 11px 14px 0; border: 1px solid #eef1f1; border-radius: 3px; background: #fff; }
+.mr-summary-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.mr-summary-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mr-summary > div { position: relative; min-width: 0; padding: 10px 8px 11px 31px; border-right: 1px solid #eef1f1; }
+.mr-summary > div:last-child { border-right: 0; }
+.mr-summary i { position: absolute; top: 10px; left: 10px; color: #76c0c3; font-size: 15px; font-style: normal; }
+.mr-drive .mr-summary i { color: #e58f99; }
+.mr-task .mr-summary i { color: #a5bd57; }
+.mr-summary span, .mr-summary b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mr-summary span { color: #91a0a2; font-size: 10px; }
+.mr-summary b { margin-top: 2px; color: #4b5d61; font-size: 13px; }
+.mr-chart { padding: 8px 12px 10px; }
+.mr-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.mr-chart text { fill: #99a5a6; font-size: 10px; font-family: inherit; }
+.mr-grid { stroke: #edf1f1; stroke-width: 1; }
+.mr-unit { fill: #a2adae !important; font-size: 9px !important; }
+.mr-line { fill: none; stroke: #df7e8d; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.mr-dot { fill: #fff; stroke: #df7e8d; stroke-width: 2; }
+.mr-legend { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; color: #879496; font-size: 10.5px; }
+.mr-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.mr-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #61bfc2; }
+.mr-legend i.mr-a { background: #7ec6ca; }.mr-legend i.mr-b { background: #f2b4bd; }.mr-legend i.mr-c { width: 14px; height: 2px; border-radius: 0; background: #df7e8d; }
+.mr-legend b { margin-left: auto; color: #587078; font-size: 10.5px; }
+.mr-maintenance, .mr-task { min-height: 246px; }
+.mr-maint-body { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 10px; padding: 11px 14px 4px; }
+.mr-empty-donut { display: grid; width: 122px; height: 122px; margin: 3px auto; border: 18px solid #edf1ee; border-top-color: #e9a65d; border-right-color: #f0d2a5; border-radius: 50%; place-content: center; text-align: center; transform: rotate(10deg); }
+.mr-empty-donut b, .mr-empty-donut span { transform: rotate(-10deg); }.mr-empty-donut b { color: #6a795f; font-size: 13px; }.mr-empty-donut span { color: #98a29a; font-size: 9px; }
+.mr-maint-stat { display: grid; grid-template-columns: 20px 1fr auto; gap: 6px; align-items: center; padding: 9px 0; border-bottom: 1px solid #edf1f1; color: #819092; font-size: 10.5px; }
+.mr-maint-stat:last-child { border-bottom: 0; }.mr-maint-stat i { color: #e5a15c; font-style: normal; }.mr-maint-stat b { color: #5d6d70; font-size: 11px; }
+.mr-note { margin: 2px 14px 13px; color: #97a2a4; font-size: 10.5px; line-height: 1.55; }
+.mr-task-empty { display: grid; gap: 7px; min-height: 128px; margin: 12px 14px 14px; padding: 16px; border: 1px dashed #dbe4df; background: #fbfdfb; color: #859395; font-size: 11px; line-height: 1.6; }
+.mr-task-empty b { color: #607477; font-size: 12px; }.mr-task-empty .native-text-action { justify-self: start; margin-top: 2px; }
+.mr-foot { margin-top: 12px; color: #899799; font-size: 10.5px; line-height: 1.55; }
+
+@media (max-width: 819px) {
+  .mr-sections { grid-template-columns: 1fr; }
+}
+@media (max-width: 469px) {
+  .monthly-report { padding: 11px; }
+  .mr-toolbar { gap: 7px; flex-wrap: wrap; }.mr-toolbar > span { order: 3; flex: 1 0 100%; margin-left: 0; }
+  .mr-toolbar .native-action { margin-left: auto; }
+  .mr-summary-four { grid-template-columns: repeat(2, minmax(0, 1fr)); }.mr-summary-four > div:nth-child(2) { border-right: 0; }.mr-summary-four > div:nth-child(-n+2) { border-bottom: 1px solid #eef1f1; }
+  .mr-maint-body { grid-template-columns: 1fr; }.mr-empty-donut { width: 105px; height: 105px; border-width: 15px; }
+  .mr-summary span { font-size: 9px; }.mr-summary b { font-size: 11px; }
+  .mr-legend b { flex-basis: 100%; margin-left: 0; text-align: center; }
+}
