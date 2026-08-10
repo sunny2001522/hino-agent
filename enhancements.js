@@ -521,6 +521,62 @@
       </section>
       <section>${competitionRules()}</section><div class="foot">資料來源：${source.sourceFile} · 人資欄位未提供</div>`;
   }
+  const executiveDecisionStorageKey = 'hino-owner-decisions-v1';
+  let executiveDecisionState = {};
+  try { executiveDecisionState = JSON.parse(localStorage.getItem(executiveDecisionStorageKey) || '{}'); } catch (error) { executiveDecisionState = {}; }
+  function topTelemetry(field, count=1) { return [...telemetryVehicles].sort((a, b) => Number(b[field] || 0) - Number(a[field] || 0)).slice(0, count); }
+  function executiveDecisionDefinitions() {
+    const speed = topTelemetry('overspeed_count')[0];
+    const idle = topTelemetry('idle_pct')[0];
+    const dtc = topTelemetry('dtc_count')[0];
+    const regionName = vehicle => (regions.find(region => region.id === vehicle.region) || {}).name || '所屬區域';
+    return {
+      speed: {
+        region: regionName(speed), title:`交辦 ${regionName(speed)} 總負責人覆核 ${speed.c}`,
+        signal:`超速 ${speed.overspeed_count.toLocaleString()} 筆；高引擎負載 ${speed.high_load_count.toLocaleString()} 筆`,
+        ask:'請在 24 小時內回覆限速資料、路況、車況與派車情境的覆核結果，再決定是否需要保修、調度調整或安全提醒。',
+        evidence:[['車號',speed.c],['超速率',`${speed.overspeed_pct}%`],['高引擎負載率',`${speed.high_load_pct}%`],['最後紀錄',speed.last_time]]
+      },
+      maintenance: {
+        region: regionName(dtc), title:`交辦 ${regionName(dtc)} 總負責人處理保修優先序`,
+        signal:`${dtc.c} 有 DTC ${dtc.dtc_count} 筆；${idle.c} 怠速佔比 ${idle.idle_pct}%`,
+        ask:'請確認故障碼、車況與停等原因；若需要停派、進廠或調度替代，才上呈老闆核准。',
+        evidence:[['DTC 優先車號',`${dtc.c} · ${dtc.dtc_count} 筆`],['怠速優先車號',`${idle.c} · ${idle.idle_pct}%`],['DTC 最後紀錄',dtc.last_time],['怠速車最後紀錄',idle.last_time]]
+      }
+    };
+  }
+  function executiveDecisionStatus(key) {
+    const state = executiveDecisionState[key];
+    return state ? `<span class="executive-status done">已交辦 · ${state.createdAt}</span>` : '<span class="executive-status open">待您決定</span>';
+  }
+  function renderExecutiveBrief() {
+    const source = window.HINO_EXCEL_DATA.meta;
+    const decisions = executiveDecisionDefinitions();
+    const pending = Object.keys(decisions).filter(key => !executiveDecisionState[key]).length;
+    const latest = source.lastRecord || source.period;
+    const decisionCard = (key, decision, tone) => `<article class="executive-decision ${tone}"><div class="executive-card-head"><span>${decision.region} · 總負責人</span>${executiveDecisionStatus(key)}</div><h3>${decision.title}</h3><strong>${decision.signal}</strong><p>${decision.ask}</p><div class="executive-evidence">${decision.evidence.map(([label, value]) => `<span><b>${label}</b>${value}</span>`).join('')}</div><div class="acts"><button class="btn pri sm" onclick="openExecutiveDecision('${key}')">${executiveDecisionState[key] ? '查看交辦內容' : '下達 24 小時覆核'}</button><button class="btn gho sm" onclick="openExecutiveEvidence('${key}')">看佐證</button></div></article>`;
+    screen.innerHTML = `
+      <section class="executive-hero"><div class="executive-kicker">老闆 10 分鐘決策台</div><div class="executive-title"><div><h2>今天只需決定 ${pending} 件事</h2><p>先交辦總負責人覆核；保修、調度或人事動作均以覆核回覆為準。</p></div><div class="executive-timer"><b>10 分鐘</b><span>每日檢視</span></div></div><div class="executive-facts"><span><b>${source.vehicles}</b> 台車</span><span><b>${source.records.toLocaleString()}</b> 筆遙測</span><span><b>${latest}</b> 最後資料</span></div></section>
+      <section class="executive-section"><div class="sh"><h2>現在需要您拍板</h2><span class="num" style="background:${pending ? 'var(--warn)' : 'var(--good)'}">${pending}</span></div><div class="subt">每張卡都包含交辦對象、為何要處理、總負責人必須回覆的事項及原始資料佐證。</div><div class="executive-decisions">${decisionCard('speed', decisions.speed, 'urgent')}${decisionCard('maintenance', decisions.maintenance, 'warning')}</div></section>
+      <section class="executive-section executive-followup"><div class="sh"><h2 class="sm">總負責人管理重點</h2></div><div class="executive-followup-grid"><div><b>您要追的不是單一事件</b><span>確認各區總負責人是否在期限內提供「原因、已處置、需升級決定」三件事。</span></div><div><b>人力／薪酬今天不決</b><span>Excel 沒有工時、出勤、薪酬、職級與人員資料；不能據此加薪、裁員或評績。</span><button class="btn gho sm" onclick="gotoTab('people')">查看人力資料缺口</button></div><div><b>不在首頁看的內容</b><span>地圖、完整趨勢和所有車號保留在下層頁面；只在需要佐證時才下鑽。</span><button class="btn gho sm" onclick="gotoTab('monitor')">開啟監控地圖</button></div></div></section>
+      <div class="foot">資料期間：${source.period} · 本頁決策依 Excel 遙測訊號建立，不會自動做保修、停派或人事處分。</div>`;
+  }
+  window.openExecutiveEvidence = function (key) {
+    const decision = executiveDecisionDefinitions()[key];
+    showModal(`<h3>${decision.title}｜資料佐證</h3><div class="native-table-wrap"><table class="native-table"><tbody>${decision.evidence.map(([label, value]) => `<tr><th>${label}</th><td>${value}</td></tr>`).join('')}</tbody></table></div><div class="guardrail">這些是待覆核訊號；須先確認限速、車況、路況與派車情境，不可直接推論為駕駛個人責任。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
+  };
+  window.openExecutiveDecision = function (key) {
+    const decision = executiveDecisionDefinitions()[key];
+    const state = executiveDecisionState[key];
+    showModal(`<h3>${state ? '交辦內容' : '下達覆核'}｜${decision.region}</h3><p>${decision.ask}</p><div class="source-note"><b>交辦對象：</b>${decision.region}總負責人（來源未提供姓名與聯絡方式）。<br><b>交辦依據：</b>${decision.signal}</div><div class="guardrail">總負責人回覆後，才由您決定是否核准額外保修、調度調整或政策；系統不會自動停派或處分人員。</div><div class="mb"><button class="btn gho" onclick="closeOv()">${state ? '關閉' : '暫不交辦'}</button>${state ? '' : `<button class="btn pri" onclick="recordExecutiveDecision('${key}')">確認交辦</button>`}</div>`);
+  };
+  window.recordExecutiveDecision = function (key) {
+    executiveDecisionState[key] = { createdAt:new Date().toLocaleString('zh-TW', { hour:'2-digit', minute:'2-digit' }) };
+    try { localStorage.setItem(executiveDecisionStorageKey, JSON.stringify(executiveDecisionState)); } catch (error) { /* Keep the current-session decision state when persistence is blocked. */ }
+    closeOv();
+    renderExecutiveBrief();
+    toast('已交辦總負責人覆核', '本頁已保留交辦狀態；等待覆核回覆後再決定是否升級處理。', 'ok');
+  };
   function renderFleetSettingsEnhanced() {
     baseFleetMe();
     const foot = screen.querySelector('.foot');
@@ -677,17 +733,17 @@
   });
 
   TABS.fleet.splice(0, TABS.fleet.length,
+    { id:'decision', l:'今日決策', render:renderExecutiveBrief },
     { id:'monitor', l:'即時監控', render:() => renderItraqPage(2, 'monitor') },
     { id:'history', l:'歷史車輛', render:() => renderItraqPage(4, 'history') },
     { id:'task', l:'任務派遣', render:() => renderItraqPage(6, 'task') },
     { id:'maintenance', l:'保修系統', render:() => renderItraqPage(7, 'maintenance') },
     { id:'data', l:'數據中心', render:() => renderItraqPage(9, 'data') },
     { id:'fleet', l:'車隊管理', render:() => renderItraqPage(11, 'fleet') },
-    { id:'settings', l:'系統設定', render:() => renderItraqPage(16, 'settings') },
-    { id:'decision', l:'管理決策', render:renderFleetTodo },
     { id:'people', l:'人力管理', render:renderPeopleDecision },
     { id:'competition', l:'安全競賽', render:renderFleetCompetition },
-    { id:'ai', l:'AI 分析', render:renderFleetAnalytics }
+    { id:'ai', l:'AI 分析', render:renderFleetAnalytics },
+    { id:'settings', l:'系統設定', render:() => renderItraqPage(16, 'settings') }
   );
   TABS.lead.splice(0, TABS.lead.length,
     { id:'monitor', l:'即時監控', render:() => renderItraqPage(2, 'monitor') },
