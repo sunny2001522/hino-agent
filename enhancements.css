@@ -99,18 +99,13 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
 .native-map-switch { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .native-map-switch button { border: 1px solid #d8e2e0; border-radius: 3px; padding: 5px 8px; background: #f8faf8; color: #56676b; font: inherit; font-size: 11px; }
 .native-map-switch button.on { border-color: #d8ebb1; background: #f3f9e7; color: #527c20; }
-.native-map { position: relative; min-height: 310px; overflow: hidden; border: 1px solid #d6dede; background: linear-gradient(22deg, transparent 28%, rgba(255,255,255,.9) 28% 35%, transparent 35%), linear-gradient(130deg, #c8dfc5 0 18%, #eee7cb 18% 40%, #c4dbc4 40% 61%, #e9e6c8 61% 100%); }
-.native-map::before { position: absolute; inset: 0; background: repeating-linear-gradient(28deg, transparent 0 28px, rgba(255,255,255,.57) 29px 33px, transparent 34px 75px), repeating-linear-gradient(-22deg, transparent 0 35px, rgba(255,255,255,.48) 36px 40px, transparent 41px 93px); content: ""; opacity: .9; }
-.road { position: absolute; z-index: 1; display: block; height: 12px; border: 2px solid rgba(255,255,255,.85); border-radius: 999px; background: #eac966; box-shadow: 0 0 0 1px rgba(183,155,60,.18); transform: rotate(-22deg); }
-.road-a { top: 42%; left: -8%; width: 116%; }
-.road-b { top: 24%; left: 11%; width: 69%; transform: rotate(48deg); }
-.road-c { bottom: 15%; left: -13%; width: 91%; transform: rotate(13deg); }
-.water { position: absolute; z-index: 1; right: -5%; bottom: -22%; width: 43%; height: 64%; border-radius: 50% 0 0; background: #92d1db; transform: rotate(18deg); }
-.map-label, .map-fence { position: absolute; z-index: 3; padding: 4px 6px; border-radius: 2px; background: rgba(255,255,255,.89); color: #4c5f61; font: inherit; font-size: 10px; font-style: normal; box-shadow: 0 1px 3px rgba(31,56,60,.2); }
-.map-fence { cursor: pointer; }
-.label-a { top: 28%; left: 31%; }.label-b { top: 52%; right: 20%; }.map-fence { right: 8%; bottom: 21%; border: 1px solid #a6d94d; color: #507b21; }
-.map-pin { position: absolute; z-index: 4; display: grid; width: 26px; height: 26px; padding: 0; border: 2px solid #fff; border-radius: 50%; place-items: center; color: #fff; font: inherit; font-size: 11px; cursor: pointer; box-shadow: 0 1px 4px rgba(13,51,64,.32); }
-.pin-run { top: 35%; left: 44%; background: #74a82a; }.pin-idle { top: 67%; left: 27%; background: #ecab3b; }.pin-off { top: 54%; right: 28%; background: #c85c55; }
+.native-map { min-height: 310px; overflow: hidden; border: 1px solid #d6dede; background: #dce6e9; }
+.native-map .leaflet-container { width: 100%; height: 100%; min-height: 310px; font: inherit; }
+.native-map .leaflet-popup-content { color: #41575d; font-family: inherit; font-size: 11px; line-height: 1.6; }
+.native-map .leaflet-tooltip { border: 0; border-radius: 3px; padding: 3px 6px; background: rgba(17, 52, 62, .9); color: #fff; font: inherit; font-size: 10px; box-shadow: 0 1px 3px rgba(13, 51, 64, .24); }
+.native-map .leaflet-tooltip-top::before { border-top-color: rgba(17, 52, 62, .9); }
+.native-map-caption { margin: 5px 0 0; color: #849194; font-size: 9.5px; line-height: 1.45; }
+.native-map-error { display: grid; min-height: 310px; place-items: center; padding: 20px; color: #7d898b; font-size: 12px; text-align: center; }
 .native-video-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-content: start; }
 .video-tile { position: relative; min-height: 0; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 2px; background: #263740; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
 .video-tile img { position: absolute; width: 200%; max-width: none; height: 200%; object-fit: fill; }.v1 img { top: 0; left: 0; }.v2 img { top: 0; left: -100%; }.v3 img { top: -100%; left: 0; }.v4 img { top: -100%; left: -100%; }

@@ -154,11 +154,59 @@
     if ([11, 12, 13, 14, 15].includes(pageNo)) return '車隊管理';
     return '系統設定';
   }
-  function nativeMap() {
-    return `<div class="native-map"><i class="road road-a"></i><i class="road road-b"></i><i class="road road-c"></i><i class="water"></i><span class="map-label label-a">GPS 位置示意</span><span class="map-label label-b">非真實地圖</span><button type="button" class="map-pin pin-run" data-itraq-action="vehicle">▶</button><button type="button" class="map-pin pin-idle" data-itraq-action="vehicle">Ⅱ</button><button type="button" class="map-pin pin-off" data-itraq-action="vehicle">×</button><button type="button" class="map-fence" data-itraq-action="fence">圍籬待串接</button></div>`;
+  let nativeLeafletMap;
+  let nativeLeafletMarkers = [];
+  function nativeMap(mapId='native-live-map') {
+    return `<div class="native-map-shell"><div id="${mapId}" class="native-map" role="application" aria-label="Excel 車輛最後 GPS 位置地圖"></div><p class="native-map-caption">底圖 © OpenStreetMap contributors；標記為 Excel 各車最後 GPS 紀錄，並非即時位置。</p></div>`;
+  }
+  function telemetryCoordinate(vehicle) {
+    const [longitude, latitude] = String(vehicle.position || '').split(',').map(value => Number(value.trim()));
+    return Number.isFinite(latitude) && Number.isFinite(longitude) && latitude >= 20 && latitude <= 27 && longitude >= 118 && longitude <= 123 ? [latitude, longitude] : null;
+  }
+  function markerColor(status) { return status === '行駛中' ? '#72a82a' : status.includes('怠速') ? '#eaa529' : '#ce5d59'; }
+  function markerTooltip(vehicle, includeSpeed) { return `${vehicle.c}${includeSpeed ? ` · ${vehicle.last_speed} km/h` : ''}`; }
+  function refreshNativeMapMarkers() {
+    if (!nativeLeafletMap) return;
+    const showLabels = Boolean(document.querySelector('[data-map-layer="vehicle"].on'));
+    const showSpeed = Boolean(document.querySelector('[data-map-layer="speed"].on'));
+    nativeLeafletMarkers.forEach(({ marker, vehicle }) => {
+      marker.unbindTooltip();
+      if (showLabels || showSpeed) marker.bindTooltip(markerTooltip(vehicle, showSpeed), { direction:'top', offset:[0, -8], opacity:.94, permanent:showLabels });
+    });
+  }
+  function initializeNativeMap(mapId) {
+    const target = document.getElementById(mapId);
+    if (!target) return;
+    if (!window.L) {
+      target.innerHTML = `<div class="native-map-error">地圖元件未載入，請確認網路連線後重新整理。</div>`;
+      return;
+    }
+    if (nativeLeafletMap) nativeLeafletMap.remove();
+    nativeLeafletMarkers = [];
+    nativeLeafletMap = window.L.map(target, { zoomControl:true, scrollWheelZoom:true, attributionControl:true });
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(nativeLeafletMap);
+    const bounds = [];
+    telemetryVehicles.forEach(vehicle => {
+      const coordinate = telemetryCoordinate(vehicle);
+      if (!coordinate) return;
+      bounds.push(coordinate);
+      const marker = window.L.circleMarker(coordinate, {
+        radius: 8, color:'#fff', weight:2, fillColor:markerColor(vehicle.last_status), fillOpacity:1
+      }).addTo(nativeLeafletMap);
+      marker.bindPopup(`<b>${vehicle.c}</b><br>車輛狀態：${vehicle.last_status}<br>車速：${vehicle.last_speed} km/h<br>最後紀錄：${vehicle.last_time}<br>座標：${vehicle.position}`);
+      nativeLeafletMarkers.push({ marker, vehicle });
+    });
+    if (bounds.length > 1) nativeLeafletMap.fitBounds(bounds, { padding:[28, 28], maxZoom:9 });
+    else if (bounds.length) nativeLeafletMap.setView(bounds[0], 10);
+    else nativeLeafletMap.setView([23.7, 121], 7);
+    refreshNativeMapMarkers();
+    requestAnimationFrame(() => nativeLeafletMap && nativeLeafletMap.invalidateSize());
   }
   function nativeMonitor() {
-    return `<div class="native-workspace"><div class="native-monitor-layout"><div><div class="native-map-switch"><button class="on">車號</button><button class="on">駕駛</button><button class="on">速度</button><button class="on">電子圍籬</button></div>${nativeMap()}</div><div class="native-list-panel"><b>Excel 資料：${excelSource.vehicles} 台車輛 / ${excelSource.records.toLocaleString()} 筆紀錄</b>${nativeTable(['車號 ↕','駕駛 ↕','車輛狀態 ↕','手機號碼 ↕','車速(km/h) ↕','經緯度 ↕','最後紀錄時間 ↕'], nativeVehicles, state => state === '行駛中' ? 'run' : state.includes('怠速') ? 'idle' : 'lost')}</div></div></div>`;
+    return `<div class="native-workspace"><div class="native-monitor-layout"><div><div class="native-map-switch"><button type="button" class="on" data-map-layer="vehicle">車號</button><button type="button" data-map-layer="driver" data-map-unavailable="駕駛姓名">駕駛</button><button type="button" data-map-layer="speed">速度</button><button type="button" data-map-layer="fence" data-map-unavailable="電子圍籬">電子圍籬</button></div>${nativeMap()}</div><div class="native-list-panel"><b>Excel 資料：${excelSource.vehicles} 台車輛 / ${excelSource.records.toLocaleString()} 筆紀錄</b>${nativeTable(['車號 ↕','駕駛 ↕','車輛狀態 ↕','手機號碼 ↕','車速(km/h) ↕','經緯度 ↕','最後紀錄時間 ↕'], nativeVehicles, state => state === '行駛中' ? 'run' : state.includes('怠速') ? 'idle' : 'lost')}</div></div></div>`;
   }
   function nativeVideoLive() {
     const dvrImage = 'assets/simulated-dvr/fleet-dvr-mosaic-v1.png';
@@ -312,7 +360,7 @@
   }
   function nativeFence() {
     const rows = [['電子圍籬資料','—','—','原始 Excel 未提供',nativeIconActions(['edit','✎','建立串接需求'])]];
-    return `<div class="native-workspace"><div class="native-fence-layout"><div>${nativeMap()}</div><div><button type="button" class="native-action">＋ 新增圍籬</button><div class="source-note">地圖僅為介面示意；Excel 只有座標，沒有圍籬名稱、範圍與進出規則。</div>${nativeTable(['圍籬名稱 ↕','顯示','進出通知設定 ↕','時效性 ↕','操作'],rows)}</div></div></div>`;
+    return `<div class="native-workspace"><div class="native-fence-layout"><div>${nativeMap('native-fence-map')}</div><div><button type="button" class="native-action">＋ 新增圍籬</button><div class="source-note">此底圖使用 Excel 車輛最後 GPS 位置；Excel 沒有圍籬名稱、範圍與進出規則，需另行設定。</div>${nativeTable(['圍籬名稱 ↕','顯示','進出通知設定 ↕','時效性 ↕','操作'],rows)}</div></div></div>`;
   }
   function nativeNotification() {
     const rows = [...telemetryVehicles].sort((a,b) => b.s - a.s).slice(0,4).map(vehicle => ['遙測資料提醒',`${vehicle.c}：${vehicle.i}；請人工覆核路況與車況。`,'查看遙測',vehicle.last_time]);
@@ -325,7 +373,10 @@
     const pageIds = itraqSections[currentItraqSection] || itraqSections.monitor;
     const pages = pageIds.map(pageNo => manualPages.find(item => item.p === pageNo)).filter(Boolean);
     const page = pages.find(item => item.p === currentManualPage) || pages[0];
+    if (nativeLeafletMap) { nativeLeafletMap.remove(); nativeLeafletMap = undefined; nativeLeafletMarkers = []; }
     screen.innerHTML = `<section class="itraq-native">${nativePageTitle(page.t, nativeSectionLabel(page.p))}${renderItraqNative(page.p)}</section>`;
+    if (page.p === 2) initializeNativeMap('native-live-map');
+    if (page.p === 15) initializeNativeMap('native-fence-map');
   }
   function nativeForm(title, hint, confirmLabel='儲存') {
     showModal(`<h3>${title}</h3><p>${hint}</p><div class="native-modal-fields"><label>名稱／車號<input type="text" placeholder="請輸入資料"></label><label>備註<textarea placeholder="可補充說明（選填）"></textarea></label></div><div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="closeOv();toast('${title}已送出','已完成送出流程；原始 Excel 紀錄維持不變。','ok')">${confirmLabel}</button></div>`);
@@ -371,7 +422,14 @@
         toast('檢視已切換', `目前顯示：${button.textContent}。`, 'ok');
         return;
       }
-      if (button.closest('.native-map-switch')) { button.classList.toggle('on'); toast('地圖圖層已更新', `${button.textContent}顯示已${button.classList.contains('on') ? '開啟' : '關閉'}。`, 'ok'); return; }
+      if (button.closest('.native-map-switch')) {
+        const unavailable = button.dataset.mapUnavailable;
+        if (unavailable) { toast(`${unavailable}無法顯示`, `Excel 未提供${unavailable}欄位，地圖不會假造此圖層。`, 'in'); return; }
+        button.classList.toggle('on');
+        refreshNativeMapMarkers();
+        toast('地圖圖層已更新', `${button.textContent}顯示已${button.classList.contains('on') ? '開啟' : '關閉'}。`, 'ok');
+        return;
+      }
       if (button.dataset.itraqFilter) { nativeFilterDialog(button.dataset.itraqFilter, button.textContent); return; }
       if (button.dataset.itraqAction) {
         const labels = { edit:'編輯資料', copy:'已複製任務', refresh:'已更新納管狀態', delete:'刪除資料', save:'已儲存行程', open:'已開啟通知', vehicle:'車輛即時資訊', fence:'電子圍籬資訊', 'confirm-maintenance':'保修值已確認', 'page-size':'每頁資料筆數', 'report-task-request':'任務資料串接需求' };
