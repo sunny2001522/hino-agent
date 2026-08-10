@@ -556,17 +556,21 @@
     const ranking = teamRanks();
     const winner = ranking[0];
     const focus = ranking.at(-1);
+    const compactRanks = ranking.map((region, index) => `<li><b>${index + 1}</b><span>${region.name}</span><strong>${currentTeamScore(region)} 分</strong></li>`).join('');
     const decisionRow = (key, decision, tone) => `<div class="executive-decision-row ${tone}"><div><b>${decision.region}總負責人</b><span>${decision.signal}</span></div>${executiveDecisionStatus(key)}<button class="btn ${executiveDecisionState[key] ? 'gho' : 'pri'} sm" onclick="openExecutiveDecision('${key}')">${executiveDecisionState[key] ? '查看' : '交辦'}</button></div>`;
     screen.innerHTML = `
       <section class="executive-hero executive-hero-compact"><div class="executive-kicker">管理加值總覽</div><div class="executive-title"><div><h2>不需要看 ${source.records.toLocaleString()} 筆資料</h2><p>系統已把遙測翻成老闆可管理的三件事；原本 iTRAQ 的完整監控與報表留在下層，不塞進這一頁。</p></div><button class="btn executive-guide" onclick="openExecutiveReadGuide()">這些資料怎麼讀？</button></div><div class="executive-flow"><span><b>${source.vehicles} 台車</b>遙測</span><i>→</i><span><b>2 張</b>總負責人交辦</span><i>→</i><span><b>1 個</b>團隊改善目標</span><i>→</i><span><b>0 項</b>人事處分</span></div></section>
       <section class="executive-section executive-summary"><div class="sh"><h2>新增管理功能 · 一分鐘看完</h2><span class="num" style="background:${pending ? 'var(--warn)' : 'var(--good)'}">${pending}</span></div><div class="subt">每張卡只回答一個問題；需要原始佐證時才下鑽。</div><div class="executive-summary-grid">
         <article class="executive-summary-card decision"><div class="summary-head"><span>總負責人</span><b>${pending ? `${pending} 件待交辦` : '今日已交辦'}</b></div><h3>今天要他們回覆什麼？</h3>${decisionRow('speed', decisions.speed, 'urgent')}${decisionRow('maintenance', decisions.maintenance, 'warning')}<button class="text-action" onclick="openExecutiveEvidence('speed')">查看資料佐證</button></article>
-        <article class="executive-summary-card competition"><div class="summary-head"><span>團隊安全競賽</span><b>可比較</b></div><h3>${winner.name}暫居第一</h3><p>安全分 ${currentTeamScore(winner)}；${focus.name}為優先改善車隊。團隊可看名次，個別車號不公開。</p><button class="btn gho sm" onclick="gotoTab('competition')">看團隊排行</button></article>
-        <article class="executive-summary-card people"><div class="summary-head"><span>人力配置與招募</span><b>暫不決定</b></div><h3>缺人資資料，不能判斷</h3><p>沒有工時、出勤、薪酬、職級與訂單量；不能用遙測直接加薪、裁員或招募。</p><button class="btn gho sm" onclick="gotoTab('people')">看需要補什麼資料</button></article>
-        <article class="executive-summary-card ai"><div class="summary-head"><span>AI 問答與行動建議</span><b>輔助判讀</b></div><h3>不確定原因，再問 AI</h3><p>AI 只協助整理超速、怠速、車況訊號與覆核問題；它不替您做處分。</p><button class="btn gho sm" onclick="openAIChat()">詢問 AI 助理</button></article>
+        <article class="executive-summary-card competition"><div class="summary-head"><span>團隊安全競賽</span><b>團隊可見</b></div><h3>${winner.name}暫居第一</h3><ul class="competition-mini-list">${compactRanks}</ul><p>${focus.name}為優先改善車隊；個別車號名次不公開。</p><button class="btn gho sm" onclick="openExecutiveCompetition()">看計分與完整名次</button></article>
+        <article class="executive-summary-card people"><div class="summary-head"><span>人力配置與招募</span><b>資料不足</b></div><h3>今天不做人事決策</h3><p>缺少工時、出勤、薪酬、職級與訂單量，不能判斷缺額、加薪或裁員。</p><div class="missing-data">需補：人員主檔、班表、薪資、真實訂單</div><button class="btn gho sm" onclick="openWorkforceGuardrail()">查看人力決策條件</button></article>
+        <article class="executive-summary-card ai"><div class="summary-head"><span>AI 問答與行動建議</span><b>輔助判讀</b></div><h3>AI 已整理兩個覆核問題</h3><div class="ai-summary-lines"><span>先確認 ${decisions.speed.region}的限速、路況、車況與派車情境。</span><span>再確認 ${decisions.maintenance.region}的故障碼與停等原因。</span></div><button class="btn gho sm" onclick="openAIChat()">直接問 AI 助理</button></article>
       </div></section>
       <div class="foot">資料期間：${source.period} · 本頁為新增管理功能摘要；不自動執行保修、停派或人事處分。</div>`;
   }
+  window.openExecutiveCompetition = function () {
+    showModal(`<h3>團隊安全競賽</h3><p>以超速、怠速、高引擎負載與 DTC 計算安全分。團隊名次可比較；個別車號名次不公開。</p><div class="ranklist">${teamRankRows()}</div>${competitionRules()}<div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
+  };
   window.openExecutiveReadGuide = function () {
     const decisions = executiveDecisionDefinitions();
     showModal(`<h3>這些資料怎麼讀？</h3><p>老闆不必逐筆看遙測。系統只將可追溯的訊號轉成「誰要覆核、覆核什麼、何時回覆」。</p><div class="brief-read-guide"><div><b>① 安全／車況</b><span>超速、高引擎負載、怠速與 DTC 先標出異常車輛，不直接判定駕駛責任。</span></div><div><b>② 管理交辦</b><span>${decisions.speed.region}與${decisions.maintenance.region}總負責人各有一張覆核單；確認路況、車況與派車情境後才升級處理。</span></div><div><b>③ 人事護欄</b><span>資料沒有工時、出勤、薪資、職級與訂單量，所以不顯示招募、加薪、裁員結論。</span></div></div><div class="guardrail">完整地圖、報表和原始車號清單仍可在原 iTRAQ 頁面查看；首頁只保留能改變管理行動的結論。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
@@ -750,9 +754,6 @@
     { id:'maintenance', l:'保修系統', render:() => renderItraqPage(7, 'maintenance') },
     { id:'data', l:'數據中心', render:() => renderItraqPage(9, 'data') },
     { id:'fleet', l:'車隊管理', render:() => renderItraqPage(11, 'fleet') },
-    { id:'people', l:'人力管理', render:renderPeopleDecision },
-    { id:'competition', l:'安全競賽', render:renderFleetCompetition },
-    { id:'ai', l:'AI 分析', render:renderFleetAnalytics },
     { id:'settings', l:'系統設定', render:() => renderItraqPage(16, 'settings') }
   );
   TABS.lead.splice(0, TABS.lead.length,
