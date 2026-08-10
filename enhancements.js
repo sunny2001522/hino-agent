@@ -89,6 +89,14 @@
     fleet: [11, 12, 13, 14, 15],
     settings: [16]
   };
+  // Desktop subpages belong to their iTRAQ header item; desktop reveals them on hover.
+  window.HEADER_SUBPAGES = {
+    monitor: [{ p:2, l:'監控地圖' }, { p:3, l:'即時影像' }],
+    history: [{ p:4, l:'軌跡回放' }, { p:5, l:'影像調閱' }],
+    maintenance: [{ p:7, l:'車輛週期' }, { p:8, l:'預約資料' }],
+    data: [{ p:9, l:'事件列表' }, { p:10, l:'營運月報' }],
+    fleet: [{ p:11, l:'車輛管理' }, { p:12, l:'駕駛管理' }, { p:13, l:'管理行程' }, { p:14, l:'駕駛成績' }, { p:15, l:'圍籬管理' }]
+  };
   let currentManualPage = 2;
   let currentItraqSection = 'monitor';
   let currentReportMonth = Math.max(0, window.HINO_EXCEL_DATA.months.length - 1);
@@ -125,8 +133,7 @@
   }
   function nativePager() { return `<div class="native-pager"><button type="button" class="native-page-size" data-itraq-action="page-size">每頁資料筆數: 10⌄</button><span><button type="button" data-itraq-page="prev">‹</button><button type="button" class="on" data-itraq-page="1">1</button><button type="button" data-itraq-page="2">2</button><button type="button" data-itraq-page="3">3</button><button type="button" data-itraq-page="4">4</button><button type="button" data-itraq-page="next">›</button></span></div>`; }
   function nativePageTitle(title, trail) {
-    const pageCount = (itraqSections[currentItraqSection] || []).length;
-    return `<div class="native-breadcrumb"><span class="native-crumb-text">${trail || '車隊管理'} <i>›</i> ${title}</span>${pageCount > 1 ? '<button type="button" class="native-page-menu" onclick="openItraqPageMenu()">切換功能⌄</button>' : ''}</div>`;
+    return `<div class="native-breadcrumb"><span class="native-crumb-text">${trail || '車隊管理'} <i>›</i> ${title}</span></div>`;
   }
   function nativeSectionLabel(pageNo) {
     if ([2, 3].includes(pageNo)) return '即時監控';
@@ -406,11 +413,6 @@
   window.openPerformanceReview = function () { showModal(`<h3>啟動安全改善與個案審查</h3><p>先由總負責人確認車況、排班、訓練與健康／工時風險，再給 30 天改善計畫、必要支持與申訴管道。</p><div class="guardrail"><b>不啟動自動裁員：</b>若改善未達成，仍須由人資依勞動法規、績效紀錄與合理調整程序進行個案審查。</div><div class="mb"><button class="btn gho" onclick="closeOv()">返回</button><button class="btn warnb" onclick="act('已建立 30 天安全改善計畫與人資個案覆核，不執行自動裁員。','wn');closeOv()">建立改善計畫</button></div>`); };
   window.openWorkforceGuardrail = function () { showModal(`<h3>人資決策覆核流程</h3><p>1. 檢視單量、車況與班表；2. 提供轉調／訓練／合理調整；3. 設定改善目標與申訴管道；4. 人資與主管依適用法規個案核准。</p><div class="guardrail">安全分是輔助訊號，不是裁員按鈕。所有解約／裁撤均須人為審核與法遵確認。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`); };
   window.openManualChecklist = function () { gotoTab('monitor'); };
-  window.selectManualPage = function (page) { renderItraqPage(page, sectionForPage(page)); };
-  window.openItraqPageMenu = function () {
-    const pages = (itraqSections[currentItraqSection] || []).map(pageNo => manualPages.find(item => item.p === pageNo)).filter(Boolean);
-    showModal(`<h3>切換功能</h3><div class="native-page-menu-list">${pages.map(page => `<button class="btn ${page.p === currentManualPage ? 'pri' : 'gho'} block" data-itraq-manual-page="${page.p}">${page.t}</button>`).join('')}</div><div class="mb"><button class="btn gho" onclick="closeOv()">取消</button></div>`);
-  };
   window.openItraqNotifications = function () {
     if (!SESSION || SESSION.role !== 'fleet') { toast('通知中心', '請由目前身份可見的通知頁面查看。', 'in'); return; }
     curTab = null;
@@ -475,6 +477,24 @@
   window.addChatActions = function (bubble, question) { if (SESSION && SESSION.role === 'shipper') { bubble.appendChild(el(`<div style="margin-top:9px"><button class="btn pri sm" onclick="act('已開啟貨件 ETA 與延誤推播。','ok')">開啟到貨推播</button></div>`)); document.getElementById('chatlog').scrollTop = 99999; return; } baseAddChatActions(bubble, question); };
 
   attachItraqInteractions();
+  tabbar.addEventListener('click', event => {
+    const subpage = event.target.closest('[data-header-page]');
+    if (subpage) {
+      event.preventDefault();
+      event.stopPropagation();
+      const page = Number(subpage.dataset.headerPage);
+      const tab = subpage.dataset.headerTab;
+      gotoTab(tab);
+      renderItraqPage(page, sectionForPage(page));
+      tabbar.querySelectorAll('.topnav-group').forEach(group => group.classList.remove('open'));
+      return;
+    }
+    const main = event.target.closest('.topnav-main');
+    const group = main && main.closest('.topnav-group.has-subnav');
+    if (!group || !window.matchMedia('(max-width: 819px)').matches) return;
+    tabbar.querySelectorAll('.topnav-group.open').forEach(item => { if (item !== group) item.classList.remove('open'); });
+    group.classList.toggle('open');
+  });
   document.addEventListener('click', event => {
     const button = event.target.closest('[data-itraq-manual-page]');
     if (!button) return;

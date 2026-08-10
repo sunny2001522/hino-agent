@@ -483,7 +483,11 @@ function logout(){
 function buildTabs(){
  const list=TABS[SESSION.role];
  tabbar.style.display="flex";
- tabbar.innerHTML=list.map(t=>`<button data-tab="${t.id}" onclick="gotoTab('${t.id}')"><span class="l">${t.l}</span></button>`).join("");
+ const subs=window.HEADER_SUBPAGES||{};
+ tabbar.innerHTML=list.map(t=>{
+  const pages=subs[t.id]||[];
+  return `<div class="topnav-group${pages.length?' has-subnav':''}"><button class="topnav-main" data-tab="${t.id}" onclick="gotoTab('${t.id}')"><span class="l">${t.l}</span>${pages.length?'<span class="subchev">⌄</span>':''}</button>${pages.length?`<div class="header-submenu" role="menu">${pages.map(p=>`<button type="button" class="header-subtab" data-header-tab="${t.id}" data-header-page="${p.p}" role="menuitem">${p.l}</button>`).join('')}</div>`:''}</div>`;
+ }).join("");
 }
 function gotoTab(id){
  curTab=id;
