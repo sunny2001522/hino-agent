@@ -553,14 +553,24 @@
     const source = window.HINO_EXCEL_DATA.meta;
     const decisions = executiveDecisionDefinitions();
     const pending = Object.keys(decisions).filter(key => !executiveDecisionState[key]).length;
-    const latest = source.lastRecord || source.period;
-    const decisionCard = (key, decision, tone) => `<article class="executive-decision ${tone}"><div class="executive-card-head"><span>${decision.region} · 總負責人</span>${executiveDecisionStatus(key)}</div><h3>${decision.title}</h3><strong>${decision.signal}</strong><p>${decision.ask}</p><div class="executive-evidence">${decision.evidence.map(([label, value]) => `<span><b>${label}</b>${value}</span>`).join('')}</div><div class="acts"><button class="btn pri sm" onclick="openExecutiveDecision('${key}')">${executiveDecisionState[key] ? '查看交辦內容' : '下達 24 小時覆核'}</button><button class="btn gho sm" onclick="openExecutiveEvidence('${key}')">看佐證</button></div></article>`;
+    const ranking = teamRanks();
+    const winner = ranking[0];
+    const focus = ranking.at(-1);
+    const decisionRow = (key, decision, tone) => `<div class="executive-decision-row ${tone}"><div><b>${decision.region}總負責人</b><span>${decision.signal}</span></div>${executiveDecisionStatus(key)}<button class="btn ${executiveDecisionState[key] ? 'gho' : 'pri'} sm" onclick="openExecutiveDecision('${key}')">${executiveDecisionState[key] ? '查看' : '交辦'}</button></div>`;
     screen.innerHTML = `
-      <section class="executive-hero"><div class="executive-kicker">老闆 10 分鐘決策台</div><div class="executive-title"><div><h2>今天只需決定 ${pending} 件事</h2><p>先交辦總負責人覆核；保修、調度或人事動作均以覆核回覆為準。</p></div><div class="executive-timer"><b>10 分鐘</b><span>每日檢視</span></div></div><div class="executive-facts"><span><b>${source.vehicles}</b> 台車</span><span><b>${source.records.toLocaleString()}</b> 筆遙測</span><span><b>${latest}</b> 最後資料</span></div></section>
-      <section class="executive-section"><div class="sh"><h2>現在需要您拍板</h2><span class="num" style="background:${pending ? 'var(--warn)' : 'var(--good)'}">${pending}</span></div><div class="subt">每張卡都包含交辦對象、為何要處理、總負責人必須回覆的事項及原始資料佐證。</div><div class="executive-decisions">${decisionCard('speed', decisions.speed, 'urgent')}${decisionCard('maintenance', decisions.maintenance, 'warning')}</div></section>
-      <section class="executive-section executive-followup"><div class="sh"><h2 class="sm">總負責人管理重點</h2></div><div class="executive-followup-grid"><div><b>您要追的不是單一事件</b><span>確認各區總負責人是否在期限內提供「原因、已處置、需升級決定」三件事。</span></div><div><b>人力／薪酬今天不決</b><span>Excel 沒有工時、出勤、薪酬、職級與人員資料；不能據此加薪、裁員或評績。</span><button class="btn gho sm" onclick="gotoTab('people')">查看人力資料缺口</button></div><div><b>不在首頁看的內容</b><span>地圖、完整趨勢和所有車號保留在下層頁面；只在需要佐證時才下鑽。</span><button class="btn gho sm" onclick="gotoTab('monitor')">開啟監控地圖</button></div></div></section>
-      <div class="foot">資料期間：${source.period} · 本頁決策依 Excel 遙測訊號建立，不會自動做保修、停派或人事處分。</div>`;
+      <section class="executive-hero executive-hero-compact"><div class="executive-kicker">管理加值總覽</div><div class="executive-title"><div><h2>不需要看 ${source.records.toLocaleString()} 筆資料</h2><p>系統已把遙測翻成老闆可管理的三件事；原本 iTRAQ 的完整監控與報表留在下層，不塞進這一頁。</p></div><button class="btn executive-guide" onclick="openExecutiveReadGuide()">這些資料怎麼讀？</button></div><div class="executive-flow"><span><b>${source.vehicles} 台車</b>遙測</span><i>→</i><span><b>2 張</b>總負責人交辦</span><i>→</i><span><b>1 個</b>團隊改善目標</span><i>→</i><span><b>0 項</b>人事處分</span></div></section>
+      <section class="executive-section executive-summary"><div class="sh"><h2>新增管理功能 · 一分鐘看完</h2><span class="num" style="background:${pending ? 'var(--warn)' : 'var(--good)'}">${pending}</span></div><div class="subt">每張卡只回答一個問題；需要原始佐證時才下鑽。</div><div class="executive-summary-grid">
+        <article class="executive-summary-card decision"><div class="summary-head"><span>總負責人</span><b>${pending ? `${pending} 件待交辦` : '今日已交辦'}</b></div><h3>今天要他們回覆什麼？</h3>${decisionRow('speed', decisions.speed, 'urgent')}${decisionRow('maintenance', decisions.maintenance, 'warning')}<button class="text-action" onclick="openExecutiveEvidence('speed')">查看資料佐證</button></article>
+        <article class="executive-summary-card competition"><div class="summary-head"><span>團隊安全競賽</span><b>可比較</b></div><h3>${winner.name}暫居第一</h3><p>安全分 ${currentTeamScore(winner)}；${focus.name}為優先改善車隊。團隊可看名次，個別車號不公開。</p><button class="btn gho sm" onclick="gotoTab('competition')">看團隊排行</button></article>
+        <article class="executive-summary-card people"><div class="summary-head"><span>人力配置與招募</span><b>暫不決定</b></div><h3>缺人資資料，不能判斷</h3><p>沒有工時、出勤、薪酬、職級與訂單量；不能用遙測直接加薪、裁員或招募。</p><button class="btn gho sm" onclick="gotoTab('people')">看需要補什麼資料</button></article>
+        <article class="executive-summary-card ai"><div class="summary-head"><span>AI 問答與行動建議</span><b>輔助判讀</b></div><h3>不確定原因，再問 AI</h3><p>AI 只協助整理超速、怠速、車況訊號與覆核問題；它不替您做處分。</p><button class="btn gho sm" onclick="openAIChat()">詢問 AI 助理</button></article>
+      </div></section>
+      <div class="foot">資料期間：${source.period} · 本頁為新增管理功能摘要；不自動執行保修、停派或人事處分。</div>`;
   }
+  window.openExecutiveReadGuide = function () {
+    const decisions = executiveDecisionDefinitions();
+    showModal(`<h3>這些資料怎麼讀？</h3><p>老闆不必逐筆看遙測。系統只將可追溯的訊號轉成「誰要覆核、覆核什麼、何時回覆」。</p><div class="brief-read-guide"><div><b>① 安全／車況</b><span>超速、高引擎負載、怠速與 DTC 先標出異常車輛，不直接判定駕駛責任。</span></div><div><b>② 管理交辦</b><span>${decisions.speed.region}與${decisions.maintenance.region}總負責人各有一張覆核單；確認路況、車況與派車情境後才升級處理。</span></div><div><b>③ 人事護欄</b><span>資料沒有工時、出勤、薪資、職級與訂單量，所以不顯示招募、加薪、裁員結論。</span></div></div><div class="guardrail">完整地圖、報表和原始車號清單仍可在原 iTRAQ 頁面查看；首頁只保留能改變管理行動的結論。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
+  };
   window.openExecutiveEvidence = function (key) {
     const decision = executiveDecisionDefinitions()[key];
     showModal(`<h3>${decision.title}｜資料佐證</h3><div class="native-table-wrap"><table class="native-table"><tbody>${decision.evidence.map(([label, value]) => `<tr><th>${label}</th><td>${value}</td></tr>`).join('')}</tbody></table></div><div class="guardrail">這些是待覆核訊號；須先確認限速、車況、路況與派車情境，不可直接推論為駕駛個人責任。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
@@ -733,7 +743,7 @@
   });
 
   TABS.fleet.splice(0, TABS.fleet.length,
-    { id:'decision', l:'今日決策', render:renderExecutiveBrief },
+    { id:'decision', l:'管理總覽', render:renderExecutiveBrief },
     { id:'monitor', l:'即時監控', render:() => renderItraqPage(2, 'monitor') },
     { id:'history', l:'歷史車輛', render:() => renderItraqPage(4, 'history') },
     { id:'task', l:'任務派遣', render:() => renderItraqPage(6, 'task') },
