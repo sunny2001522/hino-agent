@@ -198,7 +198,7 @@ def metric_payload(global_months: list[Stats]) -> tuple[list[dict], dict, dict]:
         data = month_values(global_months, key)
         facts[key] = f"2025 年 11 月全隊{name} {data[-1]:,}{unit}。"
         if key == "safety":
-            facts[key] = f"2025 年 11 月全隊計算安全分 {data[-1]} 分；計算只使用 Excel 的超速、怠速、高引擎負載與 DTC 欄位。"
+            facts[key] = f"2025 年 11 月全隊計算安全分 {data[-1]} 分；計算只使用來源的超速、怠速、高引擎負載與 DTC 欄位。"
         if key == "idle":
             facts[key] = f"2025 年 11 月全隊怠速佔比 {data[-1]}%，以 carStatus=2 計算。"
         if key == "fuel":
@@ -208,7 +208,7 @@ def metric_payload(global_months: list[Stats]) -> tuple[list[dict], dict, dict]:
             "cause": {"t": f"{name}為何需要關注？", "rs": [
                 "資料只反映車聯網紀錄；需要再核對路況、車況與派車條件。",
                 "先以車號下鑽，再決定是否需要提醒、保修或調度。",
-            ], "act": [{"l": actions[key], "c": "pri", "fn": "act('已建立 Excel 車聯網資料的後續處理清單。','ok')"}]},
+            ], "act": [{"l": actions[key], "c": "pri", "fn": "act('已建立車聯網資料的後續處理清單。','ok')"}]},
         })
         solutions[key] = {"t": f"{name}偏高／偏低，怎麼處理？", "pts": [
             "先確認原始時間、車號、路況與車況，避免以單一訊號歸因於駕駛。",
@@ -314,12 +314,12 @@ def build(source: Path) -> dict:
         todos.append({"sev": severity, "cat": category, "decide": True,
                       "tt": f"{len(relevant)} 台車{headline}，請先做資料覆核",
                       "dt": labels(relevant, key) if relevant else "資料期間未發現此類紀錄",
-                      "status": {"by": "AI", "txt": f"已依 Excel 的 {source_label} 欄位建立待覆核清單。"},
-                      "acts": [{"l": "查看車號", "c": "gho", "fn": f"drillDrivers({json.dumps(codes, ensure_ascii=False)},'Excel {category} 車號')"}]})
+                      "status": {"by": "AI", "txt": f"已依來源的 {source_label} 欄位建立待覆核清單。"},
+                      "acts": [{"l": "查看車號", "c": "gho", "fn": f"drillDrivers({json.dumps(codes, ensure_ascii=False)},'{category} 車號')"}]})
         todo_data.append(f"<b>資料依據：</b>{source_label}。<br><b>下一步：</b>先核對車況、路況與派車情境；不可據此直接做薪酬、裁員或解約決定。")
     advice = [
-        {"f": f"<b>{by_speed[0]['c']}</b> 的超速紀錄最高", "why": f"Excel 期間共 {by_speed[0]['overspeed_count']:,} 筆，佔行駛紀錄 {by_speed[0]['overspeed_pct']}%。", "status": {"by": "AI", "txt": "可建立限速提醒草稿；請先確認限速資料與路況。"}, "acts": [{"l": "建立提醒草稿", "c": "pri", "fn": "act('已建立以車號為對象的限速提醒草稿。','ok')"}]},
-        {"f": f"<b>{by_idle[0]['c']}</b> 的怠速比例最高", "why": f"Excel 期間怠速 {by_idle[0]['idle_pct']}%，共 {by_idle[0]['idle_count']:,} 筆 carStatus=2 紀錄。", "status": {"by": "AI", "txt": "可建立熄火提醒；來源未提供裝卸、等待或排班原因。"}, "acts": [{"l": "建立熄火提醒", "c": "pri", "fn": "act('已建立以車號為對象的怠速提醒草稿。','ok')"}]},
+        {"f": f"<b>{by_speed[0]['c']}</b> 的超速紀錄最高", "why": f"資料期間共 {by_speed[0]['overspeed_count']:,} 筆，佔行駛紀錄 {by_speed[0]['overspeed_pct']}%。", "status": {"by": "AI", "txt": "可建立限速提醒草稿；請先確認限速資料與路況。"}, "acts": [{"l": "建立提醒草稿", "c": "pri", "fn": "act('已建立以車號為對象的限速提醒草稿。','ok')"}]},
+        {"f": f"<b>{by_idle[0]['c']}</b> 的怠速比例最高", "why": f"資料期間怠速 {by_idle[0]['idle_pct']}%，共 {by_idle[0]['idle_count']:,} 筆 carStatus=2 紀錄。", "status": {"by": "AI", "txt": "可建立熄火提醒；來源未提供裝卸、等待或排班原因。"}, "acts": [{"l": "建立熄火提醒", "c": "pri", "fn": "act('已建立以車號為對象的怠速提醒草稿。','ok')"}]},
         {"f": f"<b>{by_load[0]['c']}</b> 的高引擎負載紀錄最高", "why": f"CAN engineLoad ≥ 90 共 {by_load[0]['high_load_count']:,} 筆，需搭配車況與派車資料判讀。", "status": {"by": "AI", "txt": "已列為車況覆核候選，不將此訊號直接等同超載或人員績效。"}, "acts": [{"l": "建立覆核", "c": "pri", "fn": "act('已建立車況與派車覆核任務。','ok')"}]},
     ]
     latest_vehicles = sorted(vehicles, key=lambda item: item["last_time"], reverse=True)
@@ -332,7 +332,7 @@ def build(source: Path) -> dict:
         "aggregate": {"safety": total_series["safety"], "idlePct": total_series["idle"][-1], "fuel": total_series["fuel"][-1], "journeys": len(total_journeys)},
         "ordersByRegion": {item["id"]: item["journeys"] for item in regions}, "targetJourneysPerVehicle": max(1, round(len(total_journeys) / len(vehicles))),
         "metrics": metrics, "factMap": facts, "dims": [{"key": key, "name": info[0], "high": info[2], "unit": info[1], "hint": info[3]} for key, info in METRIC_INFO.items()], "dimSolData": solutions,
-        "todos": todos, "todoData": todo_data, "advice": advice, "shippers": [{"id": "telemetry", "name": "Excel 車聯網紀錄", "orders": orders}],
+        "todos": todos, "todoData": todo_data, "advice": advice, "shippers": [{"id": "telemetry", "name": "車聯網紀錄", "orders": orders}],
         "accountBindings": {"lead_region": first_region["id"], "driver_code": f"{first_region['id']}0", "personal_code": f"{last_region['id']}0"}, "vehicleSnapshot": latest_vehicles,
         "sourceNote": "本頁數據由 output data_Hotai_20260511.xlsx 計算；原始檔未提供駕駛姓名、工時、人資、訂單、準時率與安全帶欄位。",
     }

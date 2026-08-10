@@ -26,7 +26,7 @@
  .app{height:calc(100vh - 44px);border-radius:34px;overflow:hidden;border:1px solid #c3cdd1}
  }
  /* ---------- app bar ---------- */
- .appbar{position:sticky;top:0;z-index:30;background:var(--teal);border-bottom:3px solid var(--accent);
+ .appbar{position:relative;z-index:50;flex:0 0 auto;background:var(--teal);border-bottom:3px solid var(--accent);
  padding:0 20px;display:flex;align-items:center;gap:22px;min-height:68px}
  .logo{height:32px;border-radius:0;background:transparent;color:#fff;display:grid;place-items:center;
  font-size:19px;font-weight:900;letter-spacing:.5px;padding:0;flex:0 0 auto}
@@ -39,7 +39,7 @@
  .barbtn{font:inherit;font-size:11px;font-weight:700;color:#dcecc9;background:rgba(255,255,255,.08);
  border:1px solid rgba(255,255,255,.16);padding:6px 11px;border-radius:6px;cursor:pointer;flex:0 0 auto}
  /* ---------- scroll body ---------- */
- .screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px 22px}
+ .screen{position:relative;z-index:1;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px 22px}
  section{margin-top:20px;scroll-margin-top:70px}
  section:first-child{margin-top:4px}
  .sh{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
@@ -408,7 +408,7 @@ const ROLES={
  personal:{label:"個人用戶", color:"#e0862a", sub:"個人車主，看自己的車與行程",
  desc:"登入：一律採用手機號碼登入 APP"},
  shipper:{label:"貨主", color:"#2e9e4f", sub:"貨件追蹤（B2B2B）",
- desc:"登入：手機號碼登入 APP · 即時追蹤貨件位置與 ETA<br><b style=\"color:var(--good)\">本團隊 B2B2B 新增身份</b>（iTRAQ 原本沒有）", isNew:true},
+ desc:"登入：手機號碼登入 APP · 查看貨件狀態與車輛編號<br><b style=\"color:var(--good)\">本團隊 B2B2B 新增身份</b>（iTRAQ 原本沒有）", isNew:true},
 };
 // each demo account maps to EXACTLY one person / region / company
 const EXCEL_ACCOUNT_BINDING=window.HINO_EXCEL_DATA.accountBindings;
@@ -417,11 +417,11 @@ const EXCEL_DRIVER=EXCEL_DRIVER_REGION.drivers[0];
 const EXCEL_PERSONAL_REGION=regions.find(region=>region.id===EXCEL_ACCOUNT_BINDING.personal_code[0]);
 const EXCEL_PERSONAL=EXCEL_PERSONAL_REGION.drivers[0];
 const ACCOUNTS={
- fleet: {phone:"0900-000-001", name:"車隊管理帳號", roleName:"車隊管理", scope:`Excel ${window.HINO_EXCEL_DATA.meta.vehicles} 台車`},
+ fleet: {phone:"0900-000-001", name:"車隊管理帳號", roleName:"車隊管理", scope:`${window.HINO_EXCEL_DATA.meta.vehicles} 台車`},
  lead: {phone:"0912-345-678", name:`${EXCEL_DRIVER_REGION.name}總負責人`, roleName:"總負責人", region:EXCEL_DRIVER_REGION.id, scope:`${EXCEL_DRIVER_REGION.name}車隊`},
  driver: {phone:"0900-110-101", name:`車號 ${EXCEL_DRIVER.c}`, roleName:"車隊駕駛", drvCode:EXCEL_ACCOUNT_BINDING.driver_code, scope:`${EXCEL_DRIVER_REGION.name}車隊`},
  personal:{phone:"0900-220-202", name:`車號 ${EXCEL_PERSONAL.c}`, roleName:"個人用戶", drvCode:EXCEL_ACCOUNT_BINDING.personal_code, scope:`${EXCEL_PERSONAL_REGION.name}車隊`},
- shipper: {phone:"0900-880-808", name:"貨主示範帳號", roleName:"貨主", shipperId:"telemetry", scope:"Excel 車聯網紀錄"},
+ shipper: {phone:"0900-880-808", name:"貨主示範帳號", roleName:"貨主", shipperId:"telemetry", scope:"我的貨件"},
 };
 let SESSION=null; // {role, acc}
 
@@ -602,7 +602,7 @@ function autoSummaryCard(){
  </div>`).join("");
  return `<div class="card" style="border-left:4px solid var(--accent)">
  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
- <div style="font-weight:850;font-size:14.5px">Excel 資料與 AI 處理摘要</div>
+ <div style="font-weight:850;font-size:14.5px">車聯網資料與 AI 處理摘要</div>
  <span class="aibadge" style="margin-left:auto"><span class="sp"></span>唯讀摘要</span></div>
  <div style="font-size:11.5px;color:var(--mut2);margin:2px 0 6px">只列出來源可支持的遙測摘要與提醒草稿；不將原始資料不存在的工作、訂單或人資行動標成已完成。</div>
  <div style="border-top:1px solid var(--line);padding-top:4px">${rows}</div>
@@ -1160,10 +1160,10 @@ function renderDriverTask(){
  const{d}=myDriver();
  screen.innerHTML=`
  <section>
- <div class="sh"><h2>今日任務 + ETA</h2></div>
+ <div class="sh"><h2>今日任務 + 預估到達時間</h2></div>
  <div class="card">
  <div style="font-weight:800;font-size:15px">台中港倉 → 台積電 中科廠</div>
- <div style="font-size:12.5px;color:var(--mut);margin-top:4px">下一站 ETA 約 <b style="color:var(--accent)">14 分</b>· 國道一號 大雅段 · 卸貨點 B12</div>
+ <div style="font-size:12.5px;color:var(--mut);margin-top:4px">下一站 預估到達時間 約 <b style="color:var(--accent)">14 分</b>· 國道一號 大雅段 · 卸貨點 B12</div>
  <div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
  <button class="btn pri sm" onclick="act('已開啟導航。','ok')">開始導航</button>
  <button class="btn gho sm" onclick="act('已回報抵達卸貨點。','ok')">回報抵達</button></div>
@@ -1291,7 +1291,7 @@ function renderShipperTrack(){
  <div class="tline">${tl}</div>
  <div class="drvbar"><div class="av"></div><div><div style="font-weight:700;font-size:13px">司機 ${o.driver}</div><div style="font-size:11px;color:var(--mut)">${o.car}</div></div>
  <div style="margin-left:auto;display:flex;gap:7px;flex-wrap:wrap"><button class="btn gho sm" onclick="act('已撥打司機 ${o.driver} 電話。','ok')">聯絡司機</button><button class="btn pri sm" onclick="act('已複製即時追蹤連結，可分享給收貨方。','ok')">分享連結</button></div></div>
- ${o.risk?`<div class="cause" style="margin-top:12px;border-left-color:var(--bad)"><div class="h">預計延誤約 35 分</div><ul style="margin-left:18px"><li>原因：中壢市區交通壅塞</li><li>系統已自動改走替代路線並更新 ETA</li></ul><div class="acts"><button class="btn pri sm" onclick="act('已開啟延誤即時通知。','wn')">接收延誤通知</button></div></div>`:''}
+ ${o.risk?`<div class="cause" style="margin-top:12px;border-left-color:var(--bad)"><div class="h">預計延誤約 35 分</div><ul style="margin-left:18px"><li>原因：中壢市區交通壅塞</li><li>系統已自動改走替代路線並更新 預估到達時間</li></ul><div class="acts"><button class="btn pri sm" onclick="act('已開啟延誤即時通知。','wn')">接收延誤通知</button></div></div>`:''}
  </div>
  </section>
  <div class="foot">貨主視角 · 僅限 ${myShipper().name} 的貨件</div>`;
@@ -1304,7 +1304,7 @@ function renderShipperOrders(){
  <div class="top"><span class="id">${o.id}</span>
  <span class="stpill ${o.risk?'st-risk':o.progress>=.85?'st-soon':'st-go'}" style="margin-left:auto">${o.status}</span></div>
  <div class="cust">${o.from} → <b style="color:var(--txt)">${o.to}</b></div>
- <div class="cust">ETA ${o.etaMin} 分 · 目前 ${o.cur} · 司機 ${o.driver}</div>
+ <div class="cust">預估到達時間 ${o.etaMin} 分 · 目前 ${o.cur} · 司機 ${o.driver}</div>
  <div class="acts"><button class="btn pri sm" onclick="selectOrderTab('${o.id}')">即時追蹤</button>
  <button class="btn gho sm" onclick="act('已撥打司機 ${o.driver} 電話。','ok')">聯絡司機</button></div>
  </div>`).join("");
@@ -1503,8 +1503,8 @@ function riskCard(f,forLead){
 function renderRiskForecast(forLead){
  const scoped=forLead?myRegion().drivers:regions.flatMap(region=>region.drivers);
  const list=scoped.slice().sort((a,b)=>a.s-b.s).slice(0,3);
- if(!list.length)return `<div class="card"><div class="dt">沒有可判讀的 Excel 車聯網紀錄。</div></div>`;
- return `<div class="private-note"><b>資料限制：</b>來源未提供事故、疲勞、急煞或即時風險預測欄位；以下僅依 Excel 計算安全分排序，作為人工覆核優先序。</div>`+
+ if(!list.length)return `<div class="card"><div class="dt">沒有可判讀的 車聯網紀錄。</div></div>`;
+ return `<div class="private-note"><b>資料限制：</b>來源未提供事故、疲勞、急煞或即時風險預測欄位；以下僅依 遙測計算安全分排序，作為人工覆核優先序。</div>`+
    list.map(vehicle=>`<div class="riskcard ${vehicle.s<55?'bad':vehicle.s<70?'mid':'low'}"><div class="rtop"><span class="rname">${vehicle.c}</span><span class="stpill" style="background:var(--card2);color:var(--mut)">計算安全分 ${vehicle.s}</span></div><div class="rwhy">超速 ${vehicle.overspeed_count.toLocaleString()} 筆 · 怠速 ${vehicle.idle_pct}% · 高引擎負載 ${vehicle.high_load_count.toLocaleString()} 筆 · DTC ${vehicle.dtc_count.toLocaleString()} 筆</div><div class="rwhy" style="margin-top:5px">優先覆核：${vehicle.i}</div>${forLead?`<div class="racts"><button class="btn pri sm" onclick="act('已建立 ${vehicle.c} 的遙測資料覆核提醒。','wn')">建立覆核提醒</button></div>`:`<div class="autoline" style="margin-top:11px"><span class="abadge">AI 草稿</span><span>可建立提醒草稿；發送前需確認車況、路況與派車情境。</span></div>`}</div>`).join('');
 }
 
