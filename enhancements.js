@@ -117,6 +117,16 @@
   }));
   const nativeVehicles = excelVehicleSnapshot.map(vehicle => [vehicle.car,'—',vehicle.status,'—',vehicle.speed,vehicle.position,vehicle.time]);
   const telemetryVehicles = window.HINO_EXCEL_DATA.vehicleSnapshot;
+  const maintenanceStorageKey = 'hino-maintenance-records-v1';
+  let maintenanceRecords = {};
+  try { maintenanceRecords = JSON.parse(localStorage.getItem(maintenanceStorageKey) || '{}'); } catch (error) { maintenanceRecords = {}; }
+  function maintenanceRecord(car) { return maintenanceRecords[car] || {}; }
+  function saveMaintenanceRecord(car, values) {
+    maintenanceRecords[car] = { ...maintenanceRecord(car), ...values };
+    try { localStorage.setItem(maintenanceStorageKey, JSON.stringify(maintenanceRecords)); } catch (error) { /* The current browser may block local persistence. */ }
+  }
+  function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]); }
+  function maintenanceValueLabel(value, unit='') { return value === undefined || value === '' ? '尚未設定' : `${Number(value).toLocaleString('zh-TW')}${unit}`; }
   const nativeTasks = telemetryVehicles.slice(0, 8).map(vehicle => [
     '可覆核', vehicle.journey, `${vehicle.journeys} 段`, '原始資料未提供', vehicle.c,
     'journeyCode 遙測', '來源未提供'
@@ -165,12 +175,95 @@
     return `<div class="native-workspace">${nativeFilter({actions:'<button type="button" class="native-action">＋ 新增任務</button><button type="button" class="native-action">⇧ 批量匯入</button>'})}<div class="native-tabs"><button type="button" class="on">依任務</button><button type="button">依駕駛</button></div>${nativeTable(['任務狀態 ↕','任務編號 ↕','進度 ↕','駕駛/手機號碼 ↕','車號 ↕','任務類型 ↕','下一站點 ↕','操作'], nativeTasks.map(r => [...r,nativeIconActions(['edit','✎','編輯任務'],['copy','▢','複製任務'],['refresh','♲','更新狀態'])]), state => ({'執行中':'running','調度中':'dispatch','已完成':'done','已中斷':'stopped','待執行':'pending'}[state]))}${nativePager()}</div>`;
   }
   function nativeMaintenance() {
-    const rows = telemetryVehicles.slice(0, 8).map(vehicle => [vehicle.c,'—',vehicle.last_time,'—','—',vehicle.dtc_count ? `DTC ${vehicle.dtc_count} 筆待覆核` : '未偵測 DTC',nativeTextAction('查看遙測','open')]);
-    return `<div class="native-workspace">${nativeFilter()}<div class="native-tabs"><button type="button" class="on" data-itraq-view="maintenance-cycle">車輛週期一覽</button><button type="button" data-itraq-page="8">預約資料</button><button type="button" data-itraq-view="work-order">工單資料</button></div>${nativeTable(['車號 ↕','工單編號 ↕','最後遙測時間 ↕','總里程數 ↕','引擎運轉時數 ↕','DTC 遙測摘要 ↕','操作'],rows)}<div class="native-maint-cards"><div><b>保修資料待串接</b><span>Excel 未提供工單、保養日期、里程週期與引擎時數累積欄位。</span><button type="button" data-itraq-action="confirm-maintenance">建立串接需求</button></div><div><b>目前可用訊號</b><span>僅能依 DTC、最後遙測時間建立人工覆核清單。</span></div></div></div>`;
+    const valueButton = (vehicle, label, action='maintenance-values') => `<button type="button" class="native-maint-unset" data-itraq-action="${action}" data-vehicle="${vehicle.c}">${label}</button>`;
+    const rows = telemetryVehicles.slice(0, 8).map(vehicle => {
+      const record = maintenanceRecord(vehicle.c);
+      return [
+        vehicle.c,
+        escapeHtml(record.workOrder || '—'),
+        valueButton(vehicle, record.date || '尚未設定'),
+        valueButton(vehicle, maintenanceValueLabel(record.mileage, ' km')),
+        valueButton(vehicle, maintenanceValueLabel(record.engineHours, ' h')),
+        valueButton(vehicle, record.item || '尚未設定', 'maintenance-items'),
+        nativeIconActions(
+          ['book-maintenance','◷','預約原廠保修'],
+          ['maintenance-schedule','▣','查看保修週期排程'],
+          ['edit-work-order','✎','編輯工單']
+        )
+      ];
+    });
+    return `<div class="native-workspace native-maintenance-workspace">${nativeFilter({search:'搜尋車號／工單編號／保修項目'})}<div class="native-tabs"><button type="button" class="on" data-itraq-view="maintenance-cycle">車輛週期一覽</button><button type="button" data-itraq-page="8">預約資料</button><button type="button" data-itraq-view="work-order">工單資料</button></div><h3 class="native-list-title">近一次保修紀錄</h3>${nativeTable(['車號 ↕','工單編號 ↕','保修日期 ↕','總里程數 ↕','引擎運轉時數 ↕','保修項目 ↕','操作'],rows)}${nativePager()}</div>`;
   }
+  function maintenanceDialog(action, car) {
+    const vehicle = telemetryVehicles.find(item => item.c === car);
+    const lastRecord = vehicle ? vehicle.last_time : '來源未提供';
+    const record = maintenanceRecord(car);
+    const sourceNote = `<div class="source-note"><b>資料狀態：</b>${car} 為 Excel 車號；最近遙測紀錄為 ${lastRecord}。來源未提供保修日期、里程、引擎時數、工單或保修項目，以下內容須由保修人員輸入，不會覆寫原始遙測資料。</div>`;
+    const dismiss = `<button class="btn gho" onclick="closeOv()">取消</button>`;
+    if (action === 'maintenance-values') {
+      showModal(`<h3>前次保修值設定 — ${car}</h3><p class="modal-alert">請完成保修值設定後，再建立週期排程。</p>${sourceNote}<div class="native-modal-fields maintenance-value-fields" data-maintenance-values><label>保修日期<input name="date" type="date" value="${record.date || ''}" required></label><label>保修總里程數<input name="mileage" type="number" min="0" value="${record.mileage || ''}" placeholder="請依保修單輸入" required><small>公里</small></label><label>保修引擎運轉時數<input name="engineHours" type="number" min="0" value="${record.engineHours || ''}" placeholder="請依保修單輸入" required><small>小時</small></label></div><div class="mb">${dismiss}<button class="btn pri" onclick="saveMaintenanceValues('${car}')">確認</button></div>`);
+      return;
+    }
+    if (action === 'maintenance-schedule') {
+      const rows = [[record.item || '尚未設定','尚未設定','—',record.mileage ? `${maintenanceValueLabel(record.mileage, ' km')}／${maintenanceValueLabel(record.engineHours, ' h')}` : '—','Excel 未提供','待設定']];
+      showModal(`<h3>保修項目週期排程 — ${car}</h3>${sourceNote}<div class="maintenance-schedule-table">${nativeTable(['保修項目','採用週期','週期值','近一次保修數值','當下數值','預估下次保修數值'],rows)}</div><div class="mb"><button class="btn pri" onclick="closeOv()">確定</button></div>`);
+      return;
+    }
+    if (action === 'maintenance-items') {
+      showModal(`<h3>請設定保修項目 — ${car}</h3><p class="modal-alert">設定後請依保修單補齊週期與前次保修值。</p>${sourceNote}<div class="native-modal-fields" data-maintenance-items><label>選擇保修項目<select name="item" required><option value="">請選擇保修項目</option><option${record.item === '煞車保養' ? ' selected' : ''}>煞車保養</option><option${record.item === '輪胎保養' ? ' selected' : ''}>輪胎保養</option><option${record.item === '其它' ? ' selected' : ''}>其它</option></select></label></div><div class="mb">${dismiss}<button class="btn pri" onclick="saveMaintenanceItem('${car}')">確認</button></div>`);
+      return;
+    }
+    if (action === 'book-maintenance') {
+      showModal(`<h3>預約原廠保修 — ${car}</h3>${sourceNote}<div class="native-modal-fields" data-maintenance-booking><label>預約日期<input name="date" type="date" required></label><label>服務廠<input name="serviceCenter" type="text" placeholder="請輸入原廠／服務廠" required></label><label>保修說明<textarea name="detail" placeholder="請輸入保修項目或檢修原因" required></textarea></label></div><div class="mb">${dismiss}<button class="btn pri" onclick="saveMaintenanceBooking('${car}')">送出預約</button></div>`);
+      return;
+    }
+    if (action === 'edit-work-order') {
+      showModal(`<h3>編輯工單 — ${car}</h3>${sourceNote}<div class="native-modal-fields" data-work-order><label>工單編號<input name="workOrder" type="text" value="${escapeHtml(record.workOrder || '')}" placeholder="請輸入工單編號" required></label><label>工單說明<textarea name="workOrderNote" placeholder="請輸入檢修內容" required>${escapeHtml(record.workOrderNote || '')}</textarea></label></div><div class="mb">${dismiss}<button class="btn pri" onclick="saveWorkOrder('${car}')">儲存</button></div>`);
+    }
+  }
+  function modalValues(selector) {
+    const container = document.querySelector(`#modal ${selector}`);
+    if (!container) return null;
+    const fields = [...container.querySelectorAll('[name]')];
+    if (fields.some(field => !field.reportValidity())) return null;
+    return Object.fromEntries(fields.map(field => [field.name, field.value.trim()]));
+  }
+  function refreshMaintenancePage(message) {
+    closeOv();
+    renderItraqPage(7, 'maintenance');
+    toast(message, '已更新目前瀏覽器的保修資料；原始 Excel 遙測資料未被修改。', 'ok');
+  }
+  window.saveMaintenanceValues = function (car) {
+    const values = modalValues('[data-maintenance-values]');
+    if (!values) return;
+    saveMaintenanceRecord(car, values);
+    refreshMaintenancePage('前次保修值已儲存');
+  };
+  window.saveMaintenanceItem = function (car) {
+    const values = modalValues('[data-maintenance-items]');
+    if (!values) return;
+    saveMaintenanceRecord(car, values);
+    refreshMaintenancePage('保修項目已儲存');
+  };
+  window.saveMaintenanceBooking = function (car) {
+    const values = modalValues('[data-maintenance-booking]');
+    if (!values) return;
+    saveMaintenanceRecord(car, { booking: values });
+    closeOv();
+    renderItraqPage(8, 'maintenance');
+    toast('原廠保修需求已送出', '預約資料已列入待服務廠確認清單。', 'ok');
+  };
+  window.saveWorkOrder = function (car) {
+    const values = modalValues('[data-work-order]');
+    if (!values) return;
+    saveMaintenanceRecord(car, values);
+    refreshMaintenancePage('工單資料已儲存');
+  };
   function nativeAppointments() {
-    const rows = telemetryVehicles.filter(vehicle => vehicle.dtc_count).slice(0, 6).map(vehicle => ['待人工確認','DTC 遙測',vehicle.c,'原始資料未提供','—','—','待串接','—',`DTC ${vehicle.dtc_count} 筆`,nativeTextAction('建立需求','open')]);
-    return `<div class="native-workspace">${nativeFilter({actions:'<button type="button" class="native-action">⇩ 匯出資料</button><button type="button" class="native-action">◷ 建立預約需求</button>'})}<div class="native-tabs"><button type="button" data-itraq-page="7">車輛週期一覽</button><button type="button" class="on">預約資料</button><button type="button" data-itraq-view="work-order">工單資料</button></div><div class="source-note">Excel 未提供原廠、服務廠、聯絡人或預約日期；僅以有 DTC 的車輛建立待串接清單。</div>${nativeTable(['狀態 ↕','類別 ↕','車號 ↕','聯絡人 ↕','預約日期 ↕','預約編號 ↕','服務廠 ↕','預計進廠時段 ↕','派工項目 ↕','操作'],rows, state => state === '待人工確認' ? 'pending' : '')}${nativePager()}</div>`;
+    const bookings = Object.entries(maintenanceRecords).filter(([, record]) => record.booking).map(([car, record]) => ['待服務廠確認',escapeHtml(record.item || '原廠保修'),car,'使用者輸入',record.booking.date,'—',escapeHtml(record.booking.serviceCenter),'待確認',escapeHtml(record.booking.detail),nativeTextAction('查看需求','open')]);
+    const detected = telemetryVehicles.filter(vehicle => vehicle.dtc_count).slice(0, 6).map(vehicle => ['待人工確認','DTC 遙測',vehicle.c,'原始資料未提供','—','—','待串接','—',`DTC ${vehicle.dtc_count} 筆`,nativeTextAction('建立需求','open')]);
+    const rows = [...bookings, ...detected];
+    return `<div class="native-workspace">${nativeFilter({actions:'<button type="button" class="native-action">⇩ 匯出資料</button><button type="button" class="native-action">◷ 建立預約需求</button>'})}<div class="native-tabs"><button type="button" data-itraq-page="7">車輛週期一覽</button><button type="button" class="on">預約資料</button><button type="button" data-itraq-view="work-order">工單資料</button></div><div class="source-note">Excel 未提供原廠、服務廠、聯絡人或預約日期；使用者送出的預約會顯示在此清單，DTC 車輛則維持待串接狀態。</div>${nativeTable(['狀態 ↕','類別 ↕','車號 ↕','聯絡人 ↕','預約日期 ↕','預約編號 ↕','服務廠 ↕','預計進廠時段 ↕','派工項目 ↕','操作'],rows, state => state === '待人工確認' ? 'pending' : '')}${nativePager()}</div>`;
   }
   function nativeEvents() {
     const sum = field => telemetryVehicles.reduce((total, vehicle) => total + (Number(vehicle[field]) || 0), 0);
@@ -283,6 +376,10 @@
       if (button.dataset.itraqAction) {
         const labels = { edit:'編輯資料', copy:'已複製任務', refresh:'已更新納管狀態', delete:'刪除資料', save:'已儲存行程', open:'已開啟通知', vehicle:'車輛即時資訊', fence:'電子圍籬資訊', 'confirm-maintenance':'保修值已確認', 'page-size':'每頁資料筆數', 'report-task-request':'任務資料串接需求' };
         const action = button.dataset.itraqAction;
+        if (['maintenance-values','maintenance-schedule','maintenance-items','book-maintenance','edit-work-order'].includes(action)) {
+          maintenanceDialog(action, button.dataset.vehicle);
+          return;
+        }
         if (action === 'report-export') {
           const reportMonth = currentReportMonth;
           const rows = [['月份','計算安全分','超速紀錄','怠速佔比','高引擎負載','DTC','百公里油耗']].concat(window.HINO_EXCEL_DATA.months.map((label, index) => {
