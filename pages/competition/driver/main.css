@@ -6,7 +6,8 @@
  --wrap:1180px;--r:14px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden}
+html,body{height:100%;overflow:hidden;max-width:100%}
+html{-webkit-text-size-adjust:100%}
 body{
  font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,sans-serif;
  background:var(--bg);color:var(--txt);line-height:1.55;
@@ -37,31 +38,31 @@ body{
 .screen{
  max-width:var(--wrap);margin:0 auto;width:100%;
  padding:12px 16px 16px;
- flex:1;min-height:0;overflow:hidden;
+ flex:1;min-width:0;min-height:0;overflow:hidden;
  display:flex;flex-direction:column;gap:10px;
 }
 .dash-top{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0;overflow:hidden}
-.period{font-size:12px;color:var(--mut);flex:0 0 auto}
+.period{font-size:12px;color:var(--mut);flex:0 0 auto;overflow-wrap:anywhere}
 .score-card .s.up{color:var(--good)}
 .score-card .s.down{color:var(--bad)}
-.score-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:0 0 auto}
+.score-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:0 0 auto;min-width:0}
 .score-card{
  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
- padding:12px 14px;box-shadow:var(--sh);
+ padding:12px 14px;box-shadow:var(--sh);min-width:0;
 }
 .score-card .k{font-size:13px;color:var(--mut);font-weight:700}
 .score-card .v{font-size:clamp(28px,5vw,40px);font-weight:850;line-height:1.1;margin-top:2px}
-.score-card .s{font-size:13px;color:var(--mut2);margin-top:4px}
+.score-card .s{font-size:13px;color:var(--mut2);margin-top:4px;overflow-wrap:anywhere}
 .chartcard{
  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
  padding:10px 12px 6px;box-shadow:var(--sh);
  flex:1;min-height:0;display:flex;flex-direction:column;
 }
-.chartcard .ch-h{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;flex:0 0 auto}
+.chartcard .ch-h{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;flex:0 0 auto;flex-wrap:wrap}
 .chartcard .ttl{font-weight:800;font-size:14px}
 .chartcard .sub{font-size:11px;color:var(--mut);margin-left:auto}
-#chart{flex:1;min-height:0}
-svg.lc{width:100%;height:100%;display:block}
+#chart{flex:1;min-height:0;display:flex;align-items:center}
+svg.lc{width:100%;height:auto;max-height:100%;display:block}
 svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
 .status{
  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
@@ -121,21 +122,61 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
 .bub.ai{align-self:flex-start;background:#f4f9ec;border:1px solid #d8e7c0}
 .bub.me{align-self:flex-end;background:var(--teal);color:#fff}
 .chatin{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--line);flex:0 0 auto}
-.chatin input{flex:1;font:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:20px;background:var(--bg2)}
+.chatin input{flex:1;min-width:0;font:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:20px;background:var(--bg2)}
 .chatin button{font:inherit;font-size:13px;font-weight:800;border:0;border-radius:20px;padding:10px 14px;background:var(--accent);color:#04121f;cursor:pointer}
 .dash-tabs{
- display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;flex:0 0 auto;
+ display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;flex:0 0 auto;min-width:0;
 }
 .dash-tabs button{
  font:inherit;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
- padding:10px 8px 8px;cursor:pointer;text-align:center;box-shadow:var(--sh);
+ padding:10px 8px 8px;cursor:pointer;text-align:center;box-shadow:var(--sh);min-width:0;
 }
 .dash-tabs button.on{
  border-color:var(--accent);box-shadow:0 0 0 2px rgba(123,180,46,.28);
 }
 .dash-tabs .tn{font-size:13px;font-weight:800;color:var(--txt)}
 .dash-tabs .tv{font-size:22px;font-weight:850;margin-top:2px;line-height:1.2}
-.dash-tabs .tr{font-size:12px;color:var(--mut);margin-top:2px}
+.dash-tabs .tr{font-size:12px;color:var(--mut);overflow-wrap:anywhere}
+
+@media (max-width: 640px){
+ .bar-inner{padding:0 12px;gap:8px;min-height:48px}
+ .logo{font-size:15px}
+ .ttl{font-size:14px}
+ .screen{padding:8px 10px 10px;gap:8px}
+ .dash-top{gap:8px}
+ .period{font-size:11px}
+ .score-row{grid-template-columns:1fr}
+ .score-card{padding:8px 10px}
+ .score-card .k{font-size:11px}
+ .score-card .v{font-size:clamp(22px,8vw,32px)}
+ .score-card .s{font-size:11px}
+ .chartcard{flex:0 0 auto;padding:8px 8px 4px;min-height:0}
+ .chartcard .ttl{font-size:13px}
+ #chart{flex:none;height:auto;display:block}
+ svg.lc{width:100%;height:auto;max-height:none}
+ svg.lc text{font-size:9px}
+ .status{padding:0 10px}
+ .status[open]{max-height:42%}
+ .status-row{flex-direction:column;gap:8px}
+ .ai-care{max-width:100%;align-self:flex-end}
+ .dash-tabs{gap:6px}
+ .dash-tabs button{padding:8px 4px 6px}
+ .dash-tabs .tn{font-size:12px}
+ .dash-tabs .tv{font-size:18px}
+ .dash-tabs .tr{font-size:10px}
+ .role-pop{inset:48px 12px auto auto}
+ .ai-dialog{width:calc(100vw - 20px);height:min(70dvh,520px)}
+ .chatin{gap:6px;padding:8px 10px}
+ .chatin input{min-width:0;padding:8px 10px;font-size:16px}
+ .hero{font-size:clamp(24px,10vw,40px)}
+}
+@media (max-height: 700px){
+ .score-card{padding:8px 10px}
+ .score-card .v{font-size:clamp(22px,6vh,32px)}
+ .dash-tabs button{padding:6px 4px}
+ .dash-tabs .tv{font-size:16px}
+ .status[open]{max-height:32%}
+}
 
 @media (min-width: 820px){
  body{background:#f4f7f7}
@@ -143,6 +184,7 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
  .logo{font-size:19px}
  .ttl{font-size:16px}
  .screen{padding:16px 24px 16px}
+ .role-pop{inset:68px 24px auto auto}
 }
 .hero{
  flex:1;display:grid;place-items:center;
@@ -150,13 +192,13 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
  letter-spacing:.08em;
 }
 .role-fab{
- position:fixed;right:20px;bottom:20px;z-index:40;
- width:52px;height:52px;border-radius:50%;border:0;cursor:pointer;
- font:inherit;font-size:13px;font-weight:800;color:#04121f;
- background:var(--accent);box-shadow:0 4px 16px rgba(20,65,79,.22);
+ font:inherit;font-size:12px;font-weight:700;color:#dcecc9;
+ background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
+ padding:6px 11px;border-radius:6px;cursor:pointer;flex:0 0 auto;
 }
+.role-fab:hover{background:rgba(255,255,255,.16)}
 .role-pop{
- inset:auto 20px 80px auto;margin:0;padding:8px;
+ inset:56px 16px auto auto;margin:0;padding:8px;
  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
  box-shadow:var(--sh);min-width:160px;
 }

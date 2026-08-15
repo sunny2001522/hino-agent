@@ -53,16 +53,21 @@ function history(cat) {
 }
 
 function lineChart(pts) {
-  const W = 560, H = 160, pl = 36, pr = 18, pt = 10, pb = 22;
+  const narrow = window.innerWidth < 520;
+  const W = 560, H = 160, pl = narrow ? 26 : 36, pr = narrow ? 12 : 18, pt = 10, pb = 22;
   const n = pts.length, x = i => pl + (W - pl - pr) * (n < 2 ? 0.5 : i / (n - 1));
   const y = v => pt + (H - pt - pb) * (1 - v / 100);
+  const mid = Math.floor((n - 1) / 2);
   const grid = [0, 50, 100].map(gv =>
     `<line x1="${pl}" y1="${y(gv)}" x2="${W - pr}" y2="${y(gv)}" stroke="#e4ebed"/><text x="${pl - 6}" y="${y(gv) + 4}" text-anchor="end">${gv}</text>`).join('');
   const goal = `<line x1="${pl}" y1="${y(70)}" x2="${W - pr}" y2="${y(70)}" stroke="#43a047" stroke-dasharray="5 4"/><text x="${W - pr + 2}" y="${y(70) + 4}" fill="#43a047">70</text>`;
-  const axis = pts.map((p, i) => `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${p.label}</text>`).join('');
+  const axis = pts.map((p, i) => {
+    if (narrow && i !== 0 && i !== n - 1 && i !== mid) return '';
+    return `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${p.label}</text>`;
+  }).join('');
   const line = pts.map((p, i) => `${x(i)},${y(p.v)}`).join(' ');
   const dots = pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.v)}" r="${i === n - 1 ? 4 : 2.4}" fill="#7bb42e"/>`).join('');
-  return `<svg class="lc" viewBox="0 0 ${W} ${H}">${grid}${goal}${axis}<polyline points="${line}" fill="none" stroke="#7bb42e" stroke-width="2.6" stroke-linejoin="round"/>${dots}</svg>`;
+  return `<svg class="lc" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${grid}${goal}${axis}<polyline points="${line}" fill="none" stroke="#7bb42e" stroke-width="2.6" stroke-linejoin="round"/>${dots}</svg>`;
 }
 
 function fleetAvg(cat) {
@@ -194,6 +199,13 @@ function boot() {
     if (btn) render(btn.dataset.cat);
   });
   render('safety');
+  addEventListener('resize', () => {
+    clearTimeout(render._t);
+    render._t = setTimeout(() => {
+      const on = document.querySelector('#tabs button.on');
+      if (on) render(on.dataset.cat);
+    }, 120);
+  });
 }
 
 boot();
