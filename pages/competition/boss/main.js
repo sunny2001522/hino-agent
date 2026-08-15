@@ -18,11 +18,21 @@ function tier(s) {
   return {id: 'ok', label: '表現好'};
 }
 
-function scoredRegions(cat) {
+function mix(cat, drivers) {
+  const n = {bad: 0, mid: 0, ok: 0};
+  for (const d of drivers) n[tier(cat.score(d)).id]++;
+  return n;
+}
+
+function regionStats(cat) {
   return data.regions.map(r => {
     const s = regionAvg(cat, r.drivers);
-    return {r, s, t: tier(s)};
-  }).sort((a, b) => a.s - b.s);
+    return {r, s, t: tier(s), n: mix(cat, r.drivers)};
+  });
+}
+
+function scoredRegions(cat) {
+  return regionStats(cat).slice().sort((a, b) => a.s - b.s);
 }
 
 function anomalyN(cat, drivers) {
@@ -63,6 +73,12 @@ function regionSeries(cat) {
   return data.regions.map(r => ({pts: history(cat, r), color: r.color, name: r.name}));
 }
 
+function legendHtml(cat) {
+  return '<div class="chart-leg">' + regionStats(cat).map(({r, s, n}) =>
+    `<span><i style="background:${r.color}"></i>${esc(r.name)} ${r.drivers.length} 台 ${s}分 · 差 ${n.bad} · 一般 ${n.mid} · 好 ${n.ok}</span>`
+  ).join('') + '</div>';
+}
+
 function chartHtml(cat) {
   return linesChart(regionSeries(cat));
 }
@@ -87,8 +103,7 @@ function render(id) {
   document.getElementById('pieTitle').textContent = anomalyLabel(cat) + '次數';
   document.getElementById('pieSub').textContent = '每台最高 ' + hot.name;
   document.getElementById('pie').innerHTML = pieChart(slices);
-  document.getElementById('chartLeg').innerHTML = '<span class="chart-leg">' +
-    data.regions.map(r => `<span><i style="background:${r.color}"></i>${esc(r.name)}</span>`).join('') + '</span>';
+  document.getElementById('chartLeg').innerHTML = legendHtml(cat);
   document.getElementById('regions').innerHTML = chartHtml(cat);
   for (const btn of document.querySelectorAll('#tabs button')) {
     btn.classList.toggle('on', btn.dataset.cat === id);
@@ -139,6 +154,12 @@ boot();
   console.assert(scoredRegions(CATS[2])[0].r.name === '南區', 'maintenance weakest is south');
   const html = chartHtml(CATS[0]);
   console.assert((html.match(/polyline/g) || []).length === 3, 'one line per region');
+  const southM = regionStats(CATS[2]).find(x => x.r.id === 'S');
+  console.assert(southM.n.bad === 2 && southM.n.mid === 2 && southM.n.ok === 3, 'south maintenance mix');
+  const northS = regionStats(CATS[0]).find(x => x.r.id === 'N');
+  console.assert(northS.s === 69 && northS.r.drivers.length === 2, 'north safety 2 cars 69');
+  const leg = legendHtml(CATS[0]);
+  console.assert(leg.includes('2 台') && leg.includes('69分') && /差 \d/.test(leg), 'legend has n, score, mix');
   console.assert(regionSeries(CATS[0]).every(s => s.pts.length === regionSeries(CATS[0])[0].pts.length), 'shared months');
   console.assert(!/ABC-/.test(html), 'no car numbers');
   const n = data.regions.map(r => anomalyN(CATS[0], r.drivers));
