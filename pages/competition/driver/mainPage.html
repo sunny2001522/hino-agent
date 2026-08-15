@@ -16,11 +16,13 @@
 </header>
 <main class="screen">
   <section class="dash-top">
+    <p class="period" id="period"></p>
     <div class="score-row">
       <div class="score-card">
         <div class="k">總分</div>
         <div class="v" id="scoreVal">—</div>
         <div class="s" id="scoreLabel"></div>
+        <div class="s" id="scoreDelta"></div>
       </div>
       <div class="score-card">
         <div class="k">排名</div>
@@ -29,12 +31,21 @@
       </div>
     </div>
     <div class="chartcard">
-      <div class="ch-h"><span class="ttl">歷史分數</span><span class="sub" id="chartSub"></span></div>
+      <div class="ch-h"><span class="ttl" id="chartTitle">月趨勢</span><span class="sub" id="chartSub"></span></div>
       <div id="chart"></div>
     </div>
     <details class="status">
       <summary>目前狀況</summary>
-      <div id="statusBody"></div>
+      <div class="status-row">
+        <div id="statusBody"></div>
+        <!-- 只有司機有：AI 關心與聊天（leader / boss 頁不放） -->
+        <div class="ai-care">
+          <p class="ai-bubble" id="aiBubble"></p>
+          <button type="button" class="ai-btn" id="aiOpen" aria-label="跟 AI 聊聊">
+            <i data-lucide="sparkles"></i>
+          </button>
+        </div>
+      </div>
     </details>
   </section>
   <nav class="dash-tabs" id="tabs"></nav>
@@ -45,6 +56,18 @@
   <a href="../leader/mainPage.html">區域負責人</a>
   <a href="../boss/mainPage.html">總負責人</a>
 </div>
+<dialog id="aiChat" class="ai-dialog">
+  <div class="chathd">
+    <strong>AI 關心</strong>
+    <button type="button" class="ai-x" id="aiClose">關閉</button>
+  </div>
+  <div class="chatlog" id="chatlog"></div>
+  <form class="chatin" id="chatForm">
+    <input id="chatInput" type="text" placeholder="想說什麼都可以" autocomplete="off">
+    <button type="submit">送出</button>
+  </form>
+</dialog>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script src="../../../excel-derived-data.js"></script>
 <script src="main.js"></script>
 </body>
