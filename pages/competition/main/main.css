@@ -1,0 +1,54 @@
+:root{
+ --bg:#eef2f4;--bg2:#f4f8f9;--card:#ffffff;--line:#dbe3e6;
+ --txt:#1c2b31;--mut:#5d7480;--mut2:#8ca0a9;
+ --accent:#7bb42e;--teal:#14414f;--good:#43a047;
+ --sh:0 3px 14px rgba(20,65,79,.09);
+ --wrap:1180px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+ font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,sans-serif;
+ background:var(--bg);color:var(--txt);line-height:1.55;
+ -webkit-font-smoothing:antialiased;
+}
+.appbar{
+ position:sticky;top:0;z-index:30;
+ background:var(--teal);border-bottom:3px solid var(--accent);
+}
+.bar-inner{
+ max-width:var(--wrap);margin:0 auto;
+ padding:0 16px;min-height:56px;
+ display:flex;align-items:center;gap:12px;
+}
+.logo{
+ color:#fff;font-size:17px;font-weight:900;letter-spacing:.5px;flex:0 0 auto;
+}
+.ttl{
+ flex:1;min-width:0;color:#fff;font-size:15px;font-weight:850;
+}
+.back{
+ font:inherit;font-size:12px;font-weight:700;color:#dcecc9;
+ background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
+ padding:6px 11px;border-radius:6px;text-decoration:none;flex:0 0 auto;
+}
+.back:hover{background:rgba(255,255,255,.16)}
+.screen{
+ max-width:var(--wrap);margin:0 auto;
+ padding:24px 16px 48px;
+ min-height:calc(100vh - 59px);
+ display:grid;place-items:center;
+}
+.hero{
+ font-size:clamp(32px, 8vw, 48px);
+ font-weight:850;color:var(--good);
+ letter-spacing:.08em;text-align:center;
+}
+
+@media (min-width: 820px){
+ body{background:#f4f7f7}
+ .bar-inner{padding:0 24px;min-height:68px;gap:22px}
+ .logo{font-size:19px}
+ .ttl{font-size:16px}
+ .screen{padding:32px 30px 64px}
+}
