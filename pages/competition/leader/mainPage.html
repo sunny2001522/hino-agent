@@ -35,6 +35,7 @@
         <div id="chart"></div>
       </div>
     </div>
+    <aside class="ai-brief" id="aiBrief"></aside>
     <div class="drv-grid" id="drivers"></div>
   </section>
   <nav class="dash-tabs" id="tabs"></nav>
@@ -44,6 +45,14 @@
   <a class="on" href="../leader/mainPage.html">區域負責人</a>
   <a href="../boss/mainPage.html">總負責人</a>
 </div>
+<dialog class="drawer" id="drawer">
+  <div class="drawer-hd">
+    <strong id="drawerTitle"></strong>
+    <button type="button" class="ai-x" id="drawerClose">關閉</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <nav class="dash-tabs" id="drawerTabs"></nav>
+</dialog>
 <script src="../../../excel-derived-data.js"></script>
 <script src="../score.js"></script>
 <script src="main.js"></script>
