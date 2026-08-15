@@ -6,22 +6,46 @@
 <title>競賽 — HINO iTRAQ</title>
 <link rel="stylesheet" href="../driver/main.css">
 </head>
-<body>
+<body class="lead boss">
 <header class="appbar">
   <div class="bar-inner">
     <div class="logo">iTRAQ</div>
-    <div class="ttl">競賽</div>
+    <div class="ttl" id="ttl">競賽</div>
     <button type="button" class="role-fab" popovertarget="rolePop">身分</button>
     <a class="back" href="../../../index.html">返回</a>
   </div>
 </header>
 <main class="screen">
-  <div class="hero">boss</div>
+  <section class="dash-top">
+    <p class="period" id="period"></p>
+    <div class="score-row">
+      <div class="score-card">
+        <div class="k">全隊平均</div>
+        <div class="v" id="scoreVal">—</div>
+        <div class="s" id="scoreLabel"></div>
+        <div class="s" id="scoreDelta"></div>
+      </div>
+      <div class="score-card">
+        <div class="k">最弱區</div>
+        <div class="v" id="rankVal">—</div>
+        <div class="s" id="rankOf"></div>
+      </div>
+      <div class="chartcard">
+        <div class="ch-h"><span class="ttl" id="chartTitle">月趨勢</span><span class="sub" id="chartSub"></span></div>
+        <div id="chart"></div>
+      </div>
+    </div>
+    <div class="drv-grid" id="regions"></div>
+  </section>
+  <nav class="dash-tabs" id="tabs"></nav>
 </main>
 <div id="rolePop" popover class="role-pop">
   <a href="../driver/mainPage.html">司機</a>
   <a href="../leader/mainPage.html">區域負責人</a>
   <a class="on" href="../boss/mainPage.html">總負責人</a>
 </div>
+<script src="../../../excel-derived-data.js"></script>
+<script src="../score.js"></script>
+<script src="main.js"></script>
 </body>
 </html>

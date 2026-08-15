@@ -250,6 +250,8 @@ body.lead .drv-grid{
 .drv-s{margin-top:auto;align-self:flex-end;font-size:22px;font-weight:850;line-height:1;padding-top:6px}
 .drv:hover{border-color:var(--accent)}
 .drv.on{box-shadow:0 0 0 2px rgba(123,180,46,.28)}
+body.boss .drv{cursor:default}
+body.boss .drv:hover{border-color:var(--line)}
 dialog.drawer{
  position:fixed;inset:0 0 0 auto;width:min(440px,100vw);height:100%;
  max-width:none;max-height:none;margin:0;padding:0;border:0;
