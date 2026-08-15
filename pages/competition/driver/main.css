@@ -238,16 +238,16 @@ body.lead .drv-grid{
 .drv{
  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
  padding:10px 12px;box-shadow:var(--sh);border-left:4px solid var(--line);
- cursor:pointer;
+ cursor:pointer;display:flex;flex-direction:column;
 }
-.drv-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.drv-top{display:flex;align-items:baseline;gap:6px 8px;flex-wrap:wrap}
 .drv-top b{font-size:14px}
 .drv-tag{font-size:11px;font-weight:800;padding:1px 6px;border-radius:999px}
 .drv.ok .drv-tag{background:#e8f5e9;color:var(--good)}
 .drv.mid .drv-tag{background:#fff8e1;color:var(--warn)}
 .drv.bad .drv-tag{background:#fdecea;color:var(--bad)}
-.drv-s{margin-left:auto;font-size:22px;font-weight:850;line-height:1}
 .drv-st{font-size:12px;color:var(--mut);margin-top:6px}
+.drv-s{margin-top:auto;align-self:flex-end;font-size:22px;font-weight:850;line-height:1;padding-top:6px}
 .drv:hover{border-color:var(--accent)}
 .drv.on{box-shadow:0 0 0 2px rgba(123,180,46,.28)}
 dialog.drawer{

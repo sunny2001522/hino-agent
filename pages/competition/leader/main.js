@@ -75,13 +75,22 @@ function watch(cat, d) {
   return WATCH.rare;
 }
 
+function dispatch(fail) {
+  return fail.map(f =>
+    f.detail.startsWith('DTC') ? '先排進廠，這幾天別塞滿班' :
+    f.detail.startsWith('怠速') ? '少派要等、要塞的市區件' :
+    f.detail.startsWith('高引擎') ? '核對載重與坡段' :
+    f.detail.startsWith('超速率') ? '少派測速密的路段' : ''
+  ).filter(Boolean).join('；');
+}
+
 function focusList(cat) {
   const order = {habit: 0, rare: 1, first: 2};
   return myRegion.drivers.map(d => {
     const w = watch(cat, d);
     if (!w) return null;
     const fail = cat.facts(d).filter(f => !f.ok);
-    return {d, s: cat.score(d), w, fail, fix: fail[0]?.fix};
+    return {d, s: cat.score(d), w, fail, fix: fail[0]?.fix, send: dispatch(fail)};
   }).filter(Boolean).sort((a, b) => order[a.w.id] - order[b.w.id] || a.s - b.s);
 }
 
@@ -91,10 +100,11 @@ function briefHtml(cat) {
   return '<div class="ai-k">AI 重點</div>' + list.map((x, i) => {
     const situ = x.fail.map(f => f.detail).join(' · ');
     const say = i === 0 && x.fix ? `跟他說：${x.fix}` : '';
+    const send = x.send ? `派車：${x.send}` : '';
     return `<p>${i === 0 ? '先找' : '其次'}
       <button type="button" class="car" data-car="${esc(x.d.c)}">${esc(x.d.c)}</button>
       <span class="how ${x.w.id}">${x.w.label} · ${x.w.how}</span>
-      ${esc(situ)}${say ? '。' + esc(say) : ''}</p>`;
+      ${esc(situ)}${say ? '。' + esc(say) : ''}${send ? '。' + esc(send) : ''}</p>`;
   }).join('');
 }
 
@@ -109,9 +119,9 @@ function cardsHtml(cat) {
         <b>${esc(d.c)}</b>
         <span class="drv-tag">${t.label}</span>
         ${w ? `<span class="drv-tag ${w.id}">${w.label}</span>` : ''}
-        <span class="drv-s" style="color:${tint(s)}">${s}</span>
       </div>
       <p class="drv-st">${esc(situ)}${extra ? ' · ' + extra : ''}</p>
+      <span class="drv-s" style="color:${tint(s)}">${s}</span>
     </article>`;
     }).join('');
 }
@@ -128,6 +138,7 @@ function drawerHtml(d, cat) {
   const asOf = (d.last_time || data.meta.lastRecord).slice(0, 10);
   const t = tier(score);
   const w = watch(cat, d);
+  const send = dispatch(cat.facts(d).filter(f => !f.ok));
   return `<p class="period">${esc(data.meta.period)} · 資料截至 ${esc(asOf)}</p>
     ${w ? `<p class="how ${w.id}">${w.label} · 關注強度 ${w.how}</p>` : ''}
     <div class="score-row">
@@ -150,6 +161,7 @@ function drawerHtml(d, cat) {
       <h3>目前狀況</h3>
       <div class="status-body">${statusHtml(cat, d)}</div>
     </div>
+    ${send ? `<p class="drv-st">派車建議：${esc(send)}</p>` : ''}
     <p class="drv-st">${esc(d.i)} · ${d.journeys} 趟</p>`;
 }
 
@@ -282,4 +294,6 @@ boot();
   console.assert(watch(CATS[2], {dtc_count: 20, overspeed_pct: 0, idle_pct: 0, high_load_pct: 0}).id === 'habit', 'dtc 20 is habit');
   const brief = briefHtml(CATS[0]);
   console.assert(brief.includes('AI 重點') && /ABC-/.test(brief), 'brief names a car');
+  console.assert(dispatch(CATS[2].facts({dtc_count: 3}).filter(f => !f.ok)).includes('進廠'), 'dtc suggests workshop');
+  console.assert(dispatch(CATS[1].facts({idle_pct: 20, high_load_pct: 0, overspeed_pct: 0, dtc_count: 0}).filter(f => !f.ok)).includes('市區'), 'idle suggests skip city waits');
 })();
