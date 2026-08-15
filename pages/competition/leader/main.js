@@ -1,13 +1,5 @@
 const data = window.HINO_EXCEL_DATA;
-const myRegion = data && (() => {
-  const m = key => data.metrics.find(x => x.key === key).data;
-  return {
-    id: '*',
-    name: '全隊',
-    drivers: data.regions.flatMap(r => r.drivers),
-    series: {safety: data.aggregate.safety, idle: m('idle'), dtc: m('dtc'), speed: m('speed')},
-  };
-})();
+let myRegion = data && data.regions.find(r => r.id === data.accountBindings.lead_region);
 
 function regionAvg(cat, drivers) {
   return Math.round(drivers.reduce((a, d) => a + cat.score(d), 0) / drivers.length);
@@ -222,12 +214,12 @@ function render(id) {
   }
 }
 
-function boot() {
-  if (!myRegion) {
-    document.querySelector('.screen').textContent = '無法載入本區資料';
-    return;
-  }
+function paintChrome() {
   document.getElementById('ttl').textContent = myRegion.name;
+  document.getElementById('regionFab').textContent = myRegion.name;
+  document.getElementById('regionPop').innerHTML = data.regions.map(r =>
+    `<button type="button" data-region="${r.id}" class="${r.id === myRegion.id ? 'on' : ''}">${esc(r.name)}</button>`
+  ).join('');
   document.getElementById('tabs').innerHTML = CATS.map(cat => {
     const avg = regionAvg(cat, myRegion.drivers);
     const n = mix(cat);
@@ -239,7 +231,36 @@ function boot() {
   }).join('');
   const asOf = myRegion.drivers.reduce((m, d) => d.last_time > m ? d.last_time : m, data.meta.lastRecord).slice(0, 10);
   document.getElementById('period').textContent =
-    `${data.meta.period} · 資料截至 ${asOf} · Excel ${myRegion.drivers.length} 台`;
+    `${data.meta.period} · 資料截至 ${asOf} · ${myRegion.name} ${myRegion.drivers.length} 台`;
+}
+
+function setRegion(id) {
+  const r = data.regions.find(x => x.id === id);
+  const pop = document.getElementById('regionPop');
+  if (!r || r === myRegion) {
+    if (pop.matches(':popover-open')) pop.hidePopover();
+    return;
+  }
+  const cat = document.querySelector('#tabs button.on')?.dataset.cat || 'safety';
+  myRegion = r;
+  openCar = null;
+  const drawer = document.getElementById('drawer');
+  if (drawer.open) drawer.close();
+  if (pop.matches(':popover-open')) pop.hidePopover();
+  paintChrome();
+  render(cat);
+}
+
+function boot() {
+  if (!myRegion) {
+    document.querySelector('.screen').textContent = '無法載入本區資料';
+    return;
+  }
+  paintChrome();
+  document.getElementById('regionPop').addEventListener('click', e => {
+    const btn = e.target.closest('[data-region]');
+    if (btn) setRegion(btn.dataset.region);
+  });
   document.getElementById('tabs').addEventListener('click', e => {
     const btn = e.target.closest('[data-cat]');
     if (btn) render(btn.dataset.cat);
@@ -281,12 +302,19 @@ boot();
 
 (function () {
   if (!myRegion) return;
-  console.assert(myRegion.drivers.length === data.meta.vehicles, 'cards use all excel vehicles');
+  console.assert(myRegion.id === data.accountBindings.lead_region, 'leader is one region');
+  console.assert(myRegion.drivers.every(d => d.region === myRegion.id), 'only this region');
   const html = cardsHtml(CATS[0]);
-  console.assert(myRegion.drivers.every(d => html.includes(d.c)), 'every excel car on a card');
-  const labels = new Set(CATS.flatMap(c => scored(c).map(x => x.t.label)));
-  console.assert(labels.has('表現好') && labels.has('表現一般'), 'excel has good and average tiers');
-  console.assert(myRegion.drivers.length === 20, 'excel fleet is 20');
+  console.assert(myRegion.drivers.every(d => html.includes(d.c)), 'every region car on a card');
+  const outsider = data.regions.flatMap(r => r.drivers).find(d => d.region !== myRegion.id);
+  console.assert(!outsider || !html.includes(outsider.c), 'other regions stay off the board');
+  const other = data.regions.find(r => r.id !== myRegion.id);
+  const home = myRegion;
+  myRegion = other;
+  const switched = cardsHtml(CATS[0]);
+  console.assert(other.drivers.every(d => switched.includes(d.c)), 'switch shows that region');
+  console.assert(!switched.includes(home.drivers[0].c), 'old region cars gone');
+  myRegion = home;
   const a = myRegion.drivers[0];
   console.assert(CATS[0].score(a) === clamp(100 - a.overspeed_pct * 2), 'excel formula');
   console.assert(watch(CATS[2], {dtc_count: 0, overspeed_pct: 0, idle_pct: 0, high_load_pct: 0}) === null, 'clean car is not a watch');

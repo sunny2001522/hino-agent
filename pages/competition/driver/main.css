@@ -164,7 +164,6 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
  .dash-tabs .tn{font-size:12px}
  .dash-tabs .tv{font-size:18px}
  .dash-tabs .tr{font-size:10px}
- .role-pop{inset:48px 12px auto auto}
  .ai-dialog{width:calc(100vw - 20px);height:min(70dvh,520px)}
  .chatin{gap:6px;padding:8px 10px}
  .chatin input{min-width:0;padding:8px 10px;font-size:16px}
@@ -184,7 +183,6 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
  .logo{font-size:19px}
  .ttl{font-size:16px}
  .screen{padding:16px 24px 16px}
- .role-pop{inset:68px 24px auto auto}
 }
 .hero{
  flex:1;display:grid;place-items:center;
@@ -202,12 +200,20 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
  box-shadow:var(--sh);min-width:160px;
 }
-.role-pop a{
- display:block;padding:10px 12px;border-radius:8px;
- color:var(--txt);text-decoration:none;font-size:14px;font-weight:700;
+@supports (top: anchor(bottom)){
+ #regionFab{anchor-name:--region-fab}
+ #regionPop{position-anchor:--region-fab}
+ .role-fab[popovertarget="rolePop"]{anchor-name:--role-fab}
+ #rolePop{position-anchor:--role-fab}
+ .role-pop{inset:auto;top:anchor(bottom);right:anchor(right);margin-top:4px}
 }
-.role-pop a:hover{background:var(--bg2)}
-.role-pop a.on{background:#f0f6ea;color:#3c5b1c}
+.role-pop a, .role-pop button{
+ display:block;width:100%;padding:10px 12px;border-radius:8px;
+ color:var(--txt);text-decoration:none;font:inherit;font-size:14px;font-weight:700;
+ text-align:left;background:none;border:0;cursor:pointer;
+}
+.role-pop a:hover, .role-pop button:hover{background:var(--bg2)}
+.role-pop a.on, .role-pop button.on{background:#f0f6ea;color:#3c5b1c}
 body.lead .score-row{grid-template-columns:minmax(0,1fr) minmax(0,.7fr) minmax(0,1.4fr);align-items:stretch}
 body.lead .chartcard{flex:none;min-height:0;padding:8px 10px 4px}
 body.lead #chart{flex:1;min-height:0;max-height:88px}

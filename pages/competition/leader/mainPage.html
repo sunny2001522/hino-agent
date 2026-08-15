@@ -11,6 +11,7 @@
   <div class="bar-inner">
     <div class="logo">iTRAQ</div>
     <div class="ttl" id="ttl">競賽</div>
+    <button type="button" class="role-fab" id="regionFab" popovertarget="regionPop">區域</button>
     <button type="button" class="role-fab" popovertarget="rolePop">身分</button>
     <a class="back" href="../../../index.html">返回</a>
   </div>
@@ -20,7 +21,7 @@
     <p class="period" id="period"></p>
     <div class="score-row">
       <div class="score-card">
-        <div class="k">全隊平均</div>
+        <div class="k">本區平均</div>
         <div class="v" id="scoreVal">—</div>
         <div class="s" id="scoreLabel"></div>
         <div class="s" id="scoreDelta"></div>
@@ -40,6 +41,7 @@
   </section>
   <nav class="dash-tabs" id="tabs"></nav>
 </main>
+<div id="regionPop" popover class="role-pop"></div>
 <div id="rolePop" popover class="role-pop">
   <a href="../driver/mainPage.html">司機</a>
   <a class="on" href="../leader/mainPage.html">區域負責人</a>
