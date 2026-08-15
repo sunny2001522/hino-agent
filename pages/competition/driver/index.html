@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>競賽 — HINO iTRAQ</title>
+<link rel="stylesheet" href="../main.css">
+</head>
+<body>
+<header class="appbar">
+  <div class="bar-inner">
+    <div class="logo">iTRAQ</div>
+    <div class="ttl">競賽</div>
+    <button type="button" class="role-fab" popovertarget="rolePop">身分</button>
+    <a class="back" href="../../../index.html">返回</a>
+  </div>
+</header>
+<main class="screen">
+  <section class="dash-top">
+    <p class="period" id="period"></p>
+    <div class="score-row">
+      <div class="score-card">
+        <div class="k">總分</div>
+        <div class="v" id="scoreVal">—</div>
+        <div class="s" id="scoreLabel"></div>
+        <div class="s" id="scoreDelta"></div>
+      </div>
+      <div class="score-card">
+        <div class="k">排名</div>
+        <div class="v" id="rankVal">—</div>
+        <div class="s" id="rankOf"></div>
+      </div>
+    </div>
+    <div class="chartcard">
+      <div class="ch-h"><span class="ttl" id="chartTitle">月趨勢</span><span class="sub" id="chartSub"></span></div>
+      <div id="chart"></div>
+    </div>
+    <details class="status">
+      <summary>目前狀況</summary>
+      <div class="status-row">
+        <div id="statusBody"></div>
+        <!-- 只有司機有：AI 關心與聊天（leader / boss 頁不放） -->
+        <div class="ai-care">
+          <p class="ai-bubble" id="aiBubble"></p>
+          <button type="button" class="ai-btn" id="aiOpen" aria-label="跟 AI 聊聊">✦</button>
+        </div>
+      </div>
+    </details>
+  </section>
+  <nav class="dash-tabs" id="tabs"></nav>
+</main>
+<div id="rolePop" popover class="role-pop">
+  <a class="on" href="../driver/index.html">司機</a>
+  <a href="../leader/index.html">區域負責人</a>
+  <a href="../boss/index.html">總負責人</a>
+</div>
+<dialog id="aiChat" class="ai-dialog">
+  <div class="chathd">
+    <strong>AI 關心</strong>
+    <button type="button" class="ai-x" id="aiClose">關閉</button>
+  </div>
+  <div class="chatlog" id="chatlog"></div>
+  <form class="chatin" id="chatForm">
+    <input id="chatInput" type="text" placeholder="想說什麼都可以" autocomplete="off">
+    <button type="submit">送出</button>
+  </form>
+</dialog>
+<script src="../../../excel-derived-data.js"></script>
+<script src="../score.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
