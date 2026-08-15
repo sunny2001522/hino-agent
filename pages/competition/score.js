@@ -45,7 +45,8 @@ function history(cat, region) {
     .filter((_, i) => s.speed[i] || s.idle[i]);
 }
 
-function lineChart(pts, simple) {
+function linesChart(series, simple) {
+  const pts = series[0].pts;
   const narrow = window.innerWidth < 520;
   const W = 560, H = 160, pl = simple || narrow ? 26 : 36, pr = simple || narrow ? 12 : 18, pt = 10, pb = 22;
   const n = pts.length, x = i => pl + (W - pl - pr) * (n < 2 ? 0.5 : i / (n - 1));
@@ -59,9 +60,17 @@ function lineChart(pts, simple) {
     if (!simple && narrow && i !== 0 && i !== n - 1 && i !== mid) return '';
     return `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${p.label}</text>`;
   }).join('');
-  const line = pts.map((p, i) => `${x(i)},${y(p.v)}`).join(' ');
-  const dots = simple ? '' : pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.v)}" r="${i === n - 1 ? 4 : 2.4}" fill="#7bb42e"/>`).join('');
-  return `<svg class="lc" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${grid}${goal}${axis}<polyline points="${line}" fill="none" stroke="#7bb42e" stroke-width="2.6" stroke-linejoin="round"/>${dots}</svg>`;
+  const lines = series.map(s => {
+    const col = s.color || '#7bb42e';
+    return `<polyline points="${s.pts.map((p, i) => `${x(i)},${y(p.v)}`).join(' ')}" fill="none" stroke="${col}" stroke-width="2.6" stroke-linejoin="round"/>`;
+  }).join('');
+  const col = series[0].color || '#7bb42e';
+  const dots = simple || series.length > 1 ? '' : pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.v)}" r="${i === n - 1 ? 4 : 2.4}" fill="${col}"/>`).join('');
+  return `<svg class="lc" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${grid}${goal}${axis}${lines}${dots}</svg>`;
+}
+
+function lineChart(pts, simple, color) {
+  return linesChart([{pts, color: color || '#7bb42e'}], simple);
 }
 
 function statusHtml(cat, d) {

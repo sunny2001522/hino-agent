@@ -18,40 +18,53 @@ function tier(s) {
   return {id: 'ok', label: '表現好'};
 }
 
-function mix(cat, drivers) {
-  const n = {bad: 0, mid: 0, ok: 0};
-  for (const d of drivers) n[tier(cat.score(d)).id]++;
-  return n;
-}
-
-function avg1(drivers, key) {
-  return (drivers.reduce((a, d) => a + d[key], 0) / drivers.length).toFixed(1);
-}
-
-function factLine(cat, drivers) {
-  if (cat.id === 'safety') return `超速率 ${avg1(drivers, 'overspeed_pct')}%`;
-  if (cat.id === 'efficiency') return `怠速 ${avg1(drivers, 'idle_pct')}% · 高引擎負載 ${avg1(drivers, 'high_load_pct')}%`;
-  return `DTC ${drivers.reduce((a, d) => a + d.dtc_count, 0)} 筆`;
-}
-
 function scoredRegions(cat) {
   return data.regions.map(r => {
     const s = regionAvg(cat, r.drivers);
-    return {r, s, t: tier(s), n: mix(cat, r.drivers)};
+    return {r, s, t: tier(s)};
   }).sort((a, b) => a.s - b.s);
 }
 
-function cardsHtml(cat) {
-  return scoredRegions(cat).map(({r, s, t, n}) =>
-    `<article class="drv ${t.id}" style="border-left-color:${r.color}">
-      <div class="drv-top">
-        <b>${esc(r.name)}</b>
-        <span class="drv-tag">${t.label}</span>
-      </div>
-      <p class="drv-st">${r.drivers.length} 台 · 差 ${n.bad} · 一般 ${n.mid} · 好 ${n.ok} · ${esc(factLine(cat, r.drivers))}</p>
-      <span class="drv-s" style="color:${tint(s)}">${s}</span>
-    </article>`
-  ).join('');
+function anomalyN(cat, drivers) {
+  // ponytail: pie follows the tab. All-types sum if a single unchanging company pie is needed.
+  if (cat.id === 'safety') return drivers.reduce((a, d) => a + d.overspeed_count, 0);
+  if (cat.id === 'efficiency') return drivers.reduce((a, d) => a + d.idle_count + d.high_load_count, 0);
+  return drivers.reduce((a, d) => a + d.dtc_count, 0);
+}
+
+function anomalyLabel(cat) {
+  return {safety: '超速', efficiency: '怠速＋高負載', maintenance: 'DTC'}[cat.id];
+}
+
+function pieChart(slices) {
+  const total = slices.reduce((a, s) => a + s.n, 0);
+  const R = 42, CX = 50, CY = 50;
+  let a0 = -Math.PI / 2;
+  const paths = slices.map(s => {
+    if (!total || !s.n) return '';
+    const frac = s.n / total;
+    if (frac >= 1) return `<circle cx="${CX}" cy="${CY}" r="${R}" fill="${s.color}"/>`;
+    const a1 = a0 + frac * 2 * Math.PI;
+    const large = frac > 0.5 ? 1 : 0;
+    const x0 = CX + R * Math.cos(a0), y0 = CY + R * Math.sin(a0);
+    const x1 = CX + R * Math.cos(a1), y1 = CY + R * Math.sin(a1);
+    a0 = a1;
+    return `<path d="M ${CX} ${CY} L ${x0} ${y0} A ${R} ${R} 0 ${large} 1 ${x1} ${y1} Z" fill="${s.color}"/>`;
+  }).join('');
+  const legend = slices.map(s => {
+    const pct = total ? Math.round(s.n / total * 100) : 0;
+    const per = Math.round(s.n / Math.max(1, s.cars));
+    return `<div><i style="background:${s.color}"></i>${esc(s.name)} ${s.n.toLocaleString()}（${pct}%）每台 ${per.toLocaleString()}</div>`;
+  }).join('');
+  return `<div class="pie-wrap"><svg viewBox="0 0 100 100">${paths}</svg><div class="pie-leg">${legend}</div></div>`;
+}
+
+function regionSeries(cat) {
+  return data.regions.map(r => ({pts: history(cat, r), color: r.color, name: r.name}));
+}
+
+function chartHtml(cat) {
+  return linesChart(regionSeries(cat));
 }
 
 function render(id) {
@@ -60,7 +73,8 @@ function render(id) {
   const weak = scoredRegions(cat)[0];
   const hist = history(cat, fleet);
   const mom = hist.at(-1).v - hist.at(-2).v;
-  const pts = hist.slice(-2).map((p, i, a) => ({label: i === a.length - 1 ? '本期' : '上期', v: p.v}));
+  const slices = data.regions.map(r => ({name: r.name, color: r.color, n: anomalyN(cat, r.drivers), cars: r.drivers.length}));
+  const hot = slices.reduce((a, s) => s.n / s.cars > a.n / a.cars ? s : a);
   document.getElementById('scoreVal').textContent = avg;
   document.getElementById('scoreVal').style.color = tint(avg);
   document.getElementById('scoreLabel').textContent = cat.name + ' · ' + fleet.drivers.length + ' 台平均';
@@ -70,10 +84,12 @@ function render(id) {
   document.getElementById('rankVal').textContent = weak.r.name;
   document.getElementById('rankVal').style.color = tint(weak.s);
   document.getElementById('rankOf').textContent = weak.s + ' 分';
-  document.getElementById('regions').innerHTML = cardsHtml(cat);
-  document.getElementById('chartTitle').textContent = fleet.name;
-  document.getElementById('chartSub').textContent = '及格線 70';
-  document.getElementById('chart').innerHTML = lineChart(pts, true);
+  document.getElementById('pieTitle').textContent = anomalyLabel(cat) + '次數';
+  document.getElementById('pieSub').textContent = '每台最高 ' + hot.name;
+  document.getElementById('pie').innerHTML = pieChart(slices);
+  document.getElementById('chartLeg').innerHTML = '<span class="chart-leg">' +
+    data.regions.map(r => `<span><i style="background:${r.color}"></i>${esc(r.name)}</span>`).join('') + '</span>';
+  document.getElementById('regions').innerHTML = chartHtml(cat);
   for (const btn of document.querySelectorAll('#tabs button')) {
     btn.classList.toggle('on', btn.dataset.cat === id);
   }
@@ -119,11 +135,15 @@ boot();
   console.assert(fleet.drivers.length === 20, 'excel fleet is 20');
   const safety = scoredRegions(CATS[0]);
   console.assert(safety[0].r.name === '北區' && safety[0].s === 69, 'safety weakest is north 69');
-  console.assert(scoredRegions(CATS[1])[0].r.name === '南區' && scoredRegions(CATS[1])[0].s === 69, 'efficiency weakest is south 69');
-  console.assert(scoredRegions(CATS[2])[0].r.name === '南區' && scoredRegions(CATS[2])[0].s === 64, 'maintenance weakest is south 64');
-  console.assert(regionAvg(CATS[0], fleet.drivers) === 75, 'fleet safety avg');
-  const html = cardsHtml(CATS[0]);
-  console.assert(data.regions.every(r => html.includes(r.name)), 'every region on a card');
+  console.assert(scoredRegions(CATS[1])[0].r.name === '南區', 'efficiency weakest is south');
+  console.assert(scoredRegions(CATS[2])[0].r.name === '南區', 'maintenance weakest is south');
+  const html = chartHtml(CATS[0]);
+  console.assert((html.match(/polyline/g) || []).length === 3, 'one line per region');
+  console.assert(regionSeries(CATS[0]).every(s => s.pts.length === regionSeries(CATS[0])[0].pts.length), 'shared months');
   console.assert(!/ABC-/.test(html), 'no car numbers');
+  const n = data.regions.map(r => anomalyN(CATS[0], r.drivers));
+  console.assert(n[0] === 5544 + 3108, 'north overspeed count');
+  const pie = pieChart(data.regions.map(r => ({name: r.name, color: r.color, n: anomalyN(CATS[0], r.drivers), cars: r.drivers.length})));
+  console.assert(pie.includes('path') && pie.includes('每台'), 'pie has slices and per-car');
   console.assert(!document.getElementById('aiBrief') && !document.getElementById('drawer'), 'no ai or drawer');
 })();
