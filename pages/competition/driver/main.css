@@ -69,16 +69,16 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
  padding:0 16px;box-shadow:var(--sh);
  flex:0 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;
 }
-.status summary{
+.status > summary{
  cursor:pointer;font-weight:800;padding:10px 0;list-style:none;
  display:flex;align-items:center;justify-content:space-between;gap:8px;flex:0 0 auto;
 }
-.status summary::-webkit-details-marker{display:none}
-.status summary::after{content:"▸";color:var(--mut2);font-size:14px}
-.status[open] summary::after{content:"▾"}
-.status[open] summary{border-bottom:1px solid var(--line)}
+.status > summary::-webkit-details-marker{display:none}
+.status > summary::after{content:"▸";color:var(--mut2);font-size:14px}
+.status[open] > summary::after{content:"▾"}
+.status[open] > summary{border-bottom:1px solid var(--line)}
 .status[open]{max-height:36%}
-.status-body{padding:0;flex:1;min-width:0}
+.status-body{padding:0;flex:1;min-width:0;overflow:auto}
 .status-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0 12px;flex:1;min-height:0;overflow:auto}
 .status h3{font-size:13px;margin:12px 0 6px}
 .status h3:first-child{margin-top:0}
@@ -208,3 +208,29 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
 }
 .role-pop a:hover{background:var(--bg2)}
 .role-pop a.on{background:#f0f6ea;color:#3c5b1c}
+body.lead .score-row{grid-template-columns:minmax(0,1fr) minmax(0,.7fr) minmax(0,1.4fr);align-items:stretch}
+body.lead .chartcard{flex:none;min-height:0;padding:8px 10px 4px}
+body.lead #chart{flex:1;min-height:0;max-height:88px}
+body.lead #chart svg.lc{max-height:88px}
+body.lead .drv-grid{
+ flex:1;min-height:0;overflow:auto;
+ display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+ gap:10px;align-content:start;
+}
+.drv{
+ background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+ padding:10px 12px;box-shadow:var(--sh);border-left:4px solid var(--line);
+}
+.drv-top{display:flex;align-items:baseline;gap:8px}
+.drv-top b{font-size:14px}
+.drv-tag{font-size:11px;font-weight:800;padding:1px 6px;border-radius:999px}
+.drv.ok .drv-tag{background:#e8f5e9;color:var(--good)}
+.drv.mid .drv-tag{background:#fff8e1;color:var(--warn)}
+.drv.bad .drv-tag{background:#fdecea;color:var(--bad)}
+.drv-s{margin-left:auto;font-size:22px;font-weight:850;line-height:1}
+.drv-st{font-size:12px;color:var(--mut);margin-top:6px}
+@media (max-width: 640px){
+ body.lead .score-row{grid-template-columns:1fr 1fr}
+ body.lead .chartcard{grid-column:1/-1}
+ body.lead #chart,body.lead #chart svg.lc{max-height:72px}
+}
