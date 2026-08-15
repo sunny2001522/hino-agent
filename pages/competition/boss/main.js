@@ -8,22 +8,6 @@ const fleet = data && (() => {
   };
 })();
 
-function regionAvg(cat, drivers) {
-  return Math.round(drivers.reduce((a, d) => a + cat.score(d), 0) / drivers.length);
-}
-
-function tier(s) {
-  if (s < 55) return {id: 'bad', label: '表現差'};
-  if (s < 70) return {id: 'mid', label: '表現一般'};
-  return {id: 'ok', label: '表現好'};
-}
-
-function mix(cat, drivers) {
-  const n = {bad: 0, mid: 0, ok: 0};
-  for (const d of drivers) n[tier(cat.score(d)).id]++;
-  return n;
-}
-
 function regionStats(cat) {
   return data.regions.map(r => {
     const s = regionAvg(cat, r.drivers);

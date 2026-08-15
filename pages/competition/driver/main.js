@@ -8,10 +8,6 @@ const me = (() => {
 })();
 const myRegion = me && data.regions.find(r => r.id === me.region);
 
-function fleetAvg(cat) {
-  return Math.round(fleet.reduce((a, d) => a + cat.score(d), 0) / fleet.length);
-}
-
 function rankOf(cat, car) {
   const list = [...fleet].sort((a, b) => cat.score(b) - cat.score(a));
   return {rank: list.findIndex(d => d.c === car) + 1, total: list.length};
@@ -63,12 +59,12 @@ function render(id) {
   const {rank, total} = rankOf(cat, me.c);
   const pts = history(cat, myRegion);
   const mom = pts.at(-1).v - pts.at(-2).v;
-  const avg = fleetAvg(cat);
+  const avg = regionAvg(cat, fleet);
   document.getElementById('scoreVal').textContent = score;
   document.getElementById('scoreVal').style.color = tint(score);
   document.getElementById('scoreLabel').textContent = cat.name + '分數';
   const deltaEl = document.getElementById('scoreDelta');
-  deltaEl.textContent = `車隊較上月 ${signed(mom)}`;
+  deltaEl.textContent = `本區較上月 ${signed(mom)}`;
   deltaEl.className = 's ' + (mom > 0 ? 'up' : mom < 0 ? 'down' : '');
   document.getElementById('rankVal').textContent = rank;
   document.getElementById('rankOf').textContent = `/ ${total} · 平均 ${avg}`;
@@ -110,7 +106,6 @@ function boot() {
     addBub('me', q);
     addBub('ai', aiReply(q));
   });
-  if (window.lucide) lucide.createIcons();
   document.getElementById('tabs').addEventListener('click', e => {
     const btn = e.target.closest('[data-cat]');
     if (btn) render(btn.dataset.cat);

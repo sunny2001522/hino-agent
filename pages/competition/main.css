@@ -92,9 +92,8 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
 .ai-btn{
  flex:0 0 auto;width:28px;height:28px;border:0;border-radius:50%;cursor:pointer;
  background:linear-gradient(135deg,#9aca3c,#7bb42e);color:#04121f;
- display:grid;place-items:center;
+ display:grid;place-items:center;font-size:14px;line-height:1;
 }
-.ai-btn svg{width:14px;height:14px}
 .ai-bubble{
  position:relative;width:fit-content;max-width:100%;margin:0;
  background:#f4f9ec;border:1px solid #d8e7c0;border-radius:10px;
@@ -167,7 +166,6 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
  .ai-dialog{width:calc(100vw - 20px);height:min(70dvh,520px)}
  .chatin{gap:6px;padding:8px 10px}
  .chatin input{min-width:0;padding:8px 10px;font-size:16px}
- .hero{font-size:clamp(24px,10vw,40px)}
 }
 @media (max-height: 700px){
  .score-card{padding:8px 10px}
@@ -183,11 +181,6 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
  .logo{font-size:19px}
  .ttl{font-size:16px}
  .screen{padding:16px 24px 16px}
-}
-.hero{
- flex:1;display:grid;place-items:center;
- font-size:clamp(32px,8vw,48px);font-weight:850;color:var(--good);
- letter-spacing:.08em;
 }
 .role-fab{
  font:inherit;font-size:12px;font-weight:700;color:#dcecc9;

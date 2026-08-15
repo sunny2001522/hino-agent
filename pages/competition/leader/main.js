@@ -1,16 +1,6 @@
 const data = window.HINO_EXCEL_DATA;
 let myRegion = data && data.regions.find(r => r.id === data.accountBindings.lead_region);
 
-function regionAvg(cat, drivers) {
-  return Math.round(drivers.reduce((a, d) => a + cat.score(d), 0) / drivers.length);
-}
-
-function tier(s) {
-  if (s < 55) return {id: 'bad', label: '表現差'};
-  if (s < 70) return {id: 'mid', label: '表現一般'};
-  return {id: 'ok', label: '表現好'};
-}
-
 function counts(cat, d) {
   if (cat.id === 'safety') return `超速 ${d.overspeed_count} 筆`;
   if (cat.id === 'efficiency') return `怠速 ${d.idle_count} 筆 · 高負載 ${d.high_load_count} 筆`;
@@ -23,15 +13,6 @@ function scored(cat) {
     const s = cat.score(d);
     return {d, s, t: tier(s), facts: cat.facts(d)};
   }).sort((a, b) => order[a.t.id] - order[b.t.id] || a.s - b.s);
-}
-
-function mix(cat) {
-  const list = scored(cat);
-  return {
-    bad: list.filter(x => x.t.id === 'bad').length,
-    mid: list.filter(x => x.t.id === 'mid').length,
-    ok: list.filter(x => x.t.id === 'ok').length,
-  };
 }
 
 function rankOf(cat, car) {
@@ -187,7 +168,7 @@ function openDrawer(car) {
 function render(id) {
   const cat = CATS.find(c => c.id === id);
   const avg = regionAvg(cat, myRegion.drivers);
-  const n = mix(cat);
+  const n = mix(cat, myRegion.drivers);
   const hist = history(cat, myRegion);
   const mom = hist.at(-1).v - hist.at(-2).v;
   const pts = hist.slice(-2).map((p, i, a) => ({label: i === a.length - 1 ? '本期' : '上期', v: p.v}));
@@ -222,7 +203,7 @@ function paintChrome() {
   ).join('');
   document.getElementById('tabs').innerHTML = CATS.map(cat => {
     const avg = regionAvg(cat, myRegion.drivers);
-    const n = mix(cat);
+    const n = mix(cat, myRegion.drivers);
     return `<button type="button" data-cat="${cat.id}">
       <div class="tn">${cat.name}</div>
       <div class="tv" style="color:${tint(avg)}">${avg}</div>

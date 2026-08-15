@@ -2,6 +2,17 @@ const clamp = n => Math.max(0, Math.min(100, Math.round(n)));
 const tint = s => s < 55 ? 'var(--bad)' : s < 70 ? 'var(--warn)' : 'var(--good)';
 const signed = n => n > 0 ? `+${n}` : String(n);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const regionAvg = (cat, drivers) => Math.round(drivers.reduce((a, d) => a + cat.score(d), 0) / drivers.length);
+function tier(s) {
+  if (s < 55) return {id: 'bad', label: '表現差'};
+  if (s < 70) return {id: 'mid', label: '表現一般'};
+  return {id: 'ok', label: '表現好'};
+}
+function mix(cat, drivers) {
+  const n = {bad: 0, mid: 0, ok: 0};
+  for (const d of drivers) n[tier(cat.score(d)).id]++;
+  return n;
+}
 
 const CATS = [
   {id: 'safety', name: '安全',
@@ -35,10 +46,12 @@ const CATS = [
 function history(cat, region) {
   const months = window.HINO_EXCEL_DATA.months;
   const s = region.series;
+  const cars = Math.max(1, (region.drivers || []).length);
   const raw = {
     safety: s.safety,
+    // ponytail: monthly idle% only. high_load_pct is period-level; add when compiler emits monthly load%.
     efficiency: s.idle.map(v => clamp(100 - v * 1.2)),
-    maintenance: s.dtc.map(v => clamp(100 - v * 4)),
+    maintenance: s.dtc.map(v => clamp(100 - (v / cars) * 4)),
   }[cat.id];
   // ponytail: workbook has region monthly only. Drop empty months. Per-car monthly when the compiler emits it.
   return months.map((label, i) => ({label, v: raw[i]}))
@@ -85,3 +98,14 @@ function statusHtml(cat, d) {
   }
   return h;
 }
+
+(function () {
+  const data = window.HINO_EXCEL_DATA;
+  if (!data) return;
+  const south = data.regions.find(r => r.id === 'S');
+  const lastDtc = south.series.dtc.filter((_, i) => south.series.speed[i] || south.series.idle[i]).at(-1);
+  console.assert(
+    history(CATS[2], south).at(-1).v === clamp(100 - (lastDtc / south.drivers.length) * 4),
+    'maintenance history is per-car dtc not region sum'
+  );
+})();
