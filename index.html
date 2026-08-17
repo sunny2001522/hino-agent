@@ -322,6 +322,7 @@
  <!-- ===== app bar ===== -->
  <div class="appbar" id="appbar" style="display:none">
  <div class="logo">iTRAQ</div>
+ <button class="menuToggle" id="menuToggle" type="button" aria-label="開啟導覽選單" aria-expanded="false" hidden onclick="toggleMobileNav()">☰</button>
  <!-- ===== top tab bar ===== -->
  <nav class="tabbar" id="tabbar" style="display:none"></nav>
  <button class="noticebtn" type="button" aria-label="通知中心" onclick="openItraqNotifications()">♧<span></span></button>
@@ -456,6 +457,7 @@ let curTab=null;
 function login(role){
  SESSION={role, acc:ACCOUNTS[role]};
  appbar.style.display="flex";
+ appbar.classList.remove('mobile-nav-open');
  document.getElementById('waName').textContent=SESSION.acc.name;
  document.getElementById('waRole').textContent=SESSION.acc.roleName+" · "+SESSION.acc.scope;
  buildTabs();
@@ -470,6 +472,7 @@ function login(role){
 }
 function logout(){
  SESSION=null;curTab=null;
+ appbar.classList.remove('mobile-nav-open');
  appbar.style.display="none";tabbar.style.display="none";
  document.getElementById('aifab').style.display="none";
  document.getElementById('simfab').style.display="none";
@@ -479,15 +482,30 @@ function logout(){
 }
 function buildTabs(){
  const list=TABS[SESSION.role];
- tabbar.style.display=list.length>1?"flex":"none";
+ const hasNavigation=list.length>1;
+ tabbar.style.display=hasNavigation?"flex":"none";
+ const menuToggle=document.getElementById('menuToggle');
+ menuToggle.hidden=!hasNavigation;
+ menuToggle.setAttribute('aria-expanded','false');
  const subs=window.HEADER_SUBPAGES||{};
  tabbar.innerHTML=list.map(t=>{
   const pages=subs[t.id]||[];
   return `<div class="topnav-group${pages.length?' has-subnav':''}"><button class="topnav-main" data-tab="${t.id}" onclick="gotoTab('${t.id}')"><span class="l">${t.l}</span>${pages.length?'<span class="subchev">⌄</span>':''}</button>${pages.length?`<div class="header-submenu" role="menu">${pages.map(p=>`<button type="button" class="header-subtab" data-header-tab="${t.id}" data-header-page="${p.p}" role="menuitem">${p.l}</button>`).join('')}</div>`:''}</div>`;
  }).join("");
 }
+function closeMobileNav(){
+ appbar.classList.remove('mobile-nav-open');
+ const menuToggle=document.getElementById('menuToggle');
+ if(menuToggle)menuToggle.setAttribute('aria-expanded','false');
+}
+function toggleMobileNav(){
+ const willOpen=!appbar.classList.contains('mobile-nav-open');
+ appbar.classList.toggle('mobile-nav-open',willOpen);
+ document.getElementById('menuToggle').setAttribute('aria-expanded',String(willOpen));
+}
 function gotoTab(id){
  curTab=id;
+ closeMobileNav();
  if(animTimer)clearInterval(animTimer);
  if(shipMap){shipMap.remove();shipMap=null;truckMarker=null;}
  const t=TABS[SESSION.role].find(x=>x.id===id);
@@ -501,25 +519,18 @@ function gotoTab(id){
 ===================================================================== */
 function renderWelcome(){
  appbar.style.display="none";tabbar.style.display="none";
- const cards=Object.entries(ROLES).map(([key,r],idx)=>`
- <div class="idcard" onclick="${r.href?`location.href='${r.href}'`:`renderLoginPage('${key}')`}">
- ${r.isNew?'<span class="newbadge nb">新增</span>':''}
- <div class="ih" style="color:${r.color}">${r.label}${key==='shipper'?'（貨件追蹤）':''}<span style="font-size:11px;font-weight:600;color:var(--mut2)">· ${r.sub}</span></div>
- <div class="idesc">${r.desc}</div>
- </div>`).join("");
+ closeMobileNav();
+ document.getElementById('menuToggle').hidden=true;
+ const cards=Object.entries(ROLES).map(([key,r])=>`
+ <button type="button" class="idcard idcard-simple" style="--role-color:${r.color}" onclick="${r.href?`location.href='${r.href}'`:`renderLoginPage('${key}')`}">
+ <span>${r.label}</span>
+ </button>`).join("");
  screen.innerHTML=`
- <div class="welcome">
- <div class="wtitle">
- <div class="big">歡迎使用</div>
- <div class="sub">iTRAQ × GenAI 省油 · 安全 智慧夥伴 · 火箭隊</div>
- <div style="font-size:11.5px;color:var(--mut);margin-top:8px;line-height:1.7">把車聯網大數據，變成會<b style="color:var(--accent)">主動幫你省油</b>、會<b style="color:var(--teal)">事前顧安全</b>的 AI 夥伴與教練</div>
- </div>
+ <div class="welcome welcome-simple">
  <div class="wpick">
- <div class="lbl">請選擇身份</div>
- <div class="desc">根據身份提供差異化服務 <span class="q">?</span></div>
- ${cards}
+ <div class="lbl">選擇身份</div>
+ <div class="identity-grid">${cards}</div>
  </div>
- <div class="verhint">軟體版本 1.5.2(1) · HINO × GenAI · 登入後由帳號決定看到誰的資料</div>
  </div>`;
  screen.scrollTo({top:0});
 }
@@ -530,26 +541,18 @@ function renderLoginPage(role){
  <div class="loginpg">
  <button class="back" onclick="renderWelcome()">← 返回選擇身份</button>
  <h2 style="color:${r.color}">${r.label} 登入</h2>
- <div class="rsub">${r.sub}${r.isNew?' · 新增身份':''}</div>
  <div class="field">
- <label>手機號碼 / 帳號</label>
- <input id="loginInput" type="text" inputmode="tel" placeholder="請輸入手機號碼或電子信箱" autocomplete="off">
- </div>
- <div class="demohint">
- <b>測試帳號</b>（點下方按鈕自動帶入）<br>
- 帳號：<b>${acc.phone}</b><br>
- 身份：${acc.name}（${acc.scope}）
- <div class="fill"><button class="btn gho sm block" onclick="document.getElementById('loginInput').value='${acc.phone}'">帶入測試帳號</button></div>
+ <label>手機號碼</label>
+ <input id="loginInput" type="text" inputmode="tel" value="${acc.phone}" aria-label="手機號碼" autocomplete="tel">
  </div>
  <button class="btn pri block" onclick="doLogin('${role}')">登入</button>
- <div class="verhint">登入後只會顯示「${acc.name}」的資料，無法在 App 內切換成其他人。</div>
  </div>`;
  screen.scrollTo({top:0});
  setTimeout(()=>{const i=document.getElementById('loginInput');if(i)i.focus();},120);
 }
 function doLogin(role){
  const v=(document.getElementById('loginInput').value||'').trim();
- if(!v){toast('請先輸入帳號','輸入手機號碼或點「帶入測試帳號」。','wn');return;}
+ if(!v){toast('請先輸入手機號碼','請確認手機號碼後再登入。','wn');return;}
  login(role);
 }
 

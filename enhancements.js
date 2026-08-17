@@ -338,8 +338,24 @@
       const line = fuel.map((item,index) => `${pad.l+index*step+step/2},${pad.t+graphH-(item/maxFuel)*graphH}`).join(' ');
       return `<div class="mr-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="每月超速、高引擎負載與油耗趨勢">${grid}${bars}<polyline points="${line}" class="mr-line"/>${fuel.map((item,index)=>`<circle cx="${pad.l+index*step+step/2}" cy="${pad.t+graphH-(item/maxFuel)*graphH}" r="3" class="mr-dot"/>`).join('')}</svg><div class="mr-legend"><span><i class="mr-a"></i>超速</span><span><i class="mr-b"></i>高引擎負載</span><span><i class="mr-c"></i>百公里油耗</span><b>${monthLabel}：${fmt(value('fuel'))} L/100km</b></div></div>`;
     };
-    const actualMaintenance = telemetryVehicles.filter(vehicle => vehicle.dtc_count > 0).length;
-    return `<div class="native-workspace report-page monthly-report"><div class="mr-toolbar"><div class="mr-month"><button type="button" aria-label="上個月份" data-report-month="-1">‹</button><b>2025-${String(month+1).padStart(2,'0')}</b><button type="button" aria-label="下個月份" data-report-month="1">›</button></div><span>統計期間：${monthLabel}（資料期間 ${excelSource.period}）</span><button type="button" class="native-action" data-itraq-action="report-export">⇩ 匯出月報</button></div><div class="mr-sections"><article class="mr-panel mr-mobility"><h3>車輛移動率</h3><div class="mr-summary"><div><i>◷</i><span>計算安全分</span><b>${fmt(value('safety'))} 分</b></div><div><i>◫</i><span>怠速佔比</span><b>${fmt(value('idle'))}%</b></div><div><i>▣</i><span>高引擎負載</span><b>${fmt(value('load'))} 筆</b></div></div>${barChart(metrics.safety, '#61bfc2', ' 分', '每月計算安全分')}</article><article class="mr-panel mr-drive"><h3>車輛行駛數據</h3><div class="mr-summary mr-summary-four"><div><i>⌁</i><span>超速紀錄</span><b>${fmt(value('speed'))} 筆</b></div><div><i>◌</i><span>高引擎負載</span><b>${fmt(value('load'))} 筆</b></div><div><i>△</i><span>百公里油耗</span><b>${fmt(value('fuel'))} L</b></div><div><i>▧</i><span>DTC</span><b>${fmt(value('dtc'))} 筆</b></div></div>${comboChart()}</article><article class="mr-panel mr-maintenance"><h3>保養維修概況</h3><div class="mr-maint-body"><div class="mr-empty-donut"><b>待串接</b><span>工單／保養費</span></div><div><div class="mr-maint-stat"><i>▣</i><span>有 DTC 的車號</span><b>${actualMaintenance} 台</b></div><div class="mr-maint-stat"><i>◫</i><span>原廠工單／保養項目</span><b>來源未提供</b></div><div class="mr-maint-stat"><i>＄</i><span>保養花費</span><b>來源未提供</b></div></div></div><p class="mr-note">來源可提供 DTC 作為覆核候選，但未提供保養項目、筆數、費用與工單結果。</p></article><article class="mr-panel mr-task"><h3>任務執行概況</h3><div class="mr-summary mr-summary-three"><div><i>▤</i><span>journeyCode</span><b>${fmt(window.HINO_EXCEL_DATA.aggregate.journeys)} 個</b></div><div><i>✓</i><span>任務準時達成率</span><b>來源未提供</b></div><div><i>↔</i><span>平均延誤天數</span><b>來源未提供</b></div></div><div class="mr-task-empty"><b>任務、站點與 預估到達時間 欄位尚未串接</b><span>目前可用 journeyCode 追溯車輛遙測，但不能推估任務執行率或準時率。</span><button type="button" class="native-text-action" data-itraq-action="report-task-request">建立任務資料串接需求</button></div></article></div><div class="mr-foot">月報圖表使用 月結遙測：超速、怠速、高引擎負載、DTC、計算安全分與百公里油耗。保修及任務資料不在來源中。</div></div>`;
+    const maintenance = window.HINO_EXCEL_DATA.maintenance || {};
+    const aggregate = window.HINO_EXCEL_DATA.aggregate || {};
+    const at = (items, fallback=0) => Number(Array.isArray(items) ? items[month] : fallback) || 0;
+    const dtcVehicles = at(maintenance.dtcVehicleCounts);
+    const dtcRecords = at(maintenance.dtcRecords, value('dtc'));
+    const journeys = at(aggregate.journeyCounts);
+    const records = at(aggregate.recordsByMonth);
+    const vehicles = at(aggregate.vehicleCountsByMonth);
+    return `<div class="native-workspace report-page monthly-report">
+      <div class="mr-toolbar"><div class="mr-month"><button type="button" aria-label="上個月份" data-report-month="-1">‹</button><b>2025-${String(month+1).padStart(2,'0')}</b><button type="button" aria-label="下個月份" data-report-month="1">›</button></div><span>統計期間：${monthLabel}（資料期間 ${excelSource.period}）</span><button type="button" class="native-action" data-itraq-action="report-export">⇩ 匯出月報</button></div>
+      <div class="mr-sections">
+        <article class="mr-panel mr-mobility"><h3>車輛移動率</h3><div class="mr-summary"><div><i>◷</i><span>計算安全分</span><b>${fmt(value('safety'))} 分</b></div><div><i>◫</i><span>怠速佔比</span><b>${fmt(value('idle'))}%</b></div><div><i>▣</i><span>高引擎負載</span><b>${fmt(value('load'))} 筆</b></div></div>${barChart(metrics.safety, '#61bfc2', ' 分', '每月計算安全分')}</article>
+        <article class="mr-panel mr-drive"><h3>車輛行駛數據</h3><div class="mr-summary mr-summary-four"><div><i>⌁</i><span>超速紀錄</span><b>${fmt(value('speed'))} 筆</b></div><div><i>◌</i><span>高引擎負載</span><b>${fmt(value('load'))} 筆</b></div><div><i>△</i><span>百公里油耗</span><b>${fmt(value('fuel'))} L</b></div><div><i>▧</i><span>DTC</span><b>${fmt(value('dtc'))} 筆</b></div></div>${comboChart()}</article>
+        <article class="mr-panel mr-maintenance"><h3>保養維修概況</h3><div class="mr-maint-body"><div class="mr-signal-ring"><b>${fmt(dtcVehicles)} 台</b><span>有 DTC 車號</span></div><div><div class="mr-maint-stat"><i>▣</i><span>當月 DTC 紀錄</span><b>${fmt(dtcRecords)} 筆</b></div><div class="mr-maint-stat"><i>◫</i><span>高引擎負載訊號</span><b>${fmt(value('load'))} 筆</b></div><div class="mr-maint-stat"><i>◎</i><span>可用維護資料</span><b>CAN／DTC</b></div></div></div><p class="mr-note">原始 Excel 沒有工單、保養項目、進廠、費用或維修結果；本區只呈現可作為車況判讀的 DTC 與 CAN 訊號。</p></article>
+        <article class="mr-panel mr-task"><h3>行車歷程概況</h3><div class="mr-summary mr-summary-three"><div><i>▤</i><span>journeyCode</span><b>${fmt(journeys)} 個</b></div><div><i>▣</i><span>可見車輛</span><b>${fmt(vehicles)} 台</b></div><div><i>≡</i><span>行車紀錄</span><b>${fmt(records)} 筆</b></div></div><div class="mr-task-empty"><b>本月行車歷程可依 journeyCode 追溯</b><span>來源沒有任務狀態、站點或到達時間，因此月報不推估準時率、延誤或任務完成率。</span></div></article>
+      </div>
+      <div class="mr-foot">所有數字均由 Excel 月結遙測計算：超速、怠速、高引擎負載、DTC、計算安全分、百公里油耗與 journeyCode。</div>
+    </div>`;
   }
   function nativeVehiclesPage() {
     const rows = excelVehicleSnapshot.map(vehicle => [vehicle.car,vehicle.status,vehicle.time,vehicle.speed,vehicle.limit,vehicle.mileage.toLocaleString(),vehicle.fuel.toLocaleString(),vehicle.engine.toLocaleString(),vehicle.position,nativeIconActions(['edit','✎','編輯車輛'],['refresh','♲','重新納管'],['delete','▢','刪除車輛'])]);
@@ -432,7 +448,7 @@
       }
       if (button.dataset.itraqFilter) { nativeFilterDialog(button.dataset.itraqFilter, button.textContent); return; }
       if (button.dataset.itraqAction) {
-        const labels = { edit:'編輯資料', copy:'已複製任務', refresh:'已更新納管狀態', delete:'刪除資料', save:'已儲存行程', open:'已開啟通知', vehicle:'車輛即時資訊', fence:'電子圍籬資訊', 'confirm-maintenance':'保修值已確認', 'page-size':'每頁資料筆數', 'report-task-request':'任務資料串接需求' };
+        const labels = { edit:'編輯資料', copy:'已複製任務', refresh:'已更新納管狀態', delete:'刪除資料', save:'已儲存行程', open:'已開啟通知', vehicle:'車輛即時資訊', fence:'電子圍籬資訊', 'confirm-maintenance':'保修值已確認', 'page-size':'每頁資料筆數' };
         const action = button.dataset.itraqAction;
         if (['maintenance-values','maintenance-schedule','maintenance-items','book-maintenance','edit-work-order'].includes(action)) {
           maintenanceDialog(action, button.dataset.vehicle);
@@ -521,9 +537,6 @@
       </section>
       <section>${competitionRules()}</section><div class="foot">資料來源：${source.sourceFile} · 人資欄位未提供</div>`;
   }
-  const executiveDecisionStorageKey = 'hino-owner-decisions-v1';
-  let executiveDecisionState = {};
-  try { executiveDecisionState = JSON.parse(localStorage.getItem(executiveDecisionStorageKey) || '{}'); } catch (error) { executiveDecisionState = {}; }
   const workforceReviewStorageKey = 'hino-workforce-review-v1';
   let workforceReviewState = {};
   try { workforceReviewState = JSON.parse(localStorage.getItem(workforceReviewStorageKey) || '{}'); } catch (error) { workforceReviewState = {}; }
@@ -546,54 +559,48 @@
     const state = workforceReviewState[kind];
     return state ? `<span class="executive-status done">已送人資 · ${state.createdAt}</span>` : '<span class="executive-status open">待建立覆核</span>';
   }
-  function executiveDecisionDefinitions() {
+  function executiveManagementFocus() {
     const speed = topTelemetry('overspeed_count')[0];
     const idle = topTelemetry('idle_pct')[0];
     const dtc = topTelemetry('dtc_count')[0];
     const regionName = vehicle => (regions.find(region => region.id === vehicle.region) || {}).name || '所屬區域';
     return {
       speed: {
-        region: regionName(speed), title:`交辦 ${regionName(speed)} 總負責人覆核 ${speed.c}`,
-        brief:`核准 ${regionName(speed)} 安全覆核`,
+        region: regionName(speed), title:`${regionName(speed)}安全改善焦點`,
         signal:`超速 ${speed.overspeed_count.toLocaleString()} 筆；高引擎負載 ${speed.high_load_count.toLocaleString()} 筆`,
-        ask:'請在 24 小時內回覆限速資料、路況、車況與派車情境的覆核結果，再決定是否需要保修、調度調整或安全提醒。',
+        next:'由區域總負責人先核對限速、路況、車況與派車情境，將可改善項目納入本週例會追蹤。',
         evidence:[['車號',speed.c],['超速率',`${speed.overspeed_pct}%`],['高引擎負載率',`${speed.high_load_pct}%`],['最後紀錄',speed.last_time]]
       },
       maintenance: {
-        region: regionName(dtc), title:`交辦 ${regionName(dtc)} 總負責人處理保修優先序`,
-        brief:`核准 ${regionName(dtc)} 保修覆核`,
+        region: regionName(dtc), title:`${regionName(dtc)}車況維護焦點`,
         signal:`${dtc.c} 有 DTC ${dtc.dtc_count} 筆；${idle.c} 怠速佔比 ${idle.idle_pct}%`,
-        ask:'請確認故障碼、車況與停等原因；若需要停派、進廠或調度替代，才上呈老闆核准。',
+        next:'由區域總負責人確認故障碼與停等情境；需要維修時依既有保修流程安排，不讓老闆逐筆核准。',
         evidence:[['DTC 優先車號',`${dtc.c} · ${dtc.dtc_count} 筆`],['怠速優先車號',`${idle.c} · ${idle.idle_pct}%`],['DTC 最後紀錄',dtc.last_time],['怠速車最後紀錄',idle.last_time]]
       }
     };
   }
-  function executiveDecisionStatus(key) {
-    const state = executiveDecisionState[key];
-    return state ? `<span class="executive-status done">已交辦 · ${state.createdAt}</span>` : '<span class="executive-status open">待您決定</span>';
-  }
   function renderExecutiveBrief() {
     const source = window.HINO_EXCEL_DATA.meta;
-    const decisions = executiveDecisionDefinitions();
-    const pending = Object.keys(decisions).filter(key => !executiveDecisionState[key]).length;
+    const focus = executiveManagementFocus();
     const ranking = teamRanks();
     const latest = source.lastRecord || source.period;
-    const sixQuadrants = ranking.flatMap(region => [
-      { label:`${region.name}安全分`, value:`${currentTeamScore(region)} 分`, fill:currentTeamScore(region), tone:'score' },
-      { label:`${region.name}低風險率`, value:`${Math.max(0, 100 - Number(region.anomaly || 0))}%`, fill:Math.max(0, 100 - Number(region.anomaly || 0)), tone:'risk' }
-    ]).slice(0, 6).map(item => `<div class="decision-quadrant ${item.tone}" style="--quadrant-fill:${Math.min(100, item.fill)}%"><span>${item.label}</span><b>${item.value}</b><i></i></div>`).join('');
+    const sixQuadrants = ranking.slice(0, 6).map(region => {
+      const score = currentTeamScore(region);
+      const anomaly = Number(region.anomaly || 0);
+      return `<div class="decision-quadrant ${anomaly > 8 ? 'risk' : 'score'}" style="--quadrant-fill:${Math.min(100, score)}%"><span>${region.name} · 風險 ${anomaly}%</span><b>安全 ${score} 分</b><i></i></div>`;
+    }).join('');
     const recognition = workforceCandidates('recognition');
     const support = workforceCandidates('support');
-    const decisionRow = (key, decision, tone) => `<div class="executive-decision-row ${tone}"><div><b>${decision.brief}</b><span>${decision.signal}</span></div>${executiveDecisionStatus(key)}<button class="btn ${executiveDecisionState[key] ? 'gho' : 'pri'} sm" onclick="openExecutiveDecision('${key}')">${executiveDecisionState[key] ? '查看交辦' : '確認交辦'}</button></div>`;
+    const focusRow = (key, item, tone) => `<div class="executive-decision-row ${tone}"><div><b>${item.title}</b><span>${item.signal}</span></div><span class="executive-status done">總負責人追蹤</span><button class="btn gho sm" onclick="openExecutiveEvidence('${key}')">查看車號</button></div>`;
     screen.innerHTML = `
-      <section class="decision-command"><div><span>車隊管理</span><h2>${pending ? `今日有 ${pending} 項待決事項` : '今日待決事項均已交辦'}</h2><p>最後資料：${latest} · 管理者只需處理下列需核准或需追蹤的工作。</p></div><button class="btn gho sm" onclick="openExecutiveReadGuide()">判讀原則</button></section>
-      <section class="decision-actions"><div class="sh"><h2>現在要決定</h2><span class="num" style="background:${pending ? 'var(--warn)' : 'var(--good)'}">${pending}</span></div>${decisionRow('speed', decisions.speed, 'urgent')}${decisionRow('maintenance', decisions.maintenance, 'warning')}</section>
+      <section class="decision-command"><div><span>車隊管理總覽</span><h2>今天先看這 2 件事</h2><p>最後資料：${latest} · 直接看需要總負責人追蹤的安全與車況訊號。</p></div><button class="btn gho sm" onclick="openExecutiveReadGuide()">判讀方式</button></section>
+      <section class="decision-actions"><div class="sh"><h2>本週管理重點</h2><span class="tag">不需老闆逐筆核准</span></div>${focusRow('speed', focus.speed, 'urgent')}${focusRow('maintenance', focus.maintenance, 'warning')}</section>
       <section class="executive-operating-grid">
-        <article class="executive-panel competition"><div class="panel-title"><div><span>安全競賽</span><h3>各區安全與風險比較</h3></div><button class="btn gho sm" onclick="openExecutiveCompetition()">完整名次</button></div><div class="decision-six-grid">${sixQuadrants}</div><p class="panel-note">安全分越高、低風險率越高越好；團隊排名公開，個別車號名次僅限授權範圍。</p></article>
+        <article class="executive-panel competition"><div class="panel-title"><div><span>安全競賽</span><h3>六個展示區域的安全比較</h3></div><button class="btn gho sm" onclick="openExecutiveCompetition()">完整名次</button></div><div class="decision-six-grid">${sixQuadrants}</div><p class="panel-note">${source.regionMethod}。安全分越高越好；團隊名次可比較，個別車號名次僅限授權範圍。</p></article>
         <article class="executive-panel people"><div class="panel-title"><div><span>人力覆核</span><h3>獎勵與改善名單</h3></div><button class="btn gho sm" onclick="openWorkforceGuardrail()">決策條件</button></div><div class="workforce-queues"><div><div class="workforce-row"><b>獎勵／留任覆核</b>${workforceReviewBadge('recognition')}</div><p>車號 ${recognition.map(item => item.car).join('、')}</p><button class="btn gho sm" onclick="openWorkforceReview('recognition')">查看原因與送覆核</button></div><div><div class="workforce-row"><b>改善與人資審查</b>${workforceReviewBadge('support')}</div><p>車號 ${support.map(item => item.car).join('、')}</p><button class="btn gho sm" onclick="openWorkforceReview('support')">查看原因與送覆核</button></div></div><p class="panel-note">來源未提供駕駛姓名、工時與薪資；上述以車號遙測篩出覆核優先序，需先由人資比對人員並補齊資料。</p></article>
-        <article class="executive-panel ai"><div class="panel-title"><div><span>AI 行動建議</span><h3>先問清楚，再做決定</h3></div><button class="btn gho sm" onclick="openAIChat()">詢問 AI</button></div><div class="ai-summary-lines"><span>${decisions.speed.region}：覆核限速、路況、車況與派車情境。</span><span>${decisions.maintenance.region}：確認故障碼、停等原因與保修優先序。</span></div><p class="panel-note">AI 協助整理事實與覆核問題；保修、調度與人事均需管理者確認後才會執行。</p></article>
+        <article class="executive-panel ai"><div class="panel-title"><div><span>AI 行動建議</span><h3>先問清楚，再做決定</h3></div><button class="btn gho sm" onclick="openAIChat()">詢問 AI</button></div><div class="ai-summary-lines"><span>${focus.speed.region}：${focus.speed.next}</span><span>${focus.maintenance.region}：${focus.maintenance.next}</span></div><p class="panel-note">AI 協助整理事實與改善問題；不會以單一遙測訊號自動處分人員或停止派車。</p></article>
       </section>
-      <div class="foot">資料期間：${source.period} · 本頁僅顯示可採取管理動作的摘要。</div>`;
+      <div class="foot">資料期間：${source.period} · 本頁只保留可讓老闆快速掌握的管理摘要。</div>`;
   }
   window.openWorkforceReview = function (kind) {
     const isRecognition = kind === 'recognition';
@@ -613,24 +620,12 @@
     showModal(`<h3>團隊安全競賽</h3><p>以超速、怠速、高引擎負載與 DTC 計算安全分。團隊名次可比較；個別車號名次不公開。</p><div class="ranklist">${teamRankRows()}</div>${competitionRules()}<div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
   };
   window.openExecutiveReadGuide = function () {
-    const decisions = executiveDecisionDefinitions();
-    showModal(`<h3>這些資料怎麼讀？</h3><p>老闆不必逐筆看遙測。系統只將可追溯的訊號轉成「誰要覆核、覆核什麼、何時回覆」。</p><div class="brief-read-guide"><div><b>① 安全／車況</b><span>超速、高引擎負載、怠速與 DTC 先標出異常車輛，不直接判定駕駛責任。</span></div><div><b>② 管理交辦</b><span>${decisions.speed.region}與${decisions.maintenance.region}總負責人各有一張覆核單；確認路況、車況與派車情境後才升級處理。</span></div><div><b>③ 人事護欄</b><span>資料沒有工時、出勤、薪資、職級與訂單量，所以不顯示招募、加薪、裁員結論。</span></div></div><div class="guardrail">完整地圖、報表和原始車號清單仍可在原 iTRAQ 頁面查看；首頁只保留能改變管理行動的結論。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
+    const focus = executiveManagementFocus();
+    showModal(`<h3>這些資料怎麼讀？</h3><p>老闆不必逐筆看遙測。首頁只把可追溯的異常訊號整理成「哪個區域、哪台車、總負責人要先釐清什麼」。</p><div class="brief-read-guide"><div><b>① 安全／車況</b><span>超速、高引擎負載、怠速與 DTC 用於標出優先追蹤車號，不直接判定駕駛責任。</span></div><div><b>② 區域管理</b><span>${focus.speed.region}與${focus.maintenance.region}的總負責人先確認路況、車況與派車情境，並將改善項目列入例會追蹤；老闆不逐筆核准安全或保修覆核。</span></div><div><b>③ 人事護欄</b><span>資料沒有工時、出勤、薪資、職級與訂單量，所以不顯示招募、加薪、裁員結論。</span></div></div><div class="guardrail">完整地圖、月報和原始車號清單仍可在 iTRAQ 頁面查看；首頁只保留能改變管理節奏的摘要。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
   };
   window.openExecutiveEvidence = function (key) {
-    const decision = executiveDecisionDefinitions()[key];
-    showModal(`<h3>${decision.title}｜資料佐證</h3><div class="native-table-wrap"><table class="native-table"><tbody>${decision.evidence.map(([label, value]) => `<tr><th>${label}</th><td>${value}</td></tr>`).join('')}</tbody></table></div><div class="guardrail">這些是待覆核訊號；須先確認限速、車況、路況與派車情境，不可直接推論為駕駛個人責任。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
-  };
-  window.openExecutiveDecision = function (key) {
-    const decision = executiveDecisionDefinitions()[key];
-    const state = executiveDecisionState[key];
-    showModal(`<h3>${state ? '交辦內容' : '下達覆核'}｜${decision.region}</h3><p>${decision.ask}</p><div class="source-note"><b>交辦對象：</b>${decision.region}總負責人（來源未提供姓名與聯絡方式）。<br><b>交辦依據：</b>${decision.signal}</div><div class="guardrail">總負責人回覆後，才由您決定是否核准額外保修、調度調整或政策；系統不會自動停派或處分人員。</div><div class="mb"><button class="btn gho" onclick="closeOv()">${state ? '關閉' : '暫不交辦'}</button>${state ? '' : `<button class="btn pri" onclick="recordExecutiveDecision('${key}')">確認交辦</button>`}</div>`);
-  };
-  window.recordExecutiveDecision = function (key) {
-    executiveDecisionState[key] = { createdAt:new Date().toLocaleString('zh-TW', { hour:'2-digit', minute:'2-digit' }) };
-    try { localStorage.setItem(executiveDecisionStorageKey, JSON.stringify(executiveDecisionState)); } catch (error) { /* Keep the current-session decision state when persistence is blocked. */ }
-    closeOv();
-    renderExecutiveBrief();
-    toast('已交辦總負責人覆核', '本頁已保留交辦狀態；等待覆核回覆後再決定是否升級處理。', 'ok');
+    const item = executiveManagementFocus()[key];
+    showModal(`<h3>${item.title}｜資料佐證</h3><p>${item.next}</p><div class="native-table-wrap"><table class="native-table"><tbody>${item.evidence.map(([label, value]) => `<tr><th>${label}</th><td>${value}</td></tr>`).join('')}</tbody></table></div><div class="guardrail">這些是管理追蹤訊號；須先確認限速、車況、路況與派車情境，不可直接推論為駕駛個人責任，也不需要老闆逐筆核准。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
   };
   function renderFleetSettingsEnhanced() {
     baseFleetMe();

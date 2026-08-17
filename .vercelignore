@@ -1,0 +1,13 @@
+.codebase-memory
+.claude
+tmp
+scripts
+*.pdf
+Dockerfile
+.dockerignore
+.gcloudignore
+README.md
+index-desktop.html
+index-mobile.html
+scratch_script.js
+server.js

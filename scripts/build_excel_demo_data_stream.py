@@ -30,8 +30,11 @@ DEFAULT_SOURCE = Path(
 DEFAULT_OUTPUT = ROOT / "excel-derived-data.js"
 REGION_INFO = {
     "N": ("北區", "北部", "#38bdf8"),
-    "C": ("中區", "中部", "#fb923c"),
-    "S": ("南區", "南部", "#34d399"),
+    "TH": ("桃竹區", "桃園／新竹", "#818cf8"),
+    "MI": ("苗中區", "苗栗／台中", "#fb923c"),
+    "CT": ("彰投區", "彰化／南投", "#f59e0b"),
+    "YJ": ("雲嘉區", "雲林／嘉義", "#34d399"),
+    "KP": ("高屏區", "高雄／屏東", "#ef6c78"),
 }
 METRIC_INFO = {
     "safety": ("計算安全分", "分", True, "分數越高代表超速、怠速、高引擎負載與 DTC 記錄較低"),
@@ -169,9 +172,24 @@ def workbook_rows(path: Path):
 
 
 def region_id(latitude: float | None) -> str:
+    """Assign a six-area display group from the vehicle's latest GPS latitude.
+
+    The source workbook has no department/area field. These are therefore
+    explicitly GPS-derived operational groups, not imported HINO departments.
+    """
     if latitude is None:
-        return "C"
-    return "N" if latitude >= 25 else "C" if latitude >= 24 else "S"
+        return "MI"
+    if latitude >= 25:
+        return "N"
+    if latitude >= 24.8:
+        return "TH"
+    if latitude >= 24.45:
+        return "MI"
+    if latitude >= 24.05:
+        return "CT"
+    if latitude >= 23:
+        return "YJ"
+    return "KP"
 
 
 def month_values(stats: list[Stats], metric: str) -> list[float | int]:
@@ -259,6 +277,7 @@ def build(source: Path) -> dict:
     vehicle_stats: dict[str, Stats] = defaultdict(Stats)
     vehicle_months: dict[str, list[Stats]] = defaultdict(lambda: [Stats() for _ in range(11)])
     car_journeys: dict[str, set[str]] = defaultdict(set)
+    journey_months: list[set[str]] = [set() for _ in range(11)]
     total_journeys: set[str] = set()
     # Second pass: metrics and counter deltas.
     for row in workbook_rows(source):
@@ -274,6 +293,7 @@ def build(source: Path) -> dict:
         journey = text(row["journeyCode"])
         if journey:
             car_journeys[car].add(journey)
+            journey_months[month].add(journey)
             total_journeys.add(journey)
 
     vehicles: list[dict] = []
@@ -315,6 +335,10 @@ def build(source: Path) -> dict:
         })
     metrics, facts, solutions = metric_payload(all_months)
     total_series = {key: month_values(all_months, key) for key in METRIC_INFO}
+    maintenance = {
+        "dtcVehicleCounts": [sum(1 for stats in vehicle_months.values() if stats[month].dtc > 0) for month in range(11)],
+        "dtcRecords": total_series["dtc"],
+    }
     by_speed = sorted(vehicles, key=lambda item: item["overspeed_count"], reverse=True)[:3]
     by_idle = sorted(vehicles, key=lambda item: item["idle_pct"], reverse=True)[:3]
     by_load = sorted(vehicles, key=lambda item: item["high_load_count"], reverse=True)[:3]
@@ -346,11 +370,19 @@ def build(source: Path) -> dict:
                "from": "起始 GPS", "to": "最後 GPS", "etaMin": None, "progress": 1, "risk": bool(item["overspeed_count"] or item["idle_count"]), "driver": "原始資料未提供", "last_speed": item["last_speed"], "shipper": "telemetry"} for item in latest_vehicles[:4]]
     first_region, last_region = regions[0], regions[-1]
     return {
-        "meta": {"sourceFile": source.name, "records": records, "vehicles": len(vehicles), "period": f"{earliest:%Y-%m-%d} 至 {newest:%Y-%m-%d}", "lastRecord": f"{newest:%Y-%m-%d %H:%M:%S}", "driverFieldsAvailable": False, "orderFieldsAvailable": False, "scoreMethod": "100 − 超速率、怠速率、高引擎負載率與 DTC 記錄的上限加權扣分"},
+        "meta": {"sourceFile": source.name, "records": records, "vehicles": len(vehicles), "period": f"{earliest:%Y-%m-%d} 至 {newest:%Y-%m-%d}", "lastRecord": f"{newest:%Y-%m-%d %H:%M:%S}", "driverFieldsAvailable": False, "orderFieldsAvailable": False, "regionMethod": "依每台車最後 GPS 緯度分為六個展示區域；原始檔未提供部門或區域欄位", "scoreMethod": "100 − 超速率、怠速率、高引擎負載率與 DTC 記錄的上限加權扣分"},
         "months": [f"{month}月" for month in range(1, 12)], "regions": regions,
-        "aggregate": {"safety": total_series["safety"], "idlePct": total_series["idle"][-1], "fuel": total_series["fuel"][-1], "journeys": len(total_journeys)},
+        "aggregate": {
+            "safety": total_series["safety"],
+            "idlePct": total_series["idle"][-1],
+            "fuel": total_series["fuel"][-1],
+            "journeys": len(total_journeys),
+            "journeyCounts": [len(items) for items in journey_months],
+            "recordsByMonth": [stat.rows for stat in all_months],
+            "vehicleCountsByMonth": [sum(1 for stats in vehicle_months.values() if stats[month].rows > 0) for month in range(11)],
+        },
         "ordersByRegion": {item["id"]: item["journeys"] for item in regions}, "targetJourneysPerVehicle": max(1, round(len(total_journeys) / len(vehicles))),
-        "metrics": metrics, "factMap": facts, "dims": [{"key": key, "name": info[0], "high": info[2], "unit": info[1], "hint": info[3]} for key, info in METRIC_INFO.items()], "dimSolData": solutions,
+        "metrics": metrics, "factMap": facts, "maintenance": maintenance, "dims": [{"key": key, "name": info[0], "high": info[2], "unit": info[1], "hint": info[3]} for key, info in METRIC_INFO.items()], "dimSolData": solutions,
         "todos": todos, "todoData": todo_data, "advice": advice, "shippers": [{"id": "telemetry", "name": "車聯網紀錄", "orders": orders}],
         "accountBindings": {"lead_region": first_region["id"], "driver_code": f"{first_region['id']}0", "personal_code": f"{last_region['id']}0"}, "vehicleSnapshot": latest_vehicles,
         "sourceNote": "本頁數據由 output data_Hotai_20260511.xlsx 計算；原始檔未提供駕駛姓名、工時、人資、訂單、準時率與安全帶欄位。",
