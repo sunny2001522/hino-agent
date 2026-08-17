@@ -47,7 +47,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: buildSystemPrompt(context) }] },
         contents: [{ role: 'user', parts: [{ text: String(question).slice(0, 2000) }] }],
-        generationConfig: { maxOutputTokens: 1024, temperature: 0.35 },
+        generationConfig: { maxOutputTokens: 1024, temperature: 0.35, thinkingConfig: { thinkingBudget: 0 } },
       }),
     });
     if (!geminiResponse.ok || !geminiResponse.body) {

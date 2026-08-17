@@ -51,7 +51,7 @@ async function handleChat(req, res) {
       const body = {
         systemInstruction: { parts: [{ text: buildSystemPrompt(context) }] },
         contents: [{ role: 'user', parts: [{ text: String(question).slice(0, 2000) }] }],
-        generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
+        generationConfig: { maxOutputTokens: 1024, temperature: 0.35, thinkingConfig: { thinkingBudget: 0 } },
       };
       const gres = await fetch(url, {
         method: 'POST',
