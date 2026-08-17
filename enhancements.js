@@ -14,6 +14,8 @@
 
   function currentTeamScore(region) { return region.safety.at(-1); }
   function teamRanks() { return regions.slice().sort((a, b) => currentTeamScore(b) - currentTeamScore(a)); }
+  function activeCompetition() { return window.HINO_EXCEL_DATA.competition; }
+  function seasonalTeamRanks() { return activeCompetition().teams.slice().sort((a, b) => b.score - a.score); }
   function allDrivers() { return regions.flatMap(region => region.drivers.map(driver => ({ region, driver }))); }
   function competitionRank(driver, region, score) {
     return region.drivers.filter(item => item.c !== driver.c && item.s > score).length + 1;
@@ -21,7 +23,7 @@
   function improvementPlan(driver, region) {
     const reasons = [];
     if (/超速/.test(driver.i)) reasons.push('連續 7 天於限速內行駛');
-    if (/怠速/.test(driver.i) || region.idlePct >= 14) reasons.push('等候超過 90 秒熄火');
+    if (/怠速/.test(driver.i) || Number(driver.idle_pct || 0) >= 14) reasons.push('等候超過 90 秒熄火');
     if (/高引擎負載/.test(driver.i)) reasons.push('出車前確認車況與派車條件');
     if (/DTC/.test(driver.i)) reasons.push('完成保修人員的故障碼覆核');
     if (!reasons.length) reasons.push('維持零違規與出車前點檢');
@@ -41,8 +43,20 @@
       </div>`;
     }).join('');
   }
+  function seasonalTeamRankRows(highlightId) {
+    const season = activeCompetition();
+    return seasonalTeamRanks().map((team, index) => {
+      const improve = Math.max(0, 70 - team.score);
+      return `<div class="rankrow ${team.id === highlightId ? 'mine' : ''}">
+        <div class="ranknum ${index < 3 ? 'top' : ''}">${index + 1}</div>
+        <div class="rankmain"><b>${team.name}車隊${team.id === highlightId ? ' · 我的車隊' : ''}</b><span>${season.label} 結算安全分 ${team.score} · 分鐘級遙測風險紀錄率 ${team.anomaly}% · ${improve ? '距 70 分差 ' + improve + ' 分' : '已達安全獎勵門檻'}</span></div>
+        <div class="rankscore" style="color:${scoreColor(team.score)}">${team.score}<small>季結算</small></div>
+      </div>`;
+    }).join('');
+  }
   function competitionRules() {
-    return `<div class="guardrail"><b>競賽護欄：</b>資料檔沒有駕駛姓名，系統以車號做私密個人名次。分數以超速、怠速、高引擎負載與 DTC 計算；團隊可比較、車號個別名次不公開。不得以分數直接加薪、扣薪或解雇。</div>`;
+    const season = activeCompetition();
+    return `<div class="guardrail"><b>季結算護欄：</b>${season.label} 依 ${season.period} 的分鐘級遙測結算，期間共 ${season.records.toLocaleString()} 筆紀錄。資料檔沒有駕駛姓名，系統以車號做私密個人名次；團隊可比較、車號個別名次不公開。不得以分數直接加薪、扣薪或解雇。</div>`;
   }
   const manualPages = [
     { p:1, t:'iTRAQ WEB', d:'iTRAQ WEB 管理入口。', b:['WEB 系統操作介面','車隊與管理資料入口','AI 決策以營運資料為基礎'], m:'系統入口與版型基準' },
@@ -487,32 +501,37 @@
     });
   }
   function renderFleetCompetition() {
-    const ranking = teamRanks();
+    const season = activeCompetition();
+    const ranking = seasonalTeamRanks();
     const winner = ranking[0];
     const focus = ranking.at(-1);
-    const source = window.HINO_EXCEL_DATA.meta;
     screen.innerHTML = `
-      <section class="competition-hero"><div class="eyebrow">SAFETY LEAGUE · EXCEL 期間資料</div><h2>把可追溯的車聯網資料變成團隊改善目標</h2><p>以 ${source.period} 的超速、怠速、高引擎負載與 DTC 計算；資料檔沒有駕駛姓名，因此個人排名以車號呈現並維持私密。</p><div class="hero-actions"><button class="btn sm" onclick="openCompetitionRules()">查看計分規則</button></div></section>
-      <section><div class="sh"><h2>車隊安全聯賽</h2><span class="newbadge">公開至團隊層級</span></div><div class="subt">依 月結遙測計算分排序；此分數為系統計算指標，非官方駕駛成績。</div><div class="ranklist">${teamRankRows()}</div></section>
-      <section class="office-grid"><div class="next-gain"><strong>目前第一名：${winner.name} ${currentTeamScore(winner)} 分</strong><p>此結果來自 遙測欄位；獎勵機制需由公司另外制定並經人資核准。</p></div><div class="next-gain"><strong>${focus.name}優先改善超速與怠速</strong><p>計算分 ${currentTeamScore(focus)} 分；改善前請先覆核車況、路況與派車情境。</p></div></section>
-      <section>${competitionRules()}</section><div class="foot">資料來源：${source.sourceFile} · 團隊排行公開、車號個別名次僅限授權範圍</div>`;
+      <section class="competition-hero"><div class="eyebrow">SAFETY LEAGUE · ${season.label} 季結算</div><h2>把分鐘級車聯網資料結算成團隊改善成果</h2><p>${season.period} 共 ${season.records.toLocaleString()} 筆原始行車紀錄。賽季結束後才更新名次，不以即時或月度資料改動排行榜。</p><div class="hero-actions"><button class="btn sm" onclick="openCompetitionRules()">查看計分規則</button></div></section>
+      <section><div class="sh"><h2>${season.label} 車隊安全聯賽</h2><span class="newbadge">季結算 · 團隊公開</span></div><div class="subt">以季內的超速、怠速、高引擎負載與 DTC 分鐘級紀錄計算；此分數為系統計算指標，非官方駕駛成績。</div><div class="ranklist">${seasonalTeamRankRows()}</div></section>
+      <section class="office-grid"><div class="next-gain"><strong>季冠軍：${winner.name} ${winner.score} 分</strong><p>此結果來自已結算的遙測欄位；獎勵機制需由公司另外制定並經人資核准。</p></div><div class="next-gain"><strong>${focus.name}優先改善超速與怠速</strong><p>季結算分 ${focus.score} 分；下季開始前先覆核車況、路況與派車情境。</p></div></section>
+      <section>${competitionRules()}</section><div class="foot">資料來源：${window.HINO_EXCEL_DATA.meta.sourceFile} · 團隊排行公開、車號個別名次僅限授權範圍</div>`;
   }
   function renderLeadCompetition() {
     const region = myRegion();
-    const teamRank = teamRanks().findIndex(item => item.id === region.id) + 1;
-    const score = currentTeamScore(region);
+    const season = activeCompetition();
+    const competitionTeam = season.teams.find(item => item.id === region.id);
+    const teamRank = seasonalTeamRanks().findIndex(item => item.id === region.id) + 1;
+    const score = competitionTeam.score;
     screen.innerHTML = `
-      <section class="competition-hero"><div class="eyebrow">${region.name}車隊 · 安全聯賽</div><h2>目前第 ${teamRank} 名，計算安全分 ${score}</h2><p>可看各車隊名次；來源沒有駕駛姓名，個別資料以車號呈現且僅限您的管理範圍。</p><div class="hero-actions"><button class="btn sm ghost" onclick="gotoTab('drivers')">安排資料覆核</button></div></section>
-      <section><div class="sh"><h2>車隊排行</h2><span class="tag">團隊資料可比較</span></div><div class="ranklist">${teamRankRows(region.id)}</div></section>
+      <section class="competition-hero"><div class="eyebrow">${region.name}車隊 · ${season.label} 季結算</div><h2>季結算第 ${teamRank} 名，安全分 ${score}</h2><p>結算區間為 ${season.period}；可看各車隊最終名次，個別資料以車號呈現且僅限您的管理範圍。</p><div class="hero-actions"><button class="btn sm ghost" onclick="gotoTab('drivers')">安排下季覆核</button></div></section>
+      <section><div class="sh"><h2>季結算車隊排行</h2><span class="tag">團隊資料可比較</span></div><div class="ranklist">${seasonalTeamRankRows(region.id)}</div></section>
       <section><div class="decision-card emphasis"><h3>本區下一步</h3><p>先覆核超速、怠速、高引擎負載與 DTC 記錄，再安排提醒或保修。請不要公開車號末段名次，也不要把計算分數直接用於人事處分。</p><div class="acts"><button class="btn pri sm" onclick="act('已排入本區遙測資料覆核會議。','ok')">安排資料覆核</button></div></div></section>
       <section>${competitionRules()}</section><div class="foot">總負責人視角 · ${region.name}管理範圍</div>`;
   }
   function renderDriverCompetition() {
-    const { region, driver } = (() => { const x = myDriver(); return { region: x.r, driver: x.d }; })();
-    const plan = improvementPlan(driver, region);
+    const { region, driver: allTimeDriver } = (() => { const x = myDriver(); return { region: x.r, driver: x.d }; })();
+    const season = activeCompetition();
+    const competitionTeam = season.teams.find(item => item.id === region.id);
+    const driver = competitionTeam.drivers.find(item => item.c === allTimeDriver.c) || allTimeDriver;
+    const plan = improvementPlan(driver, competitionTeam);
     const prize = driver.s >= 70 ? '已達系統設定的 70 分改善門檻' : `再 ${Math.max(0, 70 - driver.s)} 分可達系統設定的 70 分改善門檻`;
     screen.innerHTML = `
-      <section class="competition-hero"><div class="eyebrow">MY SAFE DRIVE · 私密榜單</div><h2>我的車號名次：第 ${plan.now} / ${region.drivers.length}</h2><p>原始資料沒有駕駛姓名；系統以綁定車號顯示個人名次，且不顯示其他車號分數。</p><div class="hero-actions"><button class="btn sm" onclick="openDriverSafetyPlan()">查看改善計畫</button></div></section>
+      <section class="competition-hero"><div class="eyebrow">MY SAFE DRIVE · ${season.label} 私密季榜</div><h2>我的車號季結算名次：第 ${plan.now} / ${competitionTeam.drivers.length}</h2><p>結算區間為 ${season.period}；原始資料沒有駕駛姓名，系統以綁定車號顯示個人名次，且不顯示其他車號分數。</p><div class="hero-actions"><button class="btn sm" onclick="openDriverSafetyPlan()">查看下季改善計畫</button></div></section>
       <section><div class="private-note"><b>隱私保護：</b>你只看得到自己的車號排名、計算分數與下一步；團隊只看整體成績。</div></section>
       <section><div class="sh"><h2>照做後可前進幾名</h2></div><div class="next-gain"><strong>完成這 3 件事，預估 +${plan.gain} 分${plan.forward ? '、前進 ' + plan.forward + ' 名' : ''}</strong><p>改善預估供你設定目標；最終入榜前會排除車況、路況與派工因素，並提供申訴管道。</p><ul class="mini-checks">${plan.reasons.map(item => `<li>${item}</li>`).join('')}</ul><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri sm" onclick="openDriverSafetyPlan()">看我的改善步驟</button></div></div></section>
       <section><div class="decision-card emphasis"><h3>改善，不是人事處分</h3><p>${prize}。任何獎勵方案需另經公司與人資核准；不以危險趕工、接更多單或壓縮休息換分數。</p></div></section>
@@ -582,12 +601,12 @@
   function renderExecutiveBrief() {
     const source = window.HINO_EXCEL_DATA.meta;
     const focus = executiveManagementFocus();
-    const ranking = teamRanks();
+    const season = activeCompetition();
+    const ranking = seasonalTeamRanks();
     const latest = source.lastRecord || source.period;
-    const sixQuadrants = ranking.slice(0, 6).map(region => {
-      const score = currentTeamScore(region);
-      const anomaly = Number(region.anomaly || 0);
-      return `<div class="decision-quadrant ${anomaly > 8 ? 'risk' : 'score'}" style="--quadrant-fill:${Math.min(100, score)}%"><span>${region.name} · 風險 ${anomaly}%</span><b>安全 ${score} 分</b><i></i></div>`;
+    const sixQuadrants = ranking.slice(0, 6).map(team => {
+      const anomaly = Number(team.anomaly || 0);
+      return `<div class="decision-quadrant ${anomaly > 8 ? 'risk' : 'score'}" style="--quadrant-fill:${Math.min(100, team.score)}%"><span>${team.name} · 風險 ${anomaly}%</span><b>季結算 ${team.score} 分</b><i></i></div>`;
     }).join('');
     const recognition = workforceCandidates('recognition');
     const support = workforceCandidates('support');
@@ -596,7 +615,7 @@
       <section class="decision-command"><div><span>車隊管理總覽</span><h2>今天先看這 2 件事</h2><p>最後資料：${latest} · 直接看需要總負責人追蹤的安全與車況訊號。</p></div><button class="btn gho sm" onclick="openExecutiveReadGuide()">判讀方式</button></section>
       <section class="decision-actions"><div class="sh"><h2>本週管理重點</h2><span class="tag">不需老闆逐筆核准</span></div>${focusRow('speed', focus.speed, 'urgent')}${focusRow('maintenance', focus.maintenance, 'warning')}</section>
       <section class="executive-operating-grid">
-        <article class="executive-panel competition"><div class="panel-title"><div><span>安全競賽</span><h3>六個展示區域的安全比較</h3></div><button class="btn gho sm" onclick="openExecutiveCompetition()">完整名次</button></div><div class="decision-six-grid">${sixQuadrants}</div><p class="panel-note">${source.regionMethod}。安全分越高越好；團隊名次可比較，個別車號名次僅限授權範圍。</p></article>
+        <article class="executive-panel competition"><div class="panel-title"><div><span>安全競賽</span><h3>${season.label} 六區季結算比較</h3></div><button class="btn gho sm" onclick="openExecutiveCompetition()">完整名次</button></div><div class="decision-six-grid">${sixQuadrants}</div><p class="panel-note">${season.period} · ${season.recordCadence}。${source.regionMethod}。安全分越高越好；團隊名次可比較，個別車號名次僅限授權範圍。</p></article>
         <article class="executive-panel people"><div class="panel-title"><div><span>人力覆核</span><h3>獎勵與改善名單</h3></div><button class="btn gho sm" onclick="openWorkforceGuardrail()">決策條件</button></div><div class="workforce-queues"><div><div class="workforce-row"><b>獎勵／留任覆核</b>${workforceReviewBadge('recognition')}</div><p>車號 ${recognition.map(item => item.car).join('、')}</p><button class="btn gho sm" onclick="openWorkforceReview('recognition')">查看原因與送覆核</button></div><div><div class="workforce-row"><b>改善與人資審查</b>${workforceReviewBadge('support')}</div><p>車號 ${support.map(item => item.car).join('、')}</p><button class="btn gho sm" onclick="openWorkforceReview('support')">查看原因與送覆核</button></div></div><p class="panel-note">來源未提供駕駛姓名、工時與薪資；上述以車號遙測篩出覆核優先序，需先由人資比對人員並補齊資料。</p></article>
         <article class="executive-panel ai"><div class="panel-title"><div><span>AI 行動建議</span><h3>先問清楚，再做決定</h3></div><button class="btn gho sm" onclick="openAIChat()">詢問 AI</button></div><div class="ai-summary-lines"><span>${focus.speed.region}：${focus.speed.next}</span><span>${focus.maintenance.region}：${focus.maintenance.next}</span></div><p class="panel-note">AI 協助整理事實與改善問題；不會以單一遙測訊號自動處分人員或停止派車。</p></article>
       </section>
@@ -617,7 +636,8 @@
     toast('已建立人資覆核案件', kind === 'recognition' ? '請人資比對人員主檔，補齊薪酬與績效資料。' : '請總負責人先完成原因覆核與改善支持，再送人資個案審查。', 'ok');
   };
   window.openExecutiveCompetition = function () {
-    showModal(`<h3>團隊安全競賽</h3><p>以超速、怠速、高引擎負載與 DTC 計算安全分。團隊名次可比較；個別車號名次不公開。</p><div class="ranklist">${teamRankRows()}</div>${competitionRules()}<div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
+    const season = activeCompetition();
+    showModal(`<h3>${season.label} 團隊安全季結算</h3><p>${season.period} 以超速、怠速、高引擎負載與 DTC 的分鐘級紀錄計算安全分。團隊名次可比較；個別車號名次不公開。</p><div class="ranklist">${seasonalTeamRankRows()}</div>${competitionRules()}<div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
   };
   window.openExecutiveReadGuide = function () {
     const focus = executiveManagementFocus();

@@ -6,6 +6,7 @@ import { buildSystemPrompt, geminiConfig } from './lib/gemini.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 8080;
+const STATIC_DIR = path.resolve(__dirname, process.env.STATIC_DIR || '.');
 
 // ---- Google Gemini（AI Studio API key，放環境變數 GEMINI_API_KEY）----
 const { key: GEMINI_KEY, model: GEMINI_MODEL } = geminiConfig();
@@ -106,8 +107,8 @@ async function handleChat(req, res) {
 async function serveStatic(req, res, urlPath) {
   try {
     const clean = urlPath === '/' ? '/index.html' : urlPath.split('?')[0];
-    const filePath = path.join(__dirname, path.normalize(clean).replace(/^(\.\.[/\\])+/, ''));
-    if (!filePath.startsWith(__dirname)) return send(res, 403, 'forbidden');
+    const filePath = path.join(STATIC_DIR, path.normalize(clean).replace(/^(\.\.[/\\])+/, ''));
+    if (!filePath.startsWith(STATIC_DIR)) return send(res, 403, 'forbidden');
     const data = await readFile(filePath);
     res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream' });
     res.end(data);

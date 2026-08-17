@@ -11,6 +11,7 @@ do not exist in the source workbook.
 from __future__ import annotations
 
 import argparse
+import calendar
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -192,6 +193,20 @@ def region_id(latitude: float | None) -> str:
     return "KP"
 
 
+def season_key(when: datetime) -> str:
+    """Return the calendar quarter that owns this telemetry record."""
+    return f"{when.year}-Q{((when.month - 1) // 3) + 1}"
+
+
+def season_dates(key: str) -> tuple[str, str, str]:
+    year_text, quarter_text = key.split("-Q")
+    year, quarter = int(year_text), int(quarter_text)
+    start_month = (quarter - 1) * 3 + 1
+    end_month = start_month + 2
+    end_day = calendar.monthrange(year, end_month)[1]
+    return f"{year} 第 {quarter} 季", f"{year}-{start_month:02d}-01", f"{year}-{end_month:02d}-{end_day:02d}"
+
+
 def month_values(stats: list[Stats], metric: str) -> list[float | int]:
     getter = {
         "safety": lambda item: item.score(),
@@ -276,6 +291,10 @@ def build(source: Path) -> dict:
     region_months = {key: [Stats() for _ in range(11)] for key in REGION_INFO}
     vehicle_stats: dict[str, Stats] = defaultdict(Stats)
     vehicle_months: dict[str, list[Stats]] = defaultdict(lambda: [Stats() for _ in range(11)])
+    season_all: dict[str, Stats] = defaultdict(Stats)
+    season_regions: dict[str, dict[str, Stats]] = defaultdict(lambda: {key: Stats() for key in REGION_INFO})
+    season_vehicles: dict[str, dict[str, Stats]] = defaultdict(lambda: defaultdict(Stats))
+    season_journeys: dict[str, set[str]] = defaultdict(set)
     car_journeys: dict[str, set[str]] = defaultdict(set)
     journey_months: list[set[str]] = [set() for _ in range(11)]
     total_journeys: set[str] = set()
@@ -288,13 +307,15 @@ def build(source: Path) -> dict:
         dtc = any(text(row[key]) for key in ("event[0].info.dtcCodes[0]", "event[1].info.dtcCodes[0]", "event[2].info.dtcCodes[0]"))
         fuel, mileage = number(row["can.engine.totalFuelUsed"]), number(row["can.totalMileage"])
         region, month = car_regions[car], when.month - 1
-        for stat in (all_months[month], region_all[region], region_months[region][month], vehicle_stats[car], vehicle_months[car][month]):
+        season = season_key(when)
+        for stat in (all_months[month], region_all[region], region_months[region][month], vehicle_stats[car], vehicle_months[car][month], season_all[season], season_regions[season][region], season_vehicles[season][car]):
             stat.add(car, when, status, speed, limit, load, dtc, fuel, mileage)
         journey = text(row["journeyCode"])
         if journey:
             car_journeys[car].add(journey)
             journey_months[month].add(journey)
             total_journeys.add(journey)
+            season_journeys[season].add(journey)
 
     vehicles: list[dict] = []
     for car, stat in vehicle_stats.items():
@@ -339,6 +360,38 @@ def build(source: Path) -> dict:
         "dtcVehicleCounts": [sum(1 for stats in vehicle_months.values() if stats[month].dtc > 0) for month in range(11)],
         "dtcRecords": total_series["dtc"],
     }
+    completed_seasons = [key for key in season_all if int(key.rsplit("Q", 1)[1]) * 3 <= newest.month]
+    active_season = max(completed_seasons or list(season_all))
+    season_label, season_start, season_end = season_dates(active_season)
+    competition_teams: list[dict] = []
+    for region, (name, scope, color) in REGION_INFO.items():
+        stat = season_regions[active_season][region]
+        if not stat.rows:
+            continue
+        drivers: list[dict] = []
+        for car, vehicle_stat in season_vehicles[active_season].items():
+            if car_regions[car] != region:
+                continue
+            driver = {
+                "c": car, "s": vehicle_stat.score(),
+                "overspeed_count": vehicle_stat.overspeed, "overspeed_pct": vehicle_stat.overspeed_pct(),
+                "idle_count": vehicle_stat.idling, "idle_pct": vehicle_stat.idle_pct(),
+                "high_load_count": vehicle_stat.high_load, "high_load_pct": vehicle_stat.high_load_pct(),
+                "dtc_count": vehicle_stat.dtc,
+            }
+            driver["i"] = issue(driver)
+            drivers.append(driver)
+        drivers.sort(key=lambda item: (item["s"], item["c"]))
+        competition_teams.append({
+            "id": region, "name": name, "scope": scope, "color": color,
+            "score": stat.score(), "anomaly": pretty(ratio(stat.overspeed + stat.high_load + stat.dtc, stat.rows) * 100, 1),
+            "records": stat.rows, "drivers": drivers,
+        })
+    competition = {
+        "id": active_season, "label": season_label, "period": f"{season_start} 至 {season_end}",
+        "records": season_all[active_season].rows, "journeys": len(season_journeys[active_season]),
+        "recordCadence": "依原始分鐘級行車紀錄計算", "teams": competition_teams,
+    }
     by_speed = sorted(vehicles, key=lambda item: item["overspeed_count"], reverse=True)[:3]
     by_idle = sorted(vehicles, key=lambda item: item["idle_pct"], reverse=True)[:3]
     by_load = sorted(vehicles, key=lambda item: item["high_load_count"], reverse=True)[:3]
@@ -382,7 +435,7 @@ def build(source: Path) -> dict:
             "vehicleCountsByMonth": [sum(1 for stats in vehicle_months.values() if stats[month].rows > 0) for month in range(11)],
         },
         "ordersByRegion": {item["id"]: item["journeys"] for item in regions}, "targetJourneysPerVehicle": max(1, round(len(total_journeys) / len(vehicles))),
-        "metrics": metrics, "factMap": facts, "maintenance": maintenance, "dims": [{"key": key, "name": info[0], "high": info[2], "unit": info[1], "hint": info[3]} for key, info in METRIC_INFO.items()], "dimSolData": solutions,
+        "metrics": metrics, "factMap": facts, "maintenance": maintenance, "competition": competition, "dims": [{"key": key, "name": info[0], "high": info[2], "unit": info[1], "hint": info[3]} for key, info in METRIC_INFO.items()], "dimSolData": solutions,
         "todos": todos, "todoData": todo_data, "advice": advice, "shippers": [{"id": "telemetry", "name": "車聯網紀錄", "orders": orders}],
         "accountBindings": {"lead_region": first_region["id"], "driver_code": f"{first_region['id']}0", "personal_code": f"{last_region['id']}0"}, "vehicleSnapshot": latest_vehicles,
         "sourceNote": "本頁數據由 output data_Hotai_20260511.xlsx 計算；原始檔未提供駕駛姓名、工時、人資、訂單、準時率與安全帶欄位。",

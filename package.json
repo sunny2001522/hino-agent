@@ -5,10 +5,20 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "dev": "vite",
+    "build": "vite build && npm run copy:assets",
+    "copy:assets": "mkdir -p dist && cp -R assets dist/assets",
+    "start": "npm run build && STATIC_DIR=dist node server.js"
   },
   "engines": {
     "node": ">=20"
   },
-  "dependencies": {}
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.5",
+    "vite": "^8.2.1"
+  }
 }
