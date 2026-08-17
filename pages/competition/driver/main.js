@@ -2,7 +2,7 @@ const data = window.HINO_EXCEL_DATA;
 const fleet = data ? data.regions.flatMap(r => r.drivers) : [];
 const me = (() => {
   if (!data) return null;
-  const code = data.accountBindings.personal_code;
+  const code = data.accountBindings.driver_code;
   const region = data.regions.find(r => r.id === code[0]);
   return region.drivers[+code.slice(1)];
 })();

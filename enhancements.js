@@ -500,7 +500,7 @@
       <section><div class="private-note"><b>隱私保護：</b>你只看得到自己的車號排名、計算分數與下一步；團隊只看整體成績。</div></section>
       <section><div class="sh"><h2>照做後可前進幾名</h2></div><div class="next-gain"><strong>完成這 3 件事，預估 +${plan.gain} 分${plan.forward ? '、前進 ' + plan.forward + ' 名' : ''}</strong><p>改善預估供你設定目標；最終入榜前會排除車況、路況與派工因素，並提供申訴管道。</p><ul class="mini-checks">${plan.reasons.map(item => `<li>${item}</li>`).join('')}</ul><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri sm" onclick="openDriverSafetyPlan()">看我的改善步驟</button><button class="btn gho sm" onclick="playDriverSafetyAudio()">播放安全語音</button></div></div></section>
       <section><div class="decision-card emphasis"><h3>改善，不是人事處分</h3><p>${prize}。任何獎勵方案需另經公司與人資核准；不以危險趕工、接更多單或壓縮休息換分數。</p></div></section>
-      <section>${competitionRules()}</section><div class="foot">車隊駕駛視角 · 個人資料僅本人可見</div>`;
+      <section>${competitionRules()}</section><div class="foot">車輛使用者視角 · 個人資料僅本人可見</div>`;
   }
   function renderPeopleDecision() {
     const source = window.HINO_EXCEL_DATA.meta;
@@ -649,7 +649,7 @@
     const { d } = myDriver();
     const event = primaryDriverEvent(d);
     const acknowledged = driverAcknowledgements[d.c];
-    screen.innerHTML = `<section class="driver-drive-header"><span>車隊駕駛</span><h2>${d.c}</h2><p>目前狀態：${d.last_status} · 最後更新 ${d.last_time}</p></section><section class="driver-drive-card ${event.tone}"><div><span>需要處理</span><h3>${acknowledged ? '已回報，請安全完成當前行程' : event.title}</h3><p>${acknowledged ? `已於 ${acknowledged} 回報車隊；若狀況改變請再次聯繫。` : event.detail}</p></div><div class="driver-drive-actions"><button class="btn pri" onclick="${acknowledged ? 'openSafetyCoach()' : 'acknowledgeDriverEvent()'}">${acknowledged ? '查看安全建議' : event.action}</button><button class="btn gho" onclick="playDriverSafetyAudio()">播放語音</button></div></section><section class="driver-task-strip"><div><span>本次任務</span><b>${d.last_status}</b><small>車速 ${d.last_speed} km/h</small></div><div><span>下一步</span><b>${Number(d.dtc_count || 0) ? '回報車況' : '安全完成行程'}</b><small>不需操作地圖或閱讀長報表</small></div></section><div class="foot">行車中介面只保留即時提醒、必要處理與任務狀態。</div>`;
+    screen.innerHTML = `<section class="driver-drive-header"><span>車輛使用者</span><h2>${d.c}</h2><p>目前狀態：${d.last_status} · 最後更新 ${d.last_time}</p></section><section class="driver-drive-card ${event.tone}"><div><span>需要處理</span><h3>${acknowledged ? '已回報，請安全完成當前行程' : event.title}</h3><p>${acknowledged ? `已於 ${acknowledged} 回報車隊；若狀況改變請再次聯繫。` : event.detail}</p></div><div class="driver-drive-actions"><button class="btn pri" onclick="${acknowledged ? 'openSafetyCoach()' : 'acknowledgeDriverEvent()'}">${acknowledged ? '查看安全建議' : event.action}</button><button class="btn gho" onclick="playDriverSafetyAudio()">播放語音</button></div></section><section class="driver-task-strip"><div><span>本次任務</span><b>${d.last_status}</b><small>車速 ${d.last_speed} km/h</small></div><div><span>下一步</span><b>${Number(d.dtc_count || 0) ? '回報車況' : '安全完成行程'}</b><small>不需操作地圖或閱讀長報表</small></div></section><div class="foot">行車中介面只保留即時提醒、必要處理與任務狀態。</div>`;
   }
   function renderDriverTaskEnhanced() {
     const { d } = myDriver();
@@ -659,18 +659,6 @@
     const { d } = myDriver();
     const alerts = [[`超速提醒`, `近期超速紀錄占 ${d.overspeed_pct}%。`], [`怠速提醒`, `怠速佔比 ${d.idle_pct}%。`], [`車況提醒`, `高引擎負載 ${d.high_load_count.toLocaleString()} 筆；DTC ${d.dtc_count} 筆。`]];
     screen.innerHTML = `<section><div class="sh"><h2>必要提醒</h2></div><div class="subt">請先處理需要您注意或回報的事項。</div><div class="driver-alert-list">${alerts.map(([title, detail]) => `<div><div><b>${title}</b><span>${detail}</span></div><button class="btn gho sm" onclick="playDriverSafetyAudio()">語音提醒</button></div>`).join('')}</div><div class="driver-task-actions"><button class="btn pri" onclick="acknowledgeDriverEvent()">我已知悉／回報</button><button class="btn gho" onclick="openSafetyCoach()">查看改善方式</button></div></section>`;
-  }
-  function renderPersonalHomeEnhanced() {
-    const { d } = myDriver();
-    screen.innerHTML = `<section><div class="driver-drive-header"><span>個人車主</span><h2>我的車況</h2><p>車輛編號 ${d.c} · 最後更新 ${d.last_time}</p></div><div class="driver-task-detail"><div><span>目前狀態</span><b>${d.last_status}</b></div><div><span>DTC 車況提醒</span><b>${d.dtc_count} 筆</b></div><div><span>怠速佔比</span><b>${d.idle_pct}%</b></div><div><span>安全分</span><b>${d.s} 分</b></div></div><div class="driver-task-actions"><button class="btn pri" onclick="openSafetyCoach()">查看車況建議</button><button class="btn gho" onclick="gotoTab('task')">查看車輛紀錄</button></div></section><div class="foot">個人車主僅查看自己的車況，不接收駕駛任務、派車或車隊競賽指令。</div>`;
-  }
-  function renderPersonalTripEnhanced() {
-    const { d } = myDriver();
-    screen.innerHTML = `<section><div class="sh"><h2>我的車輛紀錄</h2></div><div class="driver-task-detail"><div><span>車輛編號</span><b>${d.c}</b></div><div><span>最後狀態</span><b>${d.last_status}</b></div><div><span>最後更新</span><b>${d.last_time}</b></div><div><span>最後車速</span><b>${d.last_speed} km/h</b></div></div></section><div class="foot">僅顯示本人車輛資料；未串接目的地與行程單時，不顯示推測路線。</div>`;
-  }
-  function renderPersonalAlertsEnhanced() {
-    const { d } = myDriver();
-    screen.innerHTML = `<section><div class="sh"><h2>我的車況提醒</h2></div><div class="driver-alert-list"><div><div><b>DTC 車況提醒</b><span>${d.dtc_count} 筆紀錄，請由保修人員確認故障碼與處理時程。</span></div><button class="btn gho sm" onclick="openSafetyCoach()">查看建議</button></div><div><div><b>高引擎負載</b><span>${d.high_load_count.toLocaleString()} 筆，先確認車況與使用情境。</span></div><button class="btn gho sm" onclick="openFuelCoach()">查看建議</button></div></div></section>`;
   }
   const shipperPushStorageKey = 'hino-shipper-push-v1';
   let shipperPushState = {};
@@ -769,7 +757,7 @@
       if (answer) return answer;
       return `${AI_TAG} 目前可依來源資料回答車號、GPS、車況、超速、怠速、高引擎負載與 DTC 的摘要。油價、事故、工時、人資、訂單、準時率與 ROI 不在來源中，不能據此產生金額、事故率或人事結論。`;
     }
-    if (SESSION && (SESSION.role === 'driver' || SESSION.role === 'personal')) {
+    if (SESSION && SESSION.role === 'driver') {
       const { d } = myDriver();
       return `${AI_TAG} ${d.c} 的來源期間為 ${window.HINO_EXCEL_DATA.meta.period}：超速 ${d.overspeed_count.toLocaleString()} 筆、怠速 ${d.idle_pct}%、高引擎負載 ${d.high_load_count.toLocaleString()} 筆、DTC ${d.dtc_count} 筆。系統可建立提醒與覆核清單，但不會推論疲勞、安全帶、路線、預估到達時間 或獎金。`;
     }
@@ -855,9 +843,6 @@
   TABS.driver.find(tab => tab.id === 'home').render = renderDriverHomeEnhanced;
   TABS.driver.find(tab => tab.id === 'task').render = renderDriverTaskEnhanced;
   TABS.driver.find(tab => tab.id === 'alert').render = renderDriverAlertsEnhanced;
-  TABS.personal.find(tab => tab.id === 'home').render = renderPersonalHomeEnhanced;
-  TABS.personal.find(tab => tab.id === 'task').render = renderPersonalTripEnhanced;
-  TABS.personal.find(tab => tab.id === 'alert').render = renderPersonalAlertsEnhanced;
   TABS.shipper.find(tab => tab.id === 'track').render = renderShipperTrackEnhanced;
   TABS.shipper.find(tab => tab.id === 'orders').render = renderShipperOrdersEnhanced;
 })();

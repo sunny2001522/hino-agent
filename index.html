@@ -403,10 +403,8 @@ const ROLES={
  desc:"註冊：iTRAQ 系統網站註冊車隊管理帳號<br>登入：輸入手機號碼或電子信箱"},
  lead: {label:"總負責人", color:"#0d9488", sub:"區域負責人，只看自己那一區",
  desc:"註冊：由車隊管理者建立區域負責人帳號<br>登入：手機號碼登入 APP、只看負責區", isNew:true},
- driver: {label:"車隊駕駛", color:"#4a6cf0", sub:"司機，只看自己",
- desc:"註冊：由車隊管理者建立車隊駕駛帳號<br>登入：一律採用手機號碼登入 APP"},
- personal:{label:"個人用戶", color:"#e0862a", sub:"個人車主，看自己的車與行程",
- desc:"登入：一律採用手機號碼登入 APP"},
+ driver: {label:"車輛使用者", color:"#4a6cf0", sub:"駕駛／車主，只看自己的車",
+ desc:"註冊：由車隊管理者建立帳號<br>登入：一律採用手機號碼登入 APP · 查看個人車況、必要提醒與任務狀態"},
  shipper:{label:"貨主", color:"#2e9e4f", sub:"貨件追蹤（B2B2B）",
  desc:"登入：手機號碼登入 APP · 查看貨件狀態與車輛編號<br><b style=\"color:var(--good)\">本團隊 B2B2B 新增身份</b>（iTRAQ 原本沒有）", isNew:true},
  competition:{label:"競賽", color:"#c45c12", sub:"獨立頁面",
@@ -416,13 +414,10 @@ const ROLES={
 const EXCEL_ACCOUNT_BINDING=window.HINO_EXCEL_DATA.accountBindings;
 const EXCEL_DRIVER_REGION=regions.find(region=>region.id===EXCEL_ACCOUNT_BINDING.lead_region);
 const EXCEL_DRIVER=EXCEL_DRIVER_REGION.drivers[0];
-const EXCEL_PERSONAL_REGION=regions.find(region=>region.id===EXCEL_ACCOUNT_BINDING.personal_code[0]);
-const EXCEL_PERSONAL=EXCEL_PERSONAL_REGION.drivers[0];
 const ACCOUNTS={
  fleet: {phone:"0900-000-001", name:"車隊管理帳號", roleName:"車隊管理", scope:`${window.HINO_EXCEL_DATA.meta.vehicles} 台車`},
  lead: {phone:"0912-345-678", name:`${EXCEL_DRIVER_REGION.name}總負責人`, roleName:"總負責人", region:EXCEL_DRIVER_REGION.id, scope:`${EXCEL_DRIVER_REGION.name}車隊`},
- driver: {phone:"0900-110-101", name:`車號 ${EXCEL_DRIVER.c}`, roleName:"車隊駕駛", drvCode:EXCEL_ACCOUNT_BINDING.driver_code, scope:`${EXCEL_DRIVER_REGION.name}車隊`},
- personal:{phone:"0900-220-202", name:`車號 ${EXCEL_PERSONAL.c}`, roleName:"個人用戶", drvCode:EXCEL_ACCOUNT_BINDING.personal_code, scope:`${EXCEL_PERSONAL_REGION.name}車隊`},
+ driver: {phone:"0900-110-101", name:`車號 ${EXCEL_DRIVER.c}`, roleName:"車輛使用者", drvCode:EXCEL_ACCOUNT_BINDING.driver_code, scope:`${EXCEL_DRIVER_REGION.name}車隊`},
  shipper: {phone:"0900-880-808", name:"貨主示範帳號", roleName:"貨主", shipperId:"telemetry", scope:"我的貨件"},
 };
 let SESSION=null; // {role, acc}
@@ -449,11 +444,6 @@ const TABS={
  driver:[
  {id:"home", l:"首頁", render:renderDriverHome},
  {id:"task", l:"任務", render:renderDriverTask},
- {id:"alert", l:"提醒", render:renderDriverAlerts},
- ],
- personal:[
- {id:"home", l:"首頁", render:renderDriverHome},
- {id:"task", l:"行程", render:renderDriverTask},
  {id:"alert", l:"提醒", render:renderDriverAlerts},
  ],
  shipper:[
@@ -1094,20 +1084,19 @@ function renderLeadDrivers(){
 }
 
 /* =====================================================================
- ROLE: 車隊駕駛 / 個人用戶 (self only) 3 tabs
+ ROLE: 車輛使用者（駕駛／車主共用） 3 tabs
  — no driver-name switcher; fixed to session account —
 ===================================================================== */
 function myDriver(){return dref(SESSION.acc.drvCode);}
 function renderDriverHome(){
  const{r,d}=myDriver();const[lv,col]=lvl(d.s);
  const sorted=[...r.drivers].sort((x,y)=>y.s-x.s),rank=sorted.findIndex(x=>x.c===d.c)+1;
- const isPersonal=SESSION.role==='personal';
  screen.innerHTML=`
  <section>
  <div class="sh"><h2>${d.n} 的安全儀表</h2></div>
- <div class="subt">${isPersonal?'個人用戶 · 只看自己的車與行程':r.name+' · 只看自己'}</div>
+ <div class="subt">${r.name} · 只看自己的車與任務狀態</div>
  <div class="kpis">
- <div class="kpi"><div class="k">我的安全分</div><div class="v" style="color:${col}">${d.s}</div><div class="s">${lv}燈 · ${isPersonal?'個人':r.name+'排第 '+rank+'/'+r.drivers.length}</div></div>
+ <div class="kpi"><div class="k">我的安全分</div><div class="v" style="color:${col}">${d.s}</div><div class="s">${lv}燈 · ${r.name}排第 ${rank}/${r.drivers.length}</div></div>
  <div class="kpi"><div class="k">本月趟次</div><div class="v">${18+(d.s%7)}</div><div class="s">準時 ${Math.min(99,80+Math.round(d.s/5))}%</div></div>
  <div class="kpi"><div class="k">安全獎金</div><div class="v" style="color:${d.s>=70?'var(--good)':'var(--mut2)'}">${d.s>=70?'NT$1,200':'—'}</div><div class="s">${d.s>=70?'本月達標 ':'安全分達 70 可領'}</div></div>
  <div class="kpi"><div class="k">我的車</div><div class="v" style="font-size:18px">${d.c}</div><div class="s">HINO 車型</div></div>
@@ -1123,18 +1112,18 @@ function renderDriverHome(){
  <div class="why">${fatigueSet.has(SESSION.acc.drvCode)?'AI 事前預測你今天 15–17 時為疲勞高風險段，建議先排小休。':'AI 依你今日路線與歷史，事前評估風險時段，提前提醒你。'}</div>
  <div class="acts"><button class="btn pri sm" style="background:linear-gradient(135deg,#5a86d6,#2e4d7a);color:#fff" onclick="openSafetyCoach()">看今天的安全叮嚀</button></div></div>
  </section>
- ${isPersonal?'':`<section id="drv_goal">
+ <section id="drv_goal">
  <div class="sh"><h2 class="sm">團隊省油目標（我的貢獻）</h2><span class="newbadge">協同</span></div>
  <div class="subt">省油不是你一個人的事 — 駕駛 + 車隊 + AI 一起達標</div>
  ${driverFuelGoalCard(d,r)}
- </section>`}
+ </section>
  <section>
  <div class="sh"><h2 class="sm">安全獎金激勵</h2></div>
  <div class="adv"><div class="f">${d.s>=70?'已達安全獎金門檻':'再加把勁就能領獎金'}</div>
  <div class="why">安全分達 70（綠燈）當月可領 NT$1,200 安全獎金；${d.s>=70?'保持下去，連 3 個月再加碼！':'目前 '+d.s+' 分，距離門檻還差 '+Math.max(0,70-d.s)+' 分。'}</div>
  <div class="acts"><button class="btn pri sm" onclick="act('已開啟安全駕駛小技巧與獎金規則。','ok')">看如何提分</button></div></div>
  </section>
- <div class="foot">${isPersonal?'個人用戶':'車隊駕駛'}視角 · 只看自己</div>`;
+ <div class="foot">車輛使用者視角 · 只看自己</div>`;
 }
 // 駕駛端：團隊省油目標 + 我的貢獻（把個人激勵綁進團隊 KPI）
 function driverFuelGoalCard(d,r){
@@ -1540,7 +1529,7 @@ const AI_TAG='<span class="aibadge"><span class="sp"></span>AI 生成</span>';
 // 依身分取得可注入模型的 iTRAQ 情境數據
 function aiContext(){
  const role=SESSION.role;
- if(role==='driver'||role==='personal'){
+ if(role==='driver'){
  const {r,d}=myDriver();const rk=[...r.drivers].sort((a,b)=>b.s-a.s).findIndex(x=>x.c===d.c)+1;
  return {role,name:d.n,region:r.name,car:d.c,safe:d.s,rank:rk,team:r.drivers.length,
  idle:r.idlePct,fuel:r.fuel,issue:d.i,
@@ -1561,7 +1550,7 @@ function aiContext(){
 // 常見問題（依身分）
 function aiSuggestions(){
  const c=aiContext();
- if(c.role==='driver'||c.role==='personal') return [
+ if(c.role==='driver') return [
  '我今天怎麼開比較省油又安全？',
  '我哪裡最耗油？怎麼改？',
  '今天我要注意什麼安全風險？',
@@ -1583,8 +1572,8 @@ function aiGenerate(q){
  const c=aiContext();const t=q.toLowerCase();
  const has=(...k)=>k.some(x=>q.includes(x));
  const B=s=>`<b>${s}</b>`,N=s=>`<span class="num">${s}</span>`;
- // ---- 駕駛 / 個人 ----
- if(c.role==='driver'||c.role==='personal'){
+ // ---- 車輛使用者 ----
+ if(c.role==='driver'){
  const fuelW=has('省油','耗油','吃油','喝油','費油','油耗','省一點','怎麼開');
  const safeW=has('安全','風險','注意','出事','危不危險','危險','會不會撞','疲勞','開太快');
  // 複合：同時想顧省油＋安全（含預設 placeholder／第一顆 chip「今天怎麼開比較省油又安全」）
@@ -1666,7 +1655,7 @@ function openAIChat(){
  </div></div>`);
  // 開場白
  const log=document.getElementById('chatlog');
- const hi=(c.role==='driver'||c.role==='personal')?`${c.name} 你好，我是你的省油＋安全 AI 教練，已讀取你今天的 iTRAQ 數據。點下面的問題，或直接打字問我。`
+ const hi=c.role==='driver'?`${c.name} 你好，我是你的省油＋安全 AI 教練，已讀取你今天的 iTRAQ 數據。點下面的問題，或直接打字問我。`
  :(c.role==='lead')?`${SESSION.acc.name} 你好，我掌握 ${c.region} 的即時數據，幫你把省油與安全變成可執行的決策。`
  :`${SESSION.acc.name} 你好，我是全隊省油×安全 AI 軍師，已接上 iTRAQ 全隊大數據。`;
  log.innerHTML=`<div class="bub ai"><div class="lbl">${AI_TAG}</div>${hi}</div>`;
@@ -1786,7 +1775,7 @@ function revealHtml(html,n){
 }
 function addChatActions(bub,q){
  const c=aiContext();let btns='';
- if(c.role==='driver'||c.role==='personal'){
+ if(c.role==='driver'){
  if(q.includes('省油')||q.includes('油'))btns=`<button class="btn pri sm" onclick="act('已設為今日省油任務，達標可累積競賽積分。','ok')">設為今日省油任務</button>`;
  else if(q.includes('安全')||q.includes('風險'))btns=`<button class="btn pri sm" onclick="act('已開啟時段提醒，AI 會提前 30 分主動提醒你。','ok')">開啟時段提醒</button>`;
  else if(q.includes('獎金')||q.includes('提分'))btns=`<button class="btn pri sm" onclick="act('已為你排定 7 天安全提分計畫。','ok')">排 7 天提分計畫</button>`;
@@ -1830,7 +1819,7 @@ function openSafetyCoach(name){
  let d,r;
  if(name){const hit=regions.flatMap(rg=>rg.drivers.map(dv=>({dv,rg}))).find(x=>x.dv.n===name);if(hit){d=hit.dv;r=hit.rg;}}
  if(!d){const m=myDriver();d=m.d;r=m.r;}
- const fat=fatigueSet.has(SESSION.role==='driver'||SESSION.role==='personal'?SESSION.acc.drvCode:'');
+ const fat=fatigueSet.has(SESSION.role==='driver'?SESSION.acc.drvCode:'');
  const risks=[];
  if(fat)risks.push({h:'疲勞高風險段（事前）',x:'依你連續駕駛時數與歷史疲勞時段，AI 預測今天 15–17 時最易疲勞，建議先在服務區排 15 分小休。'});
  if(/超速/.test(d.i))risks.push({h:'超速路段預警',x:'你的超速多在快速道路，今日路線經過大雅段，請提前留意限速與測速。'});
