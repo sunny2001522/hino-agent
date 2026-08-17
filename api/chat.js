@@ -77,6 +77,16 @@ export default async function handler(req, res) {
         } catch { /* Ignore incomplete Gemini SSE frames. */ }
       }
     }
+    // Gemini may close the response without a trailing blank SSE separator.
+    // Flush its final event so the UI receives the entire generated answer.
+    const finalLine = buffer.split(/\r?\n/).find(item => item.trimStart().startsWith('data:'));
+    if (finalLine) {
+      try {
+        const eventData = JSON.parse(finalLine.trimStart().slice(5).trim());
+        const delta = eventData?.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('') || '';
+        if (delta) event(res, { delta });
+      } catch { /* Ignore an incomplete final SSE frame. */ }
+    }
     event(res, { done: true, model });
   } catch (error) {
     event(res, { error: error?.message || 'Gemini request failed' });

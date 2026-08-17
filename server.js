@@ -84,6 +84,16 @@ async function handleChat(req, res) {
           if (text) res.write(`data: ${JSON.stringify({ delta: text })}\n\n`);
         }
       }
+      // Some Gemini responses end without a final blank SSE line. Flush that
+      // last event so a valid answer is never cut off mid-sentence.
+      const finalLine = buf.split(/\r?\n/).find(line => line.trimStart().startsWith('data:'));
+      if (finalLine) {
+        try {
+          const obj = JSON.parse(finalLine.trimStart().slice(5).trim());
+          const text = obj?.candidates?.[0]?.content?.parts?.map(x => x.text || '').join('') || '';
+          if (text) res.write(`data: ${JSON.stringify({ delta: text })}\n\n`);
+        } catch { /* Ignore an incomplete final SSE frame. */ }
+      }
       res.write(`data: ${JSON.stringify({ done: true, model: GEMINI_MODEL })}\n\n`);
       res.end();
     } catch (err) {
