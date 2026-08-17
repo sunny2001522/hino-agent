@@ -498,7 +498,7 @@
     screen.innerHTML = `
       <section class="competition-hero"><div class="eyebrow">MY SAFE DRIVE · 私密榜單</div><h2>我的車號名次：第 ${plan.now} / ${region.drivers.length}</h2><p>原始資料沒有駕駛姓名；系統以綁定車號顯示個人名次，且不顯示其他車號分數。</p><div class="hero-actions"><button class="btn sm" onclick="openDriverSafetyPlan()">查看改善計畫</button></div></section>
       <section><div class="private-note"><b>隱私保護：</b>你只看得到自己的車號排名、計算分數與下一步；團隊只看整體成績。</div></section>
-      <section><div class="sh"><h2>照做後可前進幾名</h2></div><div class="next-gain"><strong>完成這 3 件事，預估 +${plan.gain} 分${plan.forward ? '、前進 ' + plan.forward + ' 名' : ''}</strong><p>改善預估供你設定目標；最終入榜前會排除車況、路況與派工因素，並提供申訴管道。</p><ul class="mini-checks">${plan.reasons.map(item => `<li>${item}</li>`).join('')}</ul><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri sm" onclick="openDriverSafetyPlan()">看我的改善步驟</button><button class="btn gho sm" onclick="playDriverSafetyAudio()">播放安全語音</button></div></div></section>
+      <section><div class="sh"><h2>照做後可前進幾名</h2></div><div class="next-gain"><strong>完成這 3 件事，預估 +${plan.gain} 分${plan.forward ? '、前進 ' + plan.forward + ' 名' : ''}</strong><p>改善預估供你設定目標；最終入榜前會排除車況、路況與派工因素，並提供申訴管道。</p><ul class="mini-checks">${plan.reasons.map(item => `<li>${item}</li>`).join('')}</ul><div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri sm" onclick="openDriverSafetyPlan()">看我的改善步驟</button></div></div></section>
       <section><div class="decision-card emphasis"><h3>改善，不是人事處分</h3><p>${prize}。任何獎勵方案需另經公司與人資核准；不以危險趕工、接更多單或壓縮休息換分數。</p></div></section>
       <section>${competitionRules()}</section><div class="foot">車輛使用者視角 · 個人資料僅本人可見</div>`;
   }
@@ -645,11 +645,30 @@
     if (Number(driver.overspeed_pct || 0) > 0) return { title:'請依路段限速行駛', detail:`近期超速紀錄占 ${driver.overspeed_pct}%，請鬆油門、保持安全車距。`, action:'我已知悉', tone:'safety' };
     return { title:'請維持安全駕駛', detail:'目前沒有需要立刻處理的異常提醒。', action:'查看安全建議', tone:'normal' };
   }
+  function autoPlayDriverSafetyAudio(driver, event) {
+    if (event.tone === 'normal') return;
+    const key = `hino-driver-auto-audio-v1:${driver.c}:${event.title}`;
+    try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (error) { /* Continue for this session if storage is unavailable. */ }
+    const text = event.tone === 'maintenance'
+      ? '偵測到車況提醒。請以行車安全為先，安全停靠後回報車隊安排確認。'
+      : '請依目前路段限速行駛，鬆開油門並保持安全車距。';
+    try {
+      if ('speechSynthesis' in window) {
+        speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'zh-TW';
+        speechSynthesis.speak(utterance);
+      }
+    } catch (error) { /* Device may not expose speech synthesis. The visible alert remains. */ }
+    toast('系統已自動語音提醒', '重要提醒已播報；請專心駕駛，安全停靠後再操作。', 'wn');
+  }
   function renderDriverHomeEnhanced() {
     const { d } = myDriver();
     const event = primaryDriverEvent(d);
     const acknowledged = driverAcknowledgements[d.c];
-    screen.innerHTML = `<section class="driver-drive-header"><span>車輛使用者</span><h2>${d.c}</h2><p>目前狀態：${d.last_status} · 最後更新 ${d.last_time}</p></section><section class="driver-drive-card ${event.tone}"><div><span>需要處理</span><h3>${acknowledged ? '已回報，請安全完成當前行程' : event.title}</h3><p>${acknowledged ? `已於 ${acknowledged} 回報車隊；若狀況改變請再次聯繫。` : event.detail}</p></div><div class="driver-drive-actions"><button class="btn pri" onclick="${acknowledged ? 'openSafetyCoach()' : 'acknowledgeDriverEvent()'}">${acknowledged ? '查看安全建議' : event.action}</button><button class="btn gho" onclick="playDriverSafetyAudio()">播放語音</button></div></section><section class="driver-task-strip"><div><span>本次任務</span><b>${d.last_status}</b><small>車速 ${d.last_speed} km/h</small></div><div><span>下一步</span><b>${Number(d.dtc_count || 0) ? '回報車況' : '安全完成行程'}</b><small>不需操作地圖或閱讀長報表</small></div></section><div class="foot">行車中介面只保留即時提醒、必要處理與任務狀態。</div>`;
+    const notice = event.tone === 'normal' ? '目前沒有需播報的異常提醒' : '系統已自動語音提醒；請安全停靠後再操作';
+    screen.innerHTML = `<section class="driver-drive-header"><span>車輛使用者</span><h2>${d.c}</h2><p>目前狀態：${d.last_status} · 最後更新 ${d.last_time}</p></section><section class="driver-drive-card ${event.tone}"><div><span>現在要注意</span><h3>${acknowledged ? '已回報，請安全完成當前行程' : event.title}</h3><p>${acknowledged ? `已於 ${acknowledged} 回報車隊；若狀況改變請再次聯繫。` : event.detail}</p><small style="display:block;margin-top:7px;color:var(--mut)">${notice}</small></div><div class="driver-drive-actions"><button class="btn pri" onclick="${acknowledged ? 'openSafetyCoach()' : 'acknowledgeDriverEvent()'}">${acknowledged ? '查看改善方式' : event.action}</button></div></section><section class="driver-task-strip"><div><span>本次行程</span><b>${d.last_status}</b><small>目前車速 ${d.last_speed} km/h</small></div><div><span>下一步</span><b>${Number(d.dtc_count || 0) ? '安全停靠後回報車況' : '安全完成行程'}</b><small>不需閱讀長報表或操作地圖</small></div></section><section><div class="sh"><h2>本車摘要</h2></div><div class="driver-task-detail"><div><span>超速紀錄</span><b>${d.overspeed_count.toLocaleString()} 筆</b></div><div><span>怠速佔比</span><b>${d.idle_pct}%</b></div><div><span>高引擎負載</span><b>${d.high_load_count.toLocaleString()} 筆</b></div><div><span>DTC</span><b>${d.dtc_count.toLocaleString()} 筆</b></div></div></section><div class="foot">此頁只保留即時提醒、行程狀態與必要回報；重要安全提醒會由系統直接語音播報。</div>`;
+    if (!acknowledged) requestAnimationFrame(() => autoPlayDriverSafetyAudio(d, event));
   }
   function renderDriverTaskEnhanced() {
     const { d } = myDriver();
@@ -658,7 +677,7 @@
   function renderDriverAlertsEnhanced() {
     const { d } = myDriver();
     const alerts = [[`超速提醒`, `近期超速紀錄占 ${d.overspeed_pct}%。`], [`怠速提醒`, `怠速佔比 ${d.idle_pct}%。`], [`車況提醒`, `高引擎負載 ${d.high_load_count.toLocaleString()} 筆；DTC ${d.dtc_count} 筆。`]];
-    screen.innerHTML = `<section><div class="sh"><h2>必要提醒</h2></div><div class="subt">請先處理需要您注意或回報的事項。</div><div class="driver-alert-list">${alerts.map(([title, detail]) => `<div><div><b>${title}</b><span>${detail}</span></div><button class="btn gho sm" onclick="playDriverSafetyAudio()">語音提醒</button></div>`).join('')}</div><div class="driver-task-actions"><button class="btn pri" onclick="acknowledgeDriverEvent()">我已知悉／回報</button><button class="btn gho" onclick="openSafetyCoach()">查看改善方式</button></div></section>`;
+    screen.innerHTML = `<section><div class="sh"><h2>必要提醒</h2></div><div class="subt">重要安全訊號已由系統自動語音播報；請安全停靠後再回報。</div><div class="driver-alert-list">${alerts.map(([title, detail]) => `<div><div><b>${title}</b><span>${detail}</span></div><span class="tag">系統已提醒</span></div>`).join('')}</div><div class="driver-task-actions"><button class="btn pri" onclick="acknowledgeDriverEvent()">我已知悉／回報</button><button class="btn gho" onclick="openSafetyCoach()">查看改善方式</button></div></section>`;
   }
   const shipperPushStorageKey = 'hino-shipper-push-v1';
   let shipperPushState = {};
@@ -713,7 +732,6 @@
   window.openDriverRouteCoach = function () { const { d } = myDriver(); showModal(`<h3>AI 路線資料說明</h3><p>${d.c} 的最後紀錄為 ${d.last_time}，位置 ${d.position}。來源沒有規劃路線、目的地、壅塞、卸貨或 預估到達時間 欄位，因此系統不會生成替代路線。</p><div class="guardrail">串接調度／訂單與路況資料後，才能提供可執行的替代路線；在此之前，只保留安全提醒與資料覆核。</div><div class="mb"><button class="btn gho" onclick="closeOv()">返回</button><button class="btn pri" onclick="act('已建立需要串接調度與路況資料的需求。','ok');closeOv()">建立串接需求</button></div>`); };
   window.openFuelCoach = function () { const { r, d } = myDriver(); showModal(`<h3>AI 省油建議 · ${d.c}</h3><p>資料依據：怠速 ${d.idle_pct}%、超速 ${d.overspeed_count.toLocaleString()} 筆、百公里油耗 ${r.fuel} L。</p><div class="plan rec"><div class="ph">優先減少怠速</div><div class="pd">確認等待、裝卸與停車情境；可在可安全熄火時建立提醒。</div></div><div class="plan"><div class="ph">覆核超速紀錄</div><div class="pd">先核對限速資料與路況，再建立限速提醒；不以單一紀錄直接做懲處。</div></div><div class="plan"><div class="ph">檢查車況</div><div class="pd">高引擎負載或 DTC 紀錄由保修人員判讀，並回填處理結果。</div></div><div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已建立此車號的省油改善清單。','ok');closeOv()">建立改善清單</button></div>`); };
   window.openSafetyCoach = function () { const { d } = myDriver(); showModal(`<h3>AI 安全建議 · ${d.c}</h3><p>系統只以車聯網資料中的超速、怠速、高引擎負載與 DTC 記錄提供改善建議；來源沒有疲勞、急煞或安全帶欄位。</p><div class="plan rec"><div class="ph">超速紀錄</div><div class="pd">${d.overspeed_count.toLocaleString()} 筆；確認限速與路況後，建立安全駕駛提醒。</div></div><div class="plan"><div class="ph">高引擎負載</div><div class="pd">${d.high_load_count.toLocaleString()} 筆；安排車況與派車條件覆核，不直接判定為超載。</div></div><div class="plan"><div class="ph">DTC</div><div class="pd">${d.dtc_count.toLocaleString()} 筆；由保修人員確認故障碼與處理時程。</div></div><div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="act('已建立此車號的安全資料覆核清單。','ok');closeOv()">建立覆核清單</button></div>`); };
-  window.playDriverSafetyAudio = function () { const {d} = myDriver(); const text = /超速/.test(d.i) ? '請依目前路段限速行駛，放鬆油門並保持安全車距。' : /怠速/.test(d.i) ? '等候超過九十秒請熄火，安全省油一起做到。' : '請全程繫好安全帶，保持專注，行車平安。'; try { if ('speechSynthesis' in window) { speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = 'zh-TW'; speechSynthesis.speak(utterance); } } catch (_) {} toast('安全語音已播放', '提醒後系統會用後續行車資料確認是否改善；需要協助可直接回報。', 'wn'); };
   window.acknowledgeDriverEvent = function () {
     const { d } = myDriver();
     driverAcknowledgements[d.c] = new Date().toLocaleString('zh-TW', { hour:'2-digit', minute:'2-digit' });
@@ -729,6 +747,24 @@
   window.renderDriverTask = renderDriverTaskEnhanced;
   window.renderDriverAlerts = renderDriverAlertsEnhanced;
   window.renderFleetMe = renderFleetSettingsEnhanced;
+  function sourceFuelAnswer(question) {
+    if (!/油耗|耗油|油錢|省油|百公里/.test(question)) return null;
+    const scoped = SESSION.role === 'lead' ? myRegion().drivers : regions.flatMap(region => region.drivers);
+    const ranked = scoped
+      .filter(vehicle => Number(vehicle.fuel_per_100km) > 0 && Number(vehicle.mileage_km) > 0)
+      .sort((a, b) => Number(b.fuel_per_100km) - Number(a.fuel_per_100km));
+    const top = ranked[0];
+    if (!top) return `${DATA_TAG} 來源資料尚無可同時計算 CAN 累積油耗與里程差分的車號，無法判定高油耗車；請先確認兩個累積計數欄位是否完整。`;
+    const signals = [];
+    if (Number(top.idle_pct) > 8) signals.push(`怠速佔比 ${top.idle_pct}% 高於 8% 目標`);
+    if (Number(top.high_load_count) > 0) signals.push(`高引擎負載 ${top.high_load_count.toLocaleString()} 筆`);
+    if (Number(top.overspeed_pct) > 0) signals.push(`超速占行駛紀錄 ${top.overspeed_pct}%`);
+    if (Number(top.dtc_count) > 0) signals.push(`DTC ${top.dtc_count.toLocaleString()} 筆`);
+    const sample = Number(top.mileage_km) < 500
+      ? `本月僅 ${top.mileage_km.toLocaleString()} km，樣本偏短，需先覆核。`
+      : `本月累積油耗 ${top.fuel_liters.toLocaleString()} L、里程 ${top.mileage_km.toLocaleString()} km。`;
+    return `${DATA_TAG} 依 ${top.fuel_month} 的 CAN 累積油耗／里程差分，${SESSION.role === 'lead' ? '本區' : '全隊'}百公里油耗最高的是 <b>${top.c}</b>：<b>${top.fuel_per_100km} L/100km</b>。\n\n· ${sample}\n· 需優先覆核：${signals.join('、') || '來源未發現可列出的異常訊號'}。\n· 下一步：確認等待、裝卸、路況、載重與保修紀錄，再對該車建立改善與追蹤清單；不以單一數值推定駕駛責任。`;
+  }
   function originalDataAnswer(question) {
     const topic = [
       { test:/保修|維修|工單|進廠/, p:7, next:'可至 iTRAQ → 保修系統查看週期與預約資料。' },
@@ -753,6 +789,8 @@
   window.aiGenerate = function (question) {
     if (SESSION && SESSION.role === 'shipper') { const c = aiContext(), o = c.order, index = myOrders().findIndex(order => order.id === o.id); if (/預估到達時間|多久|到達|延誤/.test(question)) return `${AI_TAG} 目前未串接可計算抵達時間的訂單與調度資料，因此不顯示 預估到達時間 或延誤預測。`; if (/車輛|狀況|摘要|貨件/.test(question)) return `${AI_TAG} ${shipmentLabel(index)}目前為「${shipmentStatus(o)}」，負責車輛為 ${o.car}，最後更新 ${shipmentUpdatedAt(o)}。為保護隱私，不提供司機個資或精確位置。`; return `${AI_TAG} 我可以說明貨件狀態、車輛編號與最後更新時間；此介面不顯示地圖、司機聯絡方式，也不能取消貨件。`; }
     if (SESSION && (SESSION.role === 'fleet' || SESSION.role === 'lead')) {
+      const fuelAnswer = sourceFuelAnswer(question);
+      if (fuelAnswer) return fuelAnswer;
       const answer = originalDataAnswer(question);
       if (answer) return answer;
       return `${AI_TAG} 目前可依來源資料回答車號、GPS、車況、超速、怠速、高引擎負載與 DTC 的摘要。油價、事故、工時、人資、訂單、準時率與 ROI 不在來源中，不能據此產生金額、事故率或人事結論。`;
@@ -839,10 +877,7 @@
     { id:'drivers', l:'駕駛', render:renderLeadDrivers },
     { id:'competition', l:'安全競賽', render:renderLeadCompetition }
   );
-  TABS.driver.splice(3, 0, { id:'competition', l:'排名', render:renderDriverCompetition });
-  TABS.driver.find(tab => tab.id === 'home').render = renderDriverHomeEnhanced;
-  TABS.driver.find(tab => tab.id === 'task').render = renderDriverTaskEnhanced;
-  TABS.driver.find(tab => tab.id === 'alert').render = renderDriverAlertsEnhanced;
+  TABS.driver.splice(0, TABS.driver.length, { id:'home', l:'我的車況', render:renderDriverHomeEnhanced });
   TABS.shipper.find(tab => tab.id === 'track').render = renderShipperTrackEnhanced;
   TABS.shipper.find(tab => tab.id === 'orders').render = renderShipperOrdersEnhanced;
 })();

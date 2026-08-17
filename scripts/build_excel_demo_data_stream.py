@@ -129,6 +129,16 @@ class Stats:
         return max(0, min(100, round(100 - penalty)))
 
     def fuel_per_100km(self) -> float:
+        return self.fuel_metrics()["fuel_per_100km"]
+
+    def fuel_metrics(self) -> dict[str, float | int]:
+        """Return cumulative-counter deltas and their fuel-efficiency ratio.
+
+        The workbook only stores CAN counters, so fuel use and mileage must be
+        calculated from the first and last available value for each vehicle in
+        the selected period.  Keeping all three values together prevents the
+        UI from presenting a ratio without its auditable source values.
+        """
         fuel_delta = 0.0
         km_delta = 0.0
         for values in self.counters.values():
@@ -136,7 +146,11 @@ class Stats:
                 continue
             fuel_delta += max(0.0, values["fuel"][1][1] - values["fuel"][0][1])
             km_delta += max(0.0, values["mileage"][1][1] - values["mileage"][0][1])
-        return pretty(ratio(fuel_delta * 100, km_delta), 2)
+        return {
+            "fuel_liters": pretty(fuel_delta, 2),
+            "mileage_km": pretty(km_delta, 1),
+            "fuel_per_100km": pretty(ratio(fuel_delta * 100, km_delta), 2),
+        }
 
 
 def workbook_rows(path: Path):
@@ -243,6 +257,7 @@ def build(source: Path) -> dict:
     region_all = {key: Stats() for key in REGION_INFO}
     region_months = {key: [Stats() for _ in range(11)] for key in REGION_INFO}
     vehicle_stats: dict[str, Stats] = defaultdict(Stats)
+    vehicle_months: dict[str, list[Stats]] = defaultdict(lambda: [Stats() for _ in range(11)])
     car_journeys: dict[str, set[str]] = defaultdict(set)
     total_journeys: set[str] = set()
     # Second pass: metrics and counter deltas.
@@ -254,7 +269,7 @@ def build(source: Path) -> dict:
         dtc = any(text(row[key]) for key in ("event[0].info.dtcCodes[0]", "event[1].info.dtcCodes[0]", "event[2].info.dtcCodes[0]"))
         fuel, mileage = number(row["can.engine.totalFuelUsed"]), number(row["can.totalMileage"])
         region, month = car_regions[car], when.month - 1
-        for stat in (all_months[month], region_all[region], region_months[region][month], vehicle_stats[car]):
+        for stat in (all_months[month], region_all[region], region_months[region][month], vehicle_stats[car], vehicle_months[car][month]):
             stat.add(car, when, status, speed, limit, load, dtc, fuel, mileage)
         journey = text(row["journeyCode"])
         if journey:
@@ -264,6 +279,8 @@ def build(source: Path) -> dict:
     vehicles: list[dict] = []
     for car, stat in vehicle_stats.items():
         last = latest[car]
+        latest_month = last["time"].month - 1
+        latest_month_fuel = vehicle_months[car][latest_month].fuel_metrics()
         vehicle = {
             "n": car, "c": car, "s": stat.score(), "region": car_regions[car],
             "overspeed_count": stat.overspeed, "overspeed_pct": stat.overspeed_pct(),
@@ -274,6 +291,8 @@ def build(source: Path) -> dict:
             "last_speed": pretty(last["speed"], 0), "last_limit": pretty(last["limit"], 0),
             "position": f"{last['longitude']:.6f}, {last['latitude']:.6f}" if last["longitude"] is not None and last["latitude"] is not None else "未提供",
             "journeys": len(car_journeys[car]), "journey": last["journey"],
+            "fuel_month": last["time"].strftime("%Y-%m"),
+            **latest_month_fuel,
         }
         vehicle["i"] = issue(vehicle)
         vehicles.append(vehicle)

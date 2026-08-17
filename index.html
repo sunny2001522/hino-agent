@@ -479,7 +479,7 @@ function logout(){
 }
 function buildTabs(){
  const list=TABS[SESSION.role];
- tabbar.style.display="flex";
+ tabbar.style.display=list.length>1?"flex":"none";
  const subs=window.HEADER_SUBPAGES||{};
  tabbar.innerHTML=list.map(t=>{
   const pages=subs[t.id]||[];
@@ -756,7 +756,7 @@ let dimSolData={
  idle:{t:"怠速佔比過高，怎麼解？",pts:["設怠速上限 ≤8%＋每日追蹤排行","怠速超 3 分鐘即時提醒熄火（AI 自動）","AI 每日自動催辦未達標區負責人","納入省油績效獎懲"],btn:[{l:"設定怠速目標",c:"pri",fn:"act('已設定全隊怠速目標 ≤8%，AI 每日自動催辦各區。','ok')"},{l:"查看 AI 催辦狀態",c:"gho",fn:"openIdleMessage()"}]},
  overload:{t:"引擎過載（疑超載），怎麼解？",pts:["超載自動停派＋調度代理重配貨物（AI 依授權，負責人監督）","更換較大車型承載","增加配送批次","治本：調整派車規則並裝載前過磅（需您核准）"],btn:[{l:"核准過磅稽核政策",c:"pri",fn:"openOverloadFix()"},{l:"查看自動停派狀態",c:"gho",fn:"openOverloadFix()"}]},
  seatbelt:{t:"未繫安全帶，怎麼解？",pts:["未繫即時車內語音提醒（DMS，AI 自動）","每日未繫排行推播負責人","列入安全分與獎懲、累犯約談"],btn:[{l:"列入績效政策",c:"pri",fn:"act('已將未繫安全帶納入全隊駕駛績效政策。','ok')"},{l:"檢視年度訓練預算",c:"gho",fn:"openTrainApprove()"}]},
- fuel:{t:"百公里油耗偏高，怎麼解？",pts:["AI 省油教練：急加速/怠速/超速個人化建議（AI 自動）","油耗排行＋向南區標竿學習","高油耗車檢查胎壓/空濾/載重","路線最佳化減里程"],btn:[{l:"設全隊省油政策",c:"pri",fn:"act('已設定全隊省油政策，AI 自動對符合條件駕駛啟動省油教練。','ok')"},{l:"發起省油競賽",c:"gho",fn:"act('已發起全隊省油競賽。','ok')"}]},
+ fuel:{t:"百公里油耗偏高，怎麼解？",pts:["先以車號、里程與 CAN 累積油耗確認異常","高油耗車檢查怠速、胎壓、空濾與載重","覆核路況與派車條件後再安排改善","追蹤處置前後的油耗變化"],btn:[{l:"建立高油耗覆核",c:"pri",fn:"act('已建立高油耗車的資料覆核清單。','ok')"}]},
 };
 /* Every visible metric below is compiled from output data_Hotai_20260511.xlsx.
    The historical literals above remain only as development fallback text and are
@@ -942,7 +942,6 @@ function fleetFuelGoalCard(){
  <div style="border-top:1px solid var(--line);margin-top:11px;padding-top:9px">${rows}</div>
  <div class="acts" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px">
  <button class="btn pri sm" onclick="act('已設定全隊怠速目標 ≤8% 並分派到各區負責人，AI 每日自動催辦。','ok')">設定/更新團隊目標</button>
- <button class="btn gho sm" onclick="act('已發起全隊省油競賽，達標區有獎勵。','ok')">發起省油競賽</button>
  <button class="btn gho sm" onclick="openIdleMessage()">查看 AI 催辦狀態</button></div>
  </div>`;
 }
@@ -1058,7 +1057,7 @@ function renderLeadFocus(){
  <div class="gt">本區怠速目標 ≤8% <span class="aibadge"><span class="sp"></span>AI 追蹤</span></div>
  <div class="gnums"><span class="big" style="color:${r.idlePct<=8?'var(--good)':'var(--warn)'}">${r.idlePct}%</span><span class="gl">目前 · 目標 8%</span><span class="aibadge" style="margin-left:auto">預測 3 個月可達 ${idleP[2]}%</span></div>
  <div class="prog"><div class="fl" style="width:${Math.round(Math.max(0,Math.min(1,(16-r.idlePct)/(16-8)))*100)}%"></div><div class="tk" style="left:100%"></div></div>
- <div class="acts" style="margin-top:11px"><button class="btn pri sm" onclick="openFuelCoach('${r.drivers[0].n}')">對主因駕駛啟動省油教練</button><button class="btn gho sm" onclick="act('已在本區發起省油競賽。','ok')">發起省油競賽</button></div>
+ <div class="acts" style="margin-top:11px"><button class="btn pri sm" onclick="openFuelCoach('${r.drivers[0].n}')">檢視優先改善車號</button></div>
  </div>
  </section>
  <section>
@@ -1143,8 +1142,7 @@ function driverFuelGoalCard(d,r){
  <div>我的省油排名：<b>${rank}</b> / ${r.drivers.length}｜達標我還可再省 <b>約 6 L</b></div>
  </div>
  <div class="acts" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px">
- <button class="btn pri sm" onclick="openFuelCoach()">看我怎麼再省</button>
- <button class="btn gho sm" onclick="act('已加入本月省油競賽，達標可領獎勵。','ok')">加入省油競賽</button></div>
+ <button class="btn pri sm" onclick="openFuelCoach()">看我怎麼再省</button></div>
  </div>`;
 }
 function renderDriverTask(){
@@ -1504,7 +1502,7 @@ function renderRiskForecast(forLead){
 ===================================================================== */
 const benefits=[
  {v:"-8%",k:"百公里油耗",w:"怠速 16%→8% + 省油教練 + 路線最佳化"},
- {v:"16%→8%",k:"全隊怠速佔比",w:"即時熄火提醒 + 目標追蹤 + 省油競賽"},
+ {v:"16%→8%",k:"全隊怠速佔比",w:"即時熄火提醒 + 目標追蹤 + 車況覆核"},
  {v:"NT$180萬",k:"預估年省油錢",w:"20 車 × 年里程 6 萬 km × 32L/100km × 降 8% × 油價 NT$32/L"},
  {v:"96 噸",k:"年減碳量",w:"年省油約 3.07 萬 L × 柴油 2.6 kg CO₂/L ≈ 80 噸(下限)，含怠速空轉估 96 噸"},
  {v:"-30%",k:"異常駕駛事件",w:"相對導入前 3 個月，事前預測 + AI 教練下降急煞/超速/未繫"},
@@ -1519,12 +1517,12 @@ function benefitCard(){
 function toggleBenefitCalc(){const p=document.getElementById("benefitCalc"),a=document.getElementById("bcArr"),o=p.style.display==="none";p.style.display=o?"block":"none";a.textContent=o?"▾":"▸";}
 
 /* =====================================================================
- 生成式 AI 對話助理（省油 × 安全）
- — 依登入身分 grounding iTRAQ 數據，逐字浮現生成式回覆 —
- 這裡以資料拼裝 + 打字動畫模擬 LLM；正式版接 GenAI（如 GPT/Gemini）。
+ Gemini 對話助理（省油 × 安全）
+ — 有 Gemini 後端時串流回答；否則僅呈現可追溯的資料分析結果 —
 ===================================================================== */
 let chatTyping=null;
 const AI_TAG='<span class="aibadge"><span class="sp"></span>AI 生成</span>';
+const DATA_TAG='<span class="aibadge"><span class="sp"></span>資料分析</span>';
 
 // 依身分取得可注入模型的 iTRAQ 情境數據
 function aiContext(){
@@ -1543,7 +1541,7 @@ function aiContext(){
  // fleet
  const worstIdle=regions.slice().sort((a,b)=>b.idlePct-a.idlePct)[0];
  const worstSafe=regions.slice().sort((a,b)=>a.safety.at(-1)-b.safety.at(-1))[0];
- return {role,name:SESSION.acc.name,idle:14,fuel:31.9,worstIdle,worstSafe,
+ return {role,name:SESSION.acc.name,idle:window.HINO_EXCEL_DATA.aggregate.idlePct,fuel:window.HINO_EXCEL_DATA.aggregate.fuel,worstIdle,worstSafe,
  aggSafe:aggSafety.at(-1)};
 }
 
@@ -1619,13 +1617,13 @@ function aiGenerate(q){
  return `${AI_TAG} 把 ${c.region} 怠速從 ${N(c.idle+'%')} 降到 8%，三步走：\n\n1. 怠速超 3 分鐘即時語音提醒熄火\n2. 每日怠速排行推播、納入省油績效\n3. 早班場站錯開等待、卸貨區調度排開\n\n預估兩週見效，每月省油約 ${N('NT$4–6 萬')}。`;
  }
  if(has('提醒','擬','話術','訊息','寫')){
- return `${AI_TAG} 幫你擬好一段可直接發給駕駛的省油提醒：\n\n「各位辛苦了！本區這週怠速偏高，麻煩等候或卸貨超過 90 秒就熄火，起步輕油門。做到的同仁本月省油競賽有獎，我們一起把油錢省下來。」\n\n要我一鍵群發給 ${c.region} 全體駕駛嗎？`;
+ return `${AI_TAG} 幫你擬好一段可直接發給駕駛的省油提醒：\n\n「各位辛苦了！本區這週怠速偏高，麻煩等候或卸貨超過 90 秒就熄火，起步輕油門。請先確認路況與裝卸情境，再一起把油耗降下來。」\n\n要我一鍵群發給 ${c.region} 全體駕駛嗎？`;
  }
  return `${AI_TAG} 我是 ${c.region} 的 AI 夥伴，掌握本區 iTRAQ：怠速 ${N(c.idle+'%')}、油耗 ${N(c.fuel+'L')}、異常率 ${N(c.anomaly+'%')}。可以問我「油耗為什麼變差、誰是主因」「今天誰最可能出事」「怎麼把怠速降到 8%」。`;
  }
  // ---- 車隊管理（fleet）----
  if(has('耗油','油耗','省油','最耗油','哪台')&&!has('風險','事故')){
- return `${AI_TAG} 這個月最耗油的是 ${B(c.worstIdle.name+'車隊')}：\n\n· 怠速 ${N(c.worstIdle.idlePct+'%')}為全隊最高，每月多燒約 ${N('NT$6 萬')}油錢\n· 高油耗車與高怠速、急加速車高度重疊\n\n${B('改善方案')}：對該區設怠速目標 ≤8% + 啟動 AI 省油教練 + 檢查胎壓/空濾。全隊怠速 14%→8% 預估年省油 ${N('NT$180 萬')}、減碳 ${N('約 96 噸')}。要我發起省油競賽嗎？`;
+ return `${AI_TAG} 請先依最新月份的逐車 CAN 累積油耗與里程差分確認高油耗車，再核對怠速、路況、載重與保修情境。來源未提供油價與成本，不能換算油錢或節省金額；下一步是建立高油耗車的資料覆核清單。`;
  }
  if(has('風險','事故','出事','誰最','危險','安全')){
  const lvName=f=>f.lv==='bad'?'高':f.lv==='mid'?'中':'低';
@@ -1646,7 +1644,7 @@ function openAIChat(){
  const roleLabel=(c.role==='fleet')?'全隊省油×安全軍師':(c.role==='lead')?c.region+'省油×安全夥伴':'我的省油×安全教練';
  const sug=aiSuggestions().map(s=>`<span class="chip2" onclick="aiAsk('${s.replace(/'/g,"")}')">${s}</span>`).join('');
  showModal(`<div class="chatwrap">
- <div class="chathd"><div class="ci">AI</div><div><div class="cn">GenAI 智慧夥伴 ${AI_TAG}</div><div class="cs" id="chatSub">${roleLabel} · 依你的 iTRAQ 數據即時生成</div></div></div>
+ <div class="chathd"><div class="ci">AI</div><div><div class="cn">Gemini 智慧夥伴 <span id="chatModeTag">${DATA_TAG}</span></div><div class="cs" id="chatSub">${roleLabel} · 正在確認 Gemini 服務…</div></div></div>
  <div class="chatlog" id="chatlog"></div>
  <div class="chips2" id="chatChips">${sug}</div>
  <div class="chatin">
@@ -1658,9 +1656,8 @@ function openAIChat(){
  const hi=c.role==='driver'?`${c.name} 你好，我是你的省油＋安全 AI 教練，已讀取你今天的 iTRAQ 數據。點下面的問題，或直接打字問我。`
  :(c.role==='lead')?`${SESSION.acc.name} 你好，我掌握 ${c.region} 的即時數據，幫你把省油與安全變成可執行的決策。`
  :`${SESSION.acc.name} 你好，我是全隊省油×安全 AI 軍師，已接上 iTRAQ 全隊大數據。`;
- log.innerHTML=`<div class="bub ai"><div class="lbl">${AI_TAG}</div>${hi}</div>`;
- // 老闆/負責人端偵測到真 AI 後端時，標示已串接 Claude
- if(c.role==='fleet'||c.role==='lead'){checkBackend().then(on=>{const s=document.getElementById('chatSub');if(s)s.textContent=roleLabel+' · '+(on?'已串接 Gemini 生成式 AI，依 iTRAQ 數據即時回答':'依你的 iTRAQ 數據即時生成');});}
+ log.innerHTML=`<div class="bub ai"><div class="lbl" id="initialAiLabel">${DATA_TAG}</div>${hi}</div>`;
+ if(c.role==='fleet'||c.role==='lead'){checkBackend().then(on=>{const s=document.getElementById('chatSub');const tag=document.getElementById('chatModeTag');const label=document.getElementById('initialAiLabel');if(s)s.textContent=roleLabel+' · '+(on?'Gemini 已連線，依車聯網資料生成':'資料分析模式（Gemini 尚未連線）');if(tag)tag.innerHTML=on?AI_TAG:DATA_TAG;if(label)label.innerHTML=on?AI_TAG:DATA_TAG;});}
 }
 function aiAskInput(){const i=document.getElementById('chatInput');const v=(i.value||'').trim();if(!v)return;i.value='';aiAsk(v);}
 
@@ -1681,17 +1678,19 @@ function backendContext(){
  const worstIdle=regions.slice().sort((a,b)=>b.idlePct-a.idlePct)[0];
  const worstSafe=regions.slice().sort((a,b)=>a.safety.at(-1)-b.safety.at(-1))[0];
  return {role,name:SESSION.acc.name,aggSafe:aggSafety.at(-1),
- idle:+(regions.reduce((a,r)=>a+r.idlePct,0)/regions.length).toFixed(1),fuel:31.9,
+ idle:window.HINO_EXCEL_DATA.aggregate.idlePct,fuel:window.HINO_EXCEL_DATA.aggregate.fuel,
  worstIdle:{name:worstIdle.name,idlePct:worstIdle.idlePct,fuel:worstIdle.fuel,anomaly:worstIdle.anomaly},
  worstSafe:{name:worstSafe.name,safe:worstSafe.safety.at(-1),anomaly:worstSafe.anomaly},
  regions:regions.map(r=>({name:r.name,safe:r.safety.at(-1),idlePct:r.idlePct,anomaly:r.anomaly,onTime:r.onTime})),
+ fuelTop:regions.flatMap(r=>r.drivers).filter(v=>Number(v.fuel_per_100km)>0&&Number(v.mileage_km)>0).sort((a,b)=>b.fuel_per_100km-a.fuel_per_100km).slice(0,3).map(v=>({car:v.c,month:v.fuel_month,fuelPer100:v.fuel_per_100km,fuelLiters:v.fuel_liters,mileageKm:v.mileage_km,idlePct:v.idle_pct,highLoadCount:v.high_load_count,overspeedPct:v.overspeed_pct,dtcCount:v.dtc_count})),
  riskTop:riskForecast.map(f=>({n:f.n,region:f.r,pc:riskScore(f),win:f.win})),
  autoOn:Object.keys(aiAuto).filter(k=>aiAuto[k]).map(k=>aiAutoMeta[k].t).join('、')||'（全部關閉）'};
  }
  const r=myRegion();
  return {role,name:SESSION.acc.name,region:r.name,aggSafe:aggSafety.at(-1),
  safe:r.safety.at(-1),idle:r.idlePct,fuel:r.fuel,anomaly:r.anomaly,overload:r.overload,
- drivers:r.drivers.map(d=>({n:d.n,s:d.s,i:d.i}))};
+ fuelTop:r.drivers.filter(v=>Number(v.fuel_per_100km)>0&&Number(v.mileage_km)>0).sort((a,b)=>b.fuel_per_100km-a.fuel_per_100km).slice(0,3).map(v=>({car:v.c,month:v.fuel_month,fuelPer100:v.fuel_per_100km,fuelLiters:v.fuel_liters,mileageKm:v.mileage_km,idlePct:v.idle_pct,highLoadCount:v.high_load_count,overspeedPct:v.overspeed_pct,dtcCount:v.dtc_count})),
+ drivers:r.drivers.map(d=>({n:d.c,s:d.s,i:d.i}))};
 }
 // 對話入口：老闆/負責人優先走真 LLM 串流；失敗或無後端則退回本地模擬
 async function aiAsk(q){
@@ -1734,18 +1733,18 @@ async function streamBackend(q,log){
  AI_BACKEND=false;bub.remove();aiAskLocal(q);
  }
 }
-// 本地模擬（資料拼裝 + 打字動畫）：無後端、駕駛/個人端、或後端失敗時使用
+// 資料分析備援：無後端、駕駛端、或後端失敗時只顯示可追溯的來源分析
 function aiAskLocal(q){
  if(chatTyping)clearInterval(chatTyping);
  const log=document.getElementById('chatlog');if(!log)return;
- const full=aiGenerate(q);
+ const full=aiGenerate(q).replace(AI_TAG,DATA_TAG);
  const bub=el(`<div class="bub ai"><span id="typing"></span><span class="caret"></span></div>`);
  log.appendChild(bub);log.scrollTop=log.scrollHeight;
  const target=bub.querySelector('#typing');
  // 逐字：以「已渲染字元數」推進，讓 HTML 標籤一次吐完不會破版
  const plain=full.replace(/<[^>]+>/g,'');
  const totalLen=plain.length;let i=0;const speed=18,step=3;
- // 先顯示 0.6s「分析中」佔位，觀感更接近生成式串流
+ // 先顯示資料分析中的短暫佔位，避免空白狀態
  let pause=Math.round(600/speed);
  chatTyping=setInterval(()=>{
  if(pause>0){pause--;target.innerHTML='<span style="color:var(--mut2)">分析你的 iTRAQ 數據中…</span>';return;}
@@ -1784,7 +1783,7 @@ function addChatActions(bub,q){
  else if(q.includes('風險')||q.includes('事故'))btns=`<button class="btn pri sm" onclick="act('已對高風險駕駛發送事前預警。','wn');closeOv()">發送事前預警</button>`;
  else if(q.includes('提醒')||q.includes('擬'))btns=`<button class="btn pri sm" onclick="act('已群發省油提醒給本區駕駛。','ok');closeOv()">一鍵群發</button>`;
  }else{
- if(q.includes('耗油')||q.includes('油'))btns=`<button class="btn pri sm" onclick="act('已對高耗油區發起全隊省油競賽。','ok');closeOv()">發起省油競賽</button>`;
+ if(q.includes('耗油')||q.includes('油'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('team')">查看高油耗車號</button>`;
  else if(q.includes('風險')||q.includes('事故'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('decision')">查看預警與介入狀態</button>`;
  else if(q.includes('效益')||q.includes('導入'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('settings')">看完整效益</button>`;
  }

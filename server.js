@@ -2,13 +2,13 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildSystemPrompt, geminiConfig } from './lib/gemini.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 8080;
 
 // ---- Google Gemini（AI Studio API key，放環境變數 GEMINI_API_KEY）----
-const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const { key: GEMINI_KEY, model: GEMINI_MODEL } = geminiConfig();
 const hasKey = !!GEMINI_KEY; // 沒有金鑰時 /api/chat 回 503，前端自動退回本地模擬
 
 const MIME = {
@@ -23,48 +23,6 @@ const MIME = {
   '.jpeg': 'image/jpeg',
   '.ico': 'image/x-icon',
 };
-
-// ---- 依身分建立系統提示（老闆／車隊負責人），強制以 iTRAQ 數據 grounding ----
-function systemPrompt(ctx) {
-  const base = `你是「HINO iTRAQ × GenAI 省油 · 安全智慧夥伴」的車隊 AI 軍師（火箭隊作品）。
-你的回答必須完全依據下方提供的 iTRAQ 車聯網即時數據（grounding），不可捏造數據。
-規則：
-- 全程繁體中文、口語、專業但好懂；不要用 emoji。
-- 聚焦「省油」與「安全」兩大主軸，並落到「可執行的決策 / 行動」。
-- 老闆端(fleet)：只談決策層級（設目標、核准預算、下達政策）；前線執行動作說明已由 AI 代理／負責人自動處理、老闆不必手按。
-- 車隊負責人端(lead)：可談本區駕駛的實際跟進動作（通知、語音關懷、派交接、限期改善），但只限自己負責的那一區。
-- 回答務必引用具體數字（怠速%、油耗L、安全分、異常率、事故風險%等），給 2-4 點具體建議，結尾給一個明確的下一步。
-- 控制在約 150-260 字，條列清楚，可用 **粗體** 標重點。`;
-
-  if (ctx.role === 'fleet') {
-    return `${base}
-
-【登入身分】${ctx.name}｜車隊管理（全隊總管，6 區 / 20 車）
-【全隊即時數據】
-- 全隊平均安全分：${ctx.aggSafe}
-- 全隊怠速佔比：${ctx.idle}%（目標 ≤8%、起點 16%）
-- 全隊百公里油耗：約 ${ctx.fuel} L
-- 怠速最高（最耗油）區：${ctx.worstIdle?.name}（怠速 ${ctx.worstIdle?.idlePct}%、油耗 ${ctx.worstIdle?.fuel}L、異常率 ${ctx.worstIdle?.anomaly}%）
-- 安全分最低（最需關注）區：${ctx.worstSafe?.name}（安全分 ${ctx.worstSafe?.safe}、異常率 ${ctx.worstSafe?.anomaly}%）
-- 各區摘要：${(ctx.regions || []).map(r => `${r.name}(安全${r.safe}/怠速${r.idlePct}%/異常${r.anomaly}%/準時${r.onTime}%)`).join('、')}
-- 今日高風險駕駛（AI 事前預測）：${(ctx.riskTop || []).map(r => `${r.n}(${r.region}) 風險${r.pc}% 於${r.win}`).join('；')}
-- AI 自動化授權目前開啟：${ctx.autoOn}
-請以「全隊省油×安全 AI 軍師」身分回答老闆的問題，只給決策層建議。`;
-  }
-
-  // lead
-  return `${base}
-
-【登入身分】${ctx.name}｜總負責人（僅負責 ${ctx.region}，看不到其他區）
-【本區即時數據】
-- 本區安全分：${ctx.safe}（全隊平均 ${ctx.aggSafe}）
-- 本區怠速佔比：${ctx.idle}%（目標 ≤8%）
-- 本區百公里油耗：約 ${ctx.fuel} L
-- 本區異常率：${ctx.anomaly}%
-- 本區引擎過載：${ctx.overload} 次
-- 本區駕駛（紅黃綠）：${(ctx.drivers || []).map(d => `${d.n} 安全分${d.s}(${d.i})`).join('；')}
-請以「${ctx.region}省油×安全夥伴」身分回答，聚焦本區駕駛的實際跟進行動。`;
-}
 
 function send(res, code, body, headers = {}) {
   res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', ...headers });
@@ -91,7 +49,7 @@ async function handleChat(req, res) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${encodeURIComponent(GEMINI_KEY)}`;
       const body = {
-        systemInstruction: { parts: [{ text: systemPrompt(context) }] },
+        systemInstruction: { parts: [{ text: buildSystemPrompt(context) }] },
         contents: [{ role: 'user', parts: [{ text: String(question).slice(0, 2000) }] }],
         generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
       };
