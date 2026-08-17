@@ -71,12 +71,12 @@ async function handleChat(req, res) {
         const { value, done } = await reader.read();
         if (done) break;
         buf += dec.decode(value, { stream: true });
-        const parts = buf.split('\n\n');
+        const parts = buf.split(/\r?\n\r?\n/);
         buf = parts.pop();
         for (const p of parts) {
-          const line = p.split('\n').find(l => l.startsWith('data:'));
+          const line = p.split(/\r?\n/).find(l => l.trimStart().startsWith('data:'));
           if (!line) continue;
-          const jsonStr = line.slice(5).trim();
+          const jsonStr = line.trimStart().slice(5).trim();
           if (!jsonStr || jsonStr === '[DONE]') continue;
           let obj;
           try { obj = JSON.parse(jsonStr); } catch { continue; }

@@ -63,12 +63,12 @@ export default async function handler(req, res) {
       const { value, done } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
-      const chunks = buffer.split('\n\n');
+      const chunks = buffer.split(/\r?\n\r?\n/);
       buffer = chunks.pop() || '';
       for (const chunk of chunks) {
-        const line = chunk.split('\n').find(item => item.startsWith('data:'));
+        const line = chunk.split(/\r?\n/).find(item => item.trimStart().startsWith('data:'));
         if (!line) continue;
-        const value = line.slice(5).trim();
+        const value = line.trimStart().slice(5).trim();
         if (!value || value === '[DONE]') continue;
         try {
           const eventData = JSON.parse(value);
