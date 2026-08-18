@@ -294,9 +294,13 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
 .idcard.idcard-simple { display: grid; width: 100%; min-height: 108px; place-items: center; margin: 0; border: 1px solid #dce7e2; border-top: 4px solid var(--role-color); background: #fff; color: var(--role-color); font: inherit; text-align: center; }
 .idcard.idcard-simple span { font-size: clamp(18px, 3vw, 25px); font-weight: 850; }
 
-/* 手機不讓桌面導航換行；改由漢堡按鈕展開為垂直選單。 */
+/*
+ * 導覽比內容區更早需要收合：iTRAQ 的完整主選單加上帳號與登出，
+ * 在小筆電或瀏覽器放大時會先擠壓、重疊。因此 1280px 以下一律
+ * 改為漢堡選單；內容仍可維持桌面雙欄，不會被誤切成手機版。
+ */
 .menuToggle { display: none; flex: 0 0 auto; width: 38px; height: 38px; place-items: center; border: 1px solid rgba(214,236,228,.38); border-radius: 8px; background: rgba(255,255,255,.07); color: #e8f3ef; font: inherit; font-size: 21px; line-height: 1; cursor: pointer; }
-@media (max-width: 819px) {
+@media (max-width: 1280px) {
   body .appbar { position: relative; z-index: 65; flex-wrap: nowrap; align-items: center; min-height: 64px; padding: 8px 14px !important; gap: 8px; }
   body .appbar .logo { flex: 0 0 auto; }
   body .appbar .menuToggle:not([hidden]) { display: grid; order: 1; }
