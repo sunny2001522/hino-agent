@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && npm run copy:assets",
-    "copy:assets": "mkdir -p dist && cp -R assets dist/assets",
+    "copy:assets": "mkdir -p dist/assets && cp -R assets/simulated-dvr dist/assets/simulated-dvr",
     "start": "npm run build && STATIC_DIR=dist node server.js"
   },
   "engines": {

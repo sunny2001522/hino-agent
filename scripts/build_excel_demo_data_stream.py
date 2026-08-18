@@ -13,9 +13,9 @@ from __future__ import annotations
 import argparse
 import calendar
 import json
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +44,16 @@ METRIC_INFO = {
     "load": ("高引擎負載紀錄", "筆", False, "CAN engineLoad ≥ 90 的記錄；越少越好"),
     "dtc": ("DTC 紀錄", "筆", False, "事件欄位帶有 DTC code 的記錄；越少越好"),
     "fuel": ("百公里油耗", "L", False, "以每車 CAN 累積油耗與里程差分計算；越低越好"),
+}
+LEADERBOARD_PROFILES = (
+    {"name": "林建宏", "avatar": 0},
+    {"name": "蔡宛庭", "avatar": 1},
+    {"name": "陳志遠", "avatar": 2},
+)
+EVENT_LABELS = {
+    5: "圍籬進出", 6: "急加速", 7: "急減速", 8: "超速",
+    12: "疲勞駕駛", 13: "未繫安全帶", 14: "使用通訊", 15: "抽菸",
+    16: "分心", 17: "鏡頭遮蔽", 18: "駕駛消失", 19: "PCS 預警", 20: "車道偏離",
 }
 
 
@@ -93,16 +103,38 @@ class Stats:
     overspeed: int = 0
     high_load: int = 0
     dtc: int = 0
+    event_counts: Counter[int] = field(default_factory=Counter)
+    event_speeding: int = 0
+    event_high_load: int = 0
+    can_abnormal: int = 0
+    battery_low: int = 0
+    coolant_hot: int = 0
+    rpm_high: int = 0
+    battery_samples: int = 0
+    coolant_samples: int = 0
+    can_status_samples: int = 0
     counters: dict[str, dict[str, tuple[datetime, float]]] = field(default_factory=dict)
 
     def add(self, car: str, when: datetime, status: int, speed: float | None, limit: float | None,
-            load: float | None, dtc: bool, fuel: float | None, mileage: float | None) -> None:
+            load: float | None, dtc: bool, fuel: float | None, mileage: float | None,
+            event_types: list[int], event_speeding: bool, event_high_load: bool,
+            can_status: int, battery: float | None, coolant: float | None, rpm: float | None) -> None:
         self.rows += 1
         self.driving += status == 1
         self.idling += status == 2
         self.overspeed += bool(limit and limit > 0 and speed is not None and speed > limit)
         self.high_load += bool(load is not None and load >= 90)
         self.dtc += bool(dtc)
+        self.event_counts.update(event_types)
+        self.event_speeding += bool(event_speeding)
+        self.event_high_load += bool(event_high_load)
+        self.can_status_samples += can_status >= 0
+        self.can_abnormal += can_status == 9
+        self.battery_samples += battery is not None and battery > 0
+        self.battery_low += battery is not None and 0 < battery < 11500
+        self.coolant_samples += coolant is not None
+        self.coolant_hot += coolant is not None and coolant >= 105
+        self.rpm_high += rpm is not None and rpm >= 2500
         car_counts = self.counters.setdefault(car, {})
         for key, value in (("fuel", fuel), ("mileage", mileage)):
             if value is None:
@@ -123,6 +155,12 @@ class Stats:
 
     def high_load_pct(self) -> float:
         return pretty(ratio(self.high_load * 100, self.driving), 1)
+
+    def event_count(self, *codes: int) -> int:
+        return sum(self.event_counts[code] for code in codes)
+
+    def event_pct(self, *codes: int) -> float:
+        return pretty(ratio(self.event_count(*codes) * 100, self.driving + self.idling), 1)
 
     def score(self) -> int:
         # Clearly marked in the UI as a calculated prototype index—not HINO's official score.
@@ -163,10 +201,18 @@ def workbook_rows(path: Path):
     rows = sheet.iter_rows(values_only=True)
     headers = next(rows)
     positions = {str(name): index for index, name in enumerate(headers)}
-    required = ["journeyCode", "time", "carStatus", "carNum", "gps.longitude", "gps.latitude",
-                "gps.speed", "gps.speedLimit", "can.totalMileage", "can.engine.totalFuelUsed",
-                "can.engine.engineLoad", "event[0].info.dtcCodes[0]",
-                "event[1].info.dtcCodes[0]", "event[2].info.dtcCodes[0]"]
+    required = [
+        "journeyCode", "time", "carStatus", "carNum", "gps.longitude", "gps.latitude",
+        "gps.speed", "gps.speedLimit", "can.canSpeed", "fenceId", "can.totalMileage",
+        "line.fuelLevel", "can.engine.totalFuelUsed", "can.engine.rpm", "can.engine.engineLoad",
+        "can.canStatus", "line.battery", "can.engine.engineCoolantTemp", "can.engine.engineTotalTime",
+    ]
+    for index in range(3):
+        required.extend([
+            f"event[{index}].type", f"event[{index}].info.duration", f"event[{index}].info.speedDifference",
+            f"event[{index}].info.speedLimit", f"event[{index}].info.speed", f"event[{index}].info.dtcCount",
+            f"event[{index}].info.waterTemp", f"event[{index}].info.engineLoad", f"event[{index}].info.dtcCodes[0]",
+        ])
     for raw in rows:
         yield {key: raw[positions[key]] if key in positions else None for key in required}
     book.close()
@@ -205,6 +251,140 @@ def season_dates(key: str) -> tuple[str, str, str]:
     end_month = start_month + 2
     end_day = calendar.monthrange(year, end_month)[1]
     return f"{year} 第 {quarter} 季", f"{year}-{start_month:02d}-01", f"{year}-{end_month:02d}-{end_day:02d}"
+
+
+def week_key(when: datetime) -> str:
+    monday = when.date() - timedelta(days=when.weekday())
+    return monday.isoformat()
+
+
+def week_dates(key: str) -> tuple[str, str, str]:
+    monday = date.fromisoformat(key)
+    sunday = monday + timedelta(days=6)
+    return f"{monday:%m/%d}–{sunday:%m/%d}", monday.isoformat(), sunday.isoformat()
+
+
+def event_code(value: Any) -> int | None:
+    raw = text(value)
+    if not raw:
+        return None
+    try:
+        return int(float(raw.split(".", 1)[0]))
+    except ValueError:
+        return None
+
+
+def event_signals(row: dict[str, Any]) -> tuple[list[int], bool, bool, bool, float | None]:
+    types: list[int] = []
+    speeding = False
+    high_load = False
+    dtc = False
+    water_temps: list[float] = []
+    for index in range(3):
+        prefix = f"event[{index}]"
+        code = event_code(row[f"{prefix}.type"])
+        if code is not None:
+            types.append(code)
+        event_speed, event_limit = number(row[f"{prefix}.info.speed"]), number(row[f"{prefix}.info.speedLimit"])
+        speed_difference = number(row[f"{prefix}.info.speedDifference"])
+        speeding = speeding or bool(event_limit and event_limit > 0 and event_speed is not None and event_speed > event_limit) or bool(speed_difference and speed_difference > 0)
+        event_load = number(row[f"{prefix}.info.engineLoad"])
+        high_load = high_load or bool(event_load is not None and event_load >= 90)
+        dtc = dtc or code == 9 or bool(text(row[f"{prefix}.info.dtcCodes[0]"])) or bool(whole(row[f"{prefix}.info.dtcCount"], 0) > 0)
+        water = number(row[f"{prefix}.info.waterTemp"])
+        if water is not None:
+            water_temps.append(water)
+    return types, speeding, high_load, dtc, max(water_temps) if water_temps else None
+
+
+def score_tone(score: int) -> str:
+    return "danger" if score < 60 else "warn" if score < 80 else "good"
+
+
+def weekly_driver_scores(stat: Stats) -> dict:
+    """Build a transparent weekly view from only supplied telemetry fields.
+
+    These are internal calculated indicators, not official HINO driver grades.
+    Scores use normalized per-record rates so drivers with different driving
+    minutes can be compared with their own previous weekly result.
+    """
+    active = max(1, stat.driving + stat.idling)
+    overspeed = max(stat.overspeed, stat.event_speeding, stat.event_count(8))
+    hard_events = stat.event_count(6, 7)
+    behaviour_events = stat.event_count(12, 13, 14, 15, 16, 17, 18)
+    warning_events = stat.event_count(19, 20)
+    speed_rate = ratio(overspeed * 100, active)
+    hard_rate = ratio(hard_events * 100, active)
+    behaviour_rate = ratio(behaviour_events * 100, active)
+    warning_rate = ratio(warning_events * 100, active)
+    safety_score = max(0, min(100, round(100
+        - min(46, speed_rate * 1.25)
+        - min(24, hard_rate * 0.9)
+        - min(24, behaviour_rate * 1.35)
+        - min(12, warning_rate * 0.75))))
+
+    high_load = max(stat.high_load, stat.event_high_load, stat.event_count(11))
+    high_load_rate = ratio(high_load * 100, active)
+    rpm_rate = ratio(stat.rpm_high * 100, active)
+    fuel = stat.fuel_metrics()
+    fuel_available = bool(fuel["mileage_km"] and fuel["fuel_liters"])
+    fuel_penalty = min(18, max(0.0, float(fuel["fuel_per_100km"]) - 24) * 0.75) if fuel_available else 0
+    efficiency_score = max(0, min(100, round(100
+        - min(38, stat.idle_pct() * 0.9)
+        - min(30, high_load_rate * 1.15)
+        - min(14, rpm_rate * 0.45)
+        - fuel_penalty)))
+
+    dtc = max(stat.dtc, stat.event_count(9))
+    dtc_rate = ratio(dtc * 100, active)
+    can_rate = ratio(stat.can_abnormal * 100, active)
+    heat_count = max(stat.coolant_hot, stat.event_count(10))
+    heat_rate = ratio(heat_count * 100, max(1, stat.coolant_samples or active))
+    battery_rate = ratio(stat.battery_low * 100, max(1, stat.battery_samples))
+    maintenance_score = max(0, min(100, round(100
+        - min(40, dtc_rate * 1.8)
+        - min(26, can_rate * 1.25)
+        - min(22, heat_rate * 1.1)
+        - min(12, battery_rate * 0.5))))
+
+    safety_attention = []
+    if overspeed: safety_attention.append((speed_rate, f"超速 {overspeed:,} 筆"))
+    if stat.event_count(6): safety_attention.append((stat.event_pct(6), f"急加速 {stat.event_count(6):,} 筆"))
+    if stat.event_count(7): safety_attention.append((stat.event_pct(7), f"急減速 {stat.event_count(7):,} 筆"))
+    behaviour_label = "／".join(EVENT_LABELS[code] for code in (12, 13, 14, 15, 16, 17, 18) if stat.event_count(code))
+    if behaviour_events: safety_attention.append((behaviour_rate, f"{behaviour_label} {behaviour_events:,} 筆"))
+    warning_label = "／".join(EVENT_LABELS[code] for code in (19, 20) if stat.event_count(code))
+    if warning_events: safety_attention.append((warning_rate, f"{warning_label} {warning_events:,} 筆"))
+
+    efficiency_attention = []
+    if stat.idling: efficiency_attention.append((stat.idle_pct(), f"怠速佔比 {stat.idle_pct()}%"))
+    if high_load: efficiency_attention.append((high_load_rate, f"高引擎負載 {high_load:,} 筆"))
+    if stat.rpm_high: efficiency_attention.append((rpm_rate, f"高轉速 {stat.rpm_high:,} 筆"))
+    if fuel_available: efficiency_attention.append((float(fuel["fuel_per_100km"]) / 10, f"百公里油耗 {fuel['fuel_per_100km']} L"))
+
+    maintenance_attention = []
+    if dtc: maintenance_attention.append((dtc_rate, f"DTC {dtc:,} 筆"))
+    if stat.can_abnormal: maintenance_attention.append((can_rate, f"CAN 異常 {stat.can_abnormal:,} 筆"))
+    if heat_count: maintenance_attention.append((heat_rate, f"冷卻系統高溫 {heat_count:,} 筆"))
+    if stat.battery_low: maintenance_attention.append((battery_rate, f"低電壓 {stat.battery_low:,} 筆"))
+
+    categories = [
+        {"id": "safety", "label": "安全", "score": safety_score, "tone": score_tone(safety_score),
+         "attention": [item for _, item in sorted(safety_attention, reverse=True)[:3]] or ["本週未偵測到需優先處理的安全訊號"],
+         "facts": [f"超速 {overspeed:,} 筆", f"急加／減速 {hard_events:,} 筆", f"駕駛／警示事件 {behaviour_events + warning_events:,} 筆"]},
+        {"id": "efficiency", "label": "效率", "score": efficiency_score, "tone": score_tone(efficiency_score),
+         "attention": [item for _, item in sorted(efficiency_attention, reverse=True)[:3]] or ["本週沒有足夠效率訊號可列為優先項目"],
+         "facts": [f"怠速 {stat.idle_pct()}%", f"高負載 {high_load:,} 筆", f"油耗 {fuel['fuel_per_100km']} L/100km" if fuel_available else "油耗資料不足"]},
+        {"id": "maintenance", "label": "保養", "score": maintenance_score, "tone": score_tone(maintenance_score),
+         "attention": [item for _, item in sorted(maintenance_attention, reverse=True)[:3]] or ["本週未偵測到需優先處理的保養訊號"],
+         "facts": [f"DTC {dtc:,} 筆", f"CAN 異常 {stat.can_abnormal:,} 筆", f"冷卻高溫 {heat_count:,} 筆"]},
+    ]
+    categories.sort(key=lambda item: (item["score"], item["id"]))
+    return {"records": stat.rows, "categories": categories}
+
+
+def category_score(stat: Stats, category_id: str) -> int:
+    return next(item["score"] for item in weekly_driver_scores(stat)["categories"] if item["id"] == category_id)
 
 
 def month_values(stats: list[Stats], metric: str) -> list[float | int]:
@@ -295,6 +475,7 @@ def build(source: Path) -> dict:
     season_regions: dict[str, dict[str, Stats]] = defaultdict(lambda: {key: Stats() for key in REGION_INFO})
     season_vehicles: dict[str, dict[str, Stats]] = defaultdict(lambda: defaultdict(Stats))
     season_journeys: dict[str, set[str]] = defaultdict(set)
+    weekly_vehicles: dict[str, dict[str, Stats]] = defaultdict(lambda: defaultdict(Stats))
     car_journeys: dict[str, set[str]] = defaultdict(set)
     journey_months: list[set[str]] = [set() for _ in range(11)]
     total_journeys: set[str] = set()
@@ -303,13 +484,19 @@ def build(source: Path) -> dict:
         car, when = text(row["carNum"]), stamp(row["time"])
         if not car or not when or not 1 <= when.month <= 11:
             continue
-        status, speed, limit, load = whole(row["carStatus"]), number(row["gps.speed"]), number(row["gps.speedLimit"]), number(row["can.engine.engineLoad"])
-        dtc = any(text(row[key]) for key in ("event[0].info.dtcCodes[0]", "event[1].info.dtcCodes[0]", "event[2].info.dtcCodes[0]"))
+        gps_speed, can_speed = number(row["gps.speed"]), number(row["can.canSpeed"])
+        speed = max(value for value in (gps_speed, can_speed) if value is not None) if gps_speed is not None or can_speed is not None else None
+        status, limit, load = whole(row["carStatus"]), number(row["gps.speedLimit"]), number(row["can.engine.engineLoad"])
+        event_types, event_speeding, event_high_load, dtc, event_water = event_signals(row)
         fuel, mileage = number(row["can.engine.totalFuelUsed"]), number(row["can.totalMileage"])
+        can_status, battery, coolant, rpm = whole(row["can.canStatus"]), number(row["line.battery"]), number(row["can.engine.engineCoolantTemp"]), number(row["can.engine.rpm"])
+        if event_water is not None:
+            coolant = max(value for value in (coolant, event_water) if value is not None)
         region, month = car_regions[car], when.month - 1
         season = season_key(when)
-        for stat in (all_months[month], region_all[region], region_months[region][month], vehicle_stats[car], vehicle_months[car][month], season_all[season], season_regions[season][region], season_vehicles[season][car]):
-            stat.add(car, when, status, speed, limit, load, dtc, fuel, mileage)
+        week = week_key(when)
+        for stat in (all_months[month], region_all[region], region_months[region][month], vehicle_stats[car], vehicle_months[car][month], season_all[season], season_regions[season][region], season_vehicles[season][car], weekly_vehicles[week][car]):
+            stat.add(car, when, status, speed, limit, load, dtc, fuel, mileage, event_types, event_speeding, event_high_load, can_status, battery, coolant, rpm)
         journey = text(row["journeyCode"])
         if journey:
             car_journeys[car].add(journey)
@@ -373,7 +560,7 @@ def build(source: Path) -> dict:
             if car_regions[car] != region:
                 continue
             driver = {
-                "c": car, "s": vehicle_stat.score(),
+                "c": car, "s": category_score(vehicle_stat, "safety"),
                 "overspeed_count": vehicle_stat.overspeed, "overspeed_pct": vehicle_stat.overspeed_pct(),
                 "idle_count": vehicle_stat.idling, "idle_pct": vehicle_stat.idle_pct(),
                 "high_load_count": vehicle_stat.high_load, "high_load_pct": vehicle_stat.high_load_pct(),
@@ -384,7 +571,7 @@ def build(source: Path) -> dict:
         drivers.sort(key=lambda item: (item["s"], item["c"]))
         competition_teams.append({
             "id": region, "name": name, "scope": scope, "color": color,
-            "score": stat.score(), "anomaly": pretty(ratio(stat.overspeed + stat.high_load + stat.dtc, stat.rows) * 100, 1),
+            "score": category_score(stat, "safety"), "anomaly": pretty(ratio(stat.overspeed + stat.high_load + stat.dtc, stat.rows) * 100, 1),
             "records": stat.rows, "drivers": drivers,
         })
     competition = {
@@ -392,6 +579,31 @@ def build(source: Path) -> dict:
         "records": season_all[active_season].rows, "journeys": len(season_journeys[active_season]),
         "recordCadence": "依原始分鐘級行車紀錄計算", "teams": competition_teams,
     }
+    eligible_week_keys = sorted(key for key in weekly_vehicles if date.fromisoformat(key) + timedelta(days=6) <= newest.date())
+    current_week = eligible_week_keys[-1] if eligible_week_keys else max(weekly_vehicles)
+    visible_week_keys = eligible_week_keys[-4:] if eligible_week_keys else [current_week]
+    weekly = {
+        "currentId": current_week,
+        "cadence": "每週以該週可用的分鐘級行車紀錄計算；非官方駕駛成績。",
+        "weeks": [],
+    }
+    for key in visible_week_keys:
+        label, start, end = week_dates(key)
+        weekly["weeks"].append({
+            "id": key, "label": label, "period": f"{start} 至 {end}",
+            "drivers": {car: weekly_driver_scores(stat) for car, stat in weekly_vehicles[key].items()},
+        })
+    season_driver_ranking = sorted(
+        ({"c": driver["c"], "score": driver["s"], "region": team["name"]}
+         for team in competition_teams for driver in team["drivers"]),
+        key=lambda item: (-item["score"], item["c"]),
+    )[:3]
+    competition["leaderboard"] = [
+        {"rank": rank, "c": driver["c"], "score": driver["score"], "region": driver["region"],
+         "displayName": LEADERBOARD_PROFILES[rank - 1]["name"], "avatar": LEADERBOARD_PROFILES[rank - 1]["avatar"],
+         "profileNote": "帳號顯示資料"}
+        for rank, driver in enumerate(season_driver_ranking, start=1)
+    ]
     by_speed = sorted(vehicles, key=lambda item: item["overspeed_count"], reverse=True)[:3]
     by_idle = sorted(vehicles, key=lambda item: item["idle_pct"], reverse=True)[:3]
     by_load = sorted(vehicles, key=lambda item: item["high_load_count"], reverse=True)[:3]
@@ -435,7 +647,7 @@ def build(source: Path) -> dict:
             "vehicleCountsByMonth": [sum(1 for stats in vehicle_months.values() if stats[month].rows > 0) for month in range(11)],
         },
         "ordersByRegion": {item["id"]: item["journeys"] for item in regions}, "targetJourneysPerVehicle": max(1, round(len(total_journeys) / len(vehicles))),
-        "metrics": metrics, "factMap": facts, "maintenance": maintenance, "competition": competition, "dims": [{"key": key, "name": info[0], "high": info[2], "unit": info[1], "hint": info[3]} for key, info in METRIC_INFO.items()], "dimSolData": solutions,
+        "metrics": metrics, "factMap": facts, "maintenance": maintenance, "competition": competition, "weekly": weekly, "dims": [{"key": key, "name": info[0], "high": info[2], "unit": info[1], "hint": info[3]} for key, info in METRIC_INFO.items()], "dimSolData": solutions,
         "todos": todos, "todoData": todo_data, "advice": advice, "shippers": [{"id": "telemetry", "name": "車聯網紀錄", "orders": orders}],
         "accountBindings": {"lead_region": first_region["id"], "driver_code": f"{first_region['id']}0", "personal_code": f"{last_region['id']}0"}, "vehicleSnapshot": latest_vehicles,
         "sourceNote": "本頁數據由 output data_Hotai_20260511.xlsx 計算；原始檔未提供駕駛姓名、工時、人資、訂單、準時率與安全帶欄位。",

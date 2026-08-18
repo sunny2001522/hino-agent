@@ -16,6 +16,30 @@
   function teamRanks() { return regions.slice().sort((a, b) => currentTeamScore(b) - currentTeamScore(a)); }
   function activeCompetition() { return window.HINO_EXCEL_DATA.competition; }
   function seasonalTeamRanks() { return activeCompetition().teams.slice().sort((a, b) => b.score - a.score); }
+  let driverWeekSelection = null;
+  function seasonDriverLeaderboard() { return activeCompetition().leaderboard || []; }
+  function activeDriverWeek(car) {
+    const weekly = window.HINO_EXCEL_DATA.weekly;
+    if (!weekly?.weeks?.length) return null;
+    const requested = weekly.weeks.find(item => item.id === (driverWeekSelection || weekly.currentId));
+    const week = requested?.drivers?.[car] ? requested : [...weekly.weeks].reverse().find(item => item.drivers?.[car]) || requested || weekly.weeks.at(-1);
+    return { weekly, week, score: week.drivers?.[car] };
+  }
+  function driverLeaderboardRows(compact = false) {
+    return seasonDriverLeaderboard().map(item => `<article class="driver-leader ${compact ? 'compact' : ''}">
+      <div class="driver-leader-avatar" style="--avatar-position:${item.avatar * 50}%" aria-label="${item.displayName} 的帳號頭像"></div>
+      <div class="driver-leader-rank">${item.rank}</div>
+      <div class="driver-leader-info"><b>${item.displayName}</b><span>${item.region} · ${item.c}</span></div>
+      <div class="driver-leader-score">${item.score}<small>季分</small></div>
+    </article>`).join('');
+  }
+  function weeklyScoreCards(score) {
+    return score.categories.map((category, index) => `<article class="weekly-score-card ${category.tone}">
+      <div class="weekly-score-head"><div><span>${index === 0 ? '優先注意' : '持續追蹤'}</span><h3>${category.label}</h3></div><b>${category.score}<small>分</small></b></div>
+      <p class="weekly-score-attention">${category.attention.map(item => `<span>${item}</span>`).join('')}</p>
+      <div class="weekly-score-facts">${category.facts.map(item => `<span>${item}</span>`).join('')}</div>
+    </article>`).join('');
+  }
   function allDrivers() { return regions.flatMap(region => region.drivers.map(driver => ({ region, driver }))); }
   function competitionRank(driver, region, score) {
     return region.drivers.filter(item => item.c !== driver.c && item.s > score).length + 1;
@@ -56,7 +80,7 @@
   }
   function competitionRules() {
     const season = activeCompetition();
-    return `<div class="guardrail"><b>季結算護欄：</b>${season.label} 依 ${season.period} 的分鐘級遙測結算，期間共 ${season.records.toLocaleString()} 筆紀錄。資料檔沒有駕駛姓名，系統以車號做私密個人名次；團隊可比較、車號個別名次不公開。不得以分數直接加薪、扣薪或解雇。</div>`;
+    return `<div class="guardrail"><b>季結算護欄：</b>${season.label} 依 ${season.period} 的分鐘級遙測結算，期間共 ${season.records.toLocaleString()} 筆紀錄。安全分採 GPS 速度／限速與安全事件訊號計算；每週分數只用於改善，不改變季榜。團隊可比較、個人只在授權的管理端顯示。不得以分數直接加薪、扣薪或解雇。</div>`;
   }
   const manualPages = [
     { p:1, t:'iTRAQ WEB', d:'iTRAQ WEB 管理入口。', b:['WEB 系統操作介面','車隊與管理資料入口','AI 決策以營運資料為基礎'], m:'系統入口與版型基準' },
@@ -507,7 +531,8 @@
     const focus = ranking.at(-1);
     screen.innerHTML = `
       <section class="competition-hero"><div class="eyebrow">SAFETY LEAGUE · ${season.label} 季結算</div><h2>把分鐘級車聯網資料結算成團隊改善成果</h2><p>${season.period} 共 ${season.records.toLocaleString()} 筆原始行車紀錄。賽季結束後才更新名次，不以即時或月度資料改動排行榜。</p><div class="hero-actions"><button class="btn sm" onclick="openCompetitionRules()">查看計分規則</button></div></section>
-      <section><div class="sh"><h2>${season.label} 車隊安全聯賽</h2><span class="newbadge">季結算 · 團隊公開</span></div><div class="subt">以季內的超速、怠速、高引擎負載與 DTC 分鐘級紀錄計算；此分數為系統計算指標，非官方駕駛成績。</div><div class="ranklist">${seasonalTeamRankRows()}</div></section>
+      <section><div class="sh"><h2>本季安全駕駛前三名</h2><span class="tag">帳號顯示資料</span></div><div class="driver-leaderboard">${driverLeaderboardRows()}</div></section>
+      <section><div class="sh"><h2>${season.label} 車隊安全聯賽</h2><span class="newbadge">季結算 · 團隊公開</span></div><div class="subt">以季內 GPS 速度／限速與急加減速、超速、疲勞、安全帶、分心、PCS、車道偏離等安全訊號計算；此分數為系統計算指標，非官方駕駛成績。</div><div class="ranklist">${seasonalTeamRankRows()}</div></section>
       <section class="office-grid"><div class="next-gain"><strong>季冠軍：${winner.name} ${winner.score} 分</strong><p>此結果來自已結算的遙測欄位；獎勵機制需由公司另外制定並經人資核准。</p></div><div class="next-gain"><strong>${focus.name}優先改善超速與怠速</strong><p>季結算分 ${focus.score} 分；下季開始前先覆核車況、路況與派車情境。</p></div></section>
       <section>${competitionRules()}</section><div class="foot">資料來源：${window.HINO_EXCEL_DATA.meta.sourceFile} · 團隊排行公開、車號個別名次僅限授權範圍</div>`;
   }
@@ -610,12 +635,13 @@
     }).join('');
     const recognition = workforceCandidates('recognition');
     const support = workforceCandidates('support');
+    const driverLeaders = driverLeaderboardRows(true);
     const focusRow = (key, item, tone) => `<div class="executive-decision-row ${tone}"><div><b>${item.title}</b><span>${item.signal}</span></div><span class="executive-status done">總負責人追蹤</span><button class="btn gho sm" onclick="openExecutiveEvidence('${key}')">查看車號</button></div>`;
     screen.innerHTML = `
       <section class="decision-command"><div><span>車隊管理總覽</span><h2>今天先看這 2 件事</h2><p>最後資料：${latest} · 直接看需要總負責人追蹤的安全與車況訊號。</p></div><button class="btn gho sm" onclick="openExecutiveReadGuide()">判讀方式</button></section>
       <section class="decision-actions"><div class="sh"><h2>本週管理重點</h2><span class="tag">不需老闆逐筆核准</span></div>${focusRow('speed', focus.speed, 'urgent')}${focusRow('maintenance', focus.maintenance, 'warning')}</section>
       <section class="executive-operating-grid">
-        <article class="executive-panel competition"><div class="panel-title"><div><span>安全競賽</span><h3>${season.label} 六區季結算比較</h3></div><button class="btn gho sm" onclick="openExecutiveCompetition()">完整名次</button></div><div class="decision-six-grid">${sixQuadrants}</div><p class="panel-note">${season.period} · ${season.recordCadence}。${source.regionMethod}。安全分越高越好；團隊名次可比較，個別車號名次僅限授權範圍。</p></article>
+        <article class="executive-panel competition"><div class="panel-title"><div><span>安全競賽</span><h3>${season.label} 六區季結算比較</h3></div><button class="btn gho sm" onclick="openExecutiveCompetition()">完整名次</button></div><div class="decision-six-grid">${sixQuadrants}</div><div class="executive-driver-leaders"><b>本季安全駕駛前三名</b><span>帳號顯示資料</span><div class="driver-leaderboard compact">${driverLeaders}</div></div><p class="panel-note">${season.period} · ${season.recordCadence}。${source.regionMethod}。安全分越高越好；團隊名次可比較，個別車號名次僅限授權範圍。</p></article>
         <article class="executive-panel people"><div class="panel-title"><div><span>人力覆核</span><h3>獎勵與改善名單</h3></div><button class="btn gho sm" onclick="openWorkforceGuardrail()">決策條件</button></div><div class="workforce-queues"><div><div class="workforce-row"><b>獎勵／留任覆核</b>${workforceReviewBadge('recognition')}</div><p>車號 ${recognition.map(item => item.car).join('、')}</p><button class="btn gho sm" onclick="openWorkforceReview('recognition')">查看原因與送覆核</button></div><div><div class="workforce-row"><b>改善與人資審查</b>${workforceReviewBadge('support')}</div><p>車號 ${support.map(item => item.car).join('、')}</p><button class="btn gho sm" onclick="openWorkforceReview('support')">查看原因與送覆核</button></div></div><p class="panel-note">來源未提供駕駛姓名、工時與薪資；上述以車號遙測篩出覆核優先序，需先由人資比對人員並補齊資料。</p></article>
         <article class="executive-panel ai"><div class="panel-title"><div><span>AI 行動建議</span><h3>先問清楚，再做決定</h3></div><button class="btn gho sm" onclick="openAIChat()">詢問 AI</button></div><div class="ai-summary-lines"><span>${focus.speed.region}：${focus.speed.next}</span><span>${focus.maintenance.region}：${focus.maintenance.next}</span></div><p class="panel-note">AI 協助整理事實與改善問題；不會以單一遙測訊號自動處分人員或停止派車。</p></article>
       </section>
@@ -637,7 +663,11 @@
   };
   window.openExecutiveCompetition = function () {
     const season = activeCompetition();
-    showModal(`<h3>${season.label} 團隊安全季結算</h3><p>${season.period} 以超速、怠速、高引擎負載與 DTC 的分鐘級紀錄計算安全分。團隊名次可比較；個別車號名次不公開。</p><div class="ranklist">${seasonalTeamRankRows()}</div>${competitionRules()}<div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
+    showModal(`<h3>${season.label} 安全季結算</h3><p>${season.period} 以 GPS 速度／限速與安全事件的分鐘級紀錄計算安全分。團隊名次可比較；個別車號名次不公開。</p><div class="sh"><h2 class="sm">安全駕駛前三名</h2><span class="tag">帳號顯示資料</span></div><div class="driver-leaderboard">${driverLeaderboardRows()}</div><div class="sh" style="margin-top:18px"><h2 class="sm">團隊排名</h2></div><div class="ranklist">${seasonalTeamRankRows()}</div>${competitionRules()}<div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
+  };
+  window.setDriverScoreWeek = function (weekId) {
+    driverWeekSelection = weekId;
+    renderDriverHomeEnhanced();
   };
   window.openExecutiveReadGuide = function () {
     const focus = executiveManagementFocus();
@@ -682,7 +712,13 @@
     const event = primaryDriverEvent(d);
     const acknowledged = driverAcknowledgements[d.c];
     const notice = event.tone === 'normal' ? '目前沒有需播報的異常提醒' : '系統已自動語音提醒；請安全停靠後再操作';
-    screen.innerHTML = `<section class="driver-drive-header"><span>車輛使用者</span><h2>${d.c}</h2><p>目前狀態：${d.last_status} · 最後更新 ${d.last_time}</p></section><section class="driver-drive-card ${event.tone}"><div><span>現在要注意</span><h3>${acknowledged ? '已回報，請安全完成當前行程' : event.title}</h3><p>${acknowledged ? `已於 ${acknowledged} 回報車隊；若狀況改變請再次聯繫。` : event.detail}</p><small style="display:block;margin-top:7px;color:var(--mut)">${notice}</small></div><div class="driver-drive-actions"><button class="btn pri" onclick="${acknowledged ? 'openSafetyCoach()' : 'acknowledgeDriverEvent()'}">${acknowledged ? '查看改善方式' : event.action}</button></div></section><section class="driver-task-strip"><div><span>本次行程</span><b>${d.last_status}</b><small>目前車速 ${d.last_speed} km/h</small></div><div><span>下一步</span><b>${Number(d.dtc_count || 0) ? '安全停靠後回報車況' : '安全完成行程'}</b><small>不需閱讀長報表或操作地圖</small></div></section><section><div class="sh"><h2>本車摘要</h2></div><div class="driver-task-detail"><div><span>超速紀錄</span><b>${d.overspeed_count.toLocaleString()} 筆</b></div><div><span>怠速佔比</span><b>${d.idle_pct}%</b></div><div><span>高引擎負載</span><b>${d.high_load_count.toLocaleString()} 筆</b></div><div><span>DTC</span><b>${d.dtc_count.toLocaleString()} 筆</b></div></div></section><div class="foot">此頁只保留即時提醒、行程狀態與必要回報；重要安全提醒會由系統直接語音播報。</div>`;
+    const weekly = activeDriverWeek(d.c);
+    const season = activeCompetition();
+    const seasonTeam = season.teams.find(item => item.id === d.region);
+    const seasonDriver = seasonTeam?.drivers.find(item => item.c === d.c);
+    const weeklySection = weekly?.score ? `<section class="driver-weekly-section"><div class="sh"><h2>本週我的評分</h2><span class="tag">${weekly.week.label}</span></div><div class="weekly-period-tabs">${weekly.weekly.weeks.map(item => `<button class="weekly-period ${item.id === weekly.week.id ? 'on' : ''}" onclick="setDriverScoreWeek('${item.id}')">${item.label}</button>`).join('')}</div><p class="weekly-score-note">依需要注意程度排序；本週以 ${weekly.score.records.toLocaleString()} 筆可用行車紀錄計算。</p><div class="weekly-score-list">${weeklyScoreCards(weekly.score)}</div></section>` : `<section><div class="driver-task-detail"><div><span>超速紀錄</span><b>${d.overspeed_count.toLocaleString()} 筆</b></div><div><span>怠速佔比</span><b>${d.idle_pct}%</b></div><div><span>高引擎負載</span><b>${d.high_load_count.toLocaleString()} 筆</b></div><div><span>DTC</span><b>${d.dtc_count.toLocaleString()} 筆</b></div></div></section>`;
+    const seasonSection = `<section class="driver-season-status"><span>安全競賽</span><b>${season.label} ${seasonDriver ? `已結算 ${seasonDriver.s} 分` : '季結算'}</b><small>每週分數只用來改善；不以週榜公開比較個人，季末才結算。</small></section>`;
+    screen.innerHTML = `<section class="driver-drive-header"><span>車輛使用者</span><h2>${d.c}</h2><p>目前狀態：${d.last_status} · 最後更新 ${d.last_time}</p></section><section class="driver-drive-card ${event.tone}"><div><span>現在要注意</span><h3>${acknowledged ? '已回報，請安全完成當前行程' : event.title}</h3><p>${acknowledged ? `已於 ${acknowledged} 回報車隊；若狀況改變請再次聯繫。` : event.detail}</p><small style="display:block;margin-top:7px;color:var(--mut)">${notice}</small></div><div class="driver-drive-actions"><button class="btn pri" onclick="${acknowledged ? 'openSafetyCoach()' : 'acknowledgeDriverEvent()'}">${acknowledged ? '查看改善方式' : event.action}</button></div></section><section class="driver-task-strip"><div><span>本次行程</span><b>${d.last_status}</b><small>目前車速 ${d.last_speed} km/h</small></div><div><span>下一步</span><b>${Number(d.dtc_count || 0) ? '安全停靠後回報車況' : '安全完成行程'}</b><small>不需閱讀長報表或操作地圖</small></div></section>${weeklySection}${seasonSection}<div class="foot">${weekly?.weekly?.cadence || '此頁只保留即時提醒、行程狀態與必要回報。'} 重要安全提醒會由系統直接語音播報。</div>`;
     if (!acknowledged) requestAnimationFrame(() => autoPlayDriverSafetyAudio(d, event));
   }
   function renderDriverTaskEnhanced() {
