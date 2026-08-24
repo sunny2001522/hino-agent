@@ -16,10 +16,10 @@
   function seasonalTeamRanks() { return activeCompetition().teams.slice().sort((a, b) => b.score - a.score); }
   let driverWeekSelection = null;
   function seasonDriverLeaderboard() { return activeCompetition().leaderboard || []; }
-  function activeDriverWeek(car) {
+  function activeDriverWeek(car, weekId) {
     const weekly = window.HINO_EXCEL_DATA.weekly;
     if (!weekly?.weeks?.length) return null;
-    const requested = weekly.weeks.find(item => item.id === (driverWeekSelection || weekly.currentId));
+    const requested = weekly.weeks.find(item => item.id === (weekId || driverWeekSelection || weekly.currentId));
     const week = requested?.drivers?.[car] ? requested : [...weekly.weeks].reverse().find(item => item.drivers?.[car]) || requested || weekly.weeks.at(-1);
     return { weekly, week, score: week.drivers?.[car] };
   }
@@ -790,6 +790,11 @@
   };
 
   window.selectOrder = function (id) { openShipmentDetail(id); };
+  window.primaryDriverEvent = primaryDriverEvent;
+  window.autoPlayDriverSafetyAudio = autoPlayDriverSafetyAudio;
+  window.activeDriverWeek = activeDriverWeek;
+  window.driverAcknowledgements = driverAcknowledgements;
+  window.TABS = TABS;
   window.renderDriverHome = renderDriverHomeEnhanced;
   window.renderDriverTask = renderDriverTaskEnhanced;
   window.renderDriverAlerts = renderDriverAlertsEnhanced;

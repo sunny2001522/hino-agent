@@ -24,7 +24,7 @@ export const ROLE_TABS = {
     { id: 'competition', l: '安全競賽', converted: false },
   ],
   driver: [
-    { id: 'home', l: '我的車況', converted: false },
+    { id: 'home', l: '我的車況', converted: true },
   ],
   shipper: [
     { id: 'track', l: '追蹤', converted: false },

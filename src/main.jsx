@@ -4,6 +4,7 @@ import telemetryData from '../excel-derived-data.js?raw';
 import enhancements from '../enhancements.js?raw';
 import legacyApp from './legacy/legacy-app.js?raw';
 import LegacyIsland from './legacy/LegacyIsland.jsx';
+import DriverHome from './pages/DriverHome.jsx';
 import { ROLE_TABS, tabSpec } from './legacy/tabs.js';
 import './legacy/legacy.css';
 import '../enhancements.css';
@@ -29,6 +30,10 @@ function applyChrome(role) {
   if (aifab) aifab.style.display = role ? 'grid' : 'none';
   if (simfab) simfab.style.display = 'none';
 }
+
+const REACT_PAGES = {
+  'driver:home': DriverHome,
+};
 
 const IDENTITIES = [
   { key: 'fleet', label: '車隊管理', color: '#2e9e4f' },
@@ -204,6 +209,15 @@ function ItraqApplication() {
       runClassicScript(legacyApp);
       runClassicScript(enhancements);
 
+      // enhancements splice 的 .render 仍指向 legacy innerHTML；converted tab 改 no-op 避免寫進 Island
+      for (const [role, tabs] of Object.entries(ROLE_TABS)) {
+        for (const tab of tabs) {
+          if (!tab.converted) continue;
+          const entry = window.TABS?.[role]?.find((item) => item.id === tab.id);
+          if (entry) entry.render = () => {};
+        }
+      }
+
       bindLegacyControl('menuToggle', 'toggleMobileNav');
       bindLegacyControl('noticeButton', 'openItraqNotifications');
       hookReactNav(setNav, setLoginRole);
@@ -218,6 +232,9 @@ function ItraqApplication() {
   }, [nav.role]);
 
   const islandKey = nav.role ? `${nav.role}-${nav.tab}-${nav.itraqPage ?? ''}` : 'welcome';
+  const currentTab = nav.role && nav.tab ? tabSpec(nav.role, nav.tab) : null;
+  const converted = currentTab?.converted ?? false;
+  const ReactPage = converted ? REACT_PAGES[`${nav.role}:${nav.tab}`] : null;
 
   return (
     <div className="app" id="app" data-runtime="react">
@@ -225,7 +242,8 @@ function ItraqApplication() {
       {!nav.role && (loginRole
         ? <LoginPage key={loginRole} role={loginRole} onBack={() => setLoginRole(null)} />
         : <Welcome onPick={setLoginRole} />)}
-      <LegacyIsland islandKey={islandKey} hidden={!nav.role} />
+      {nav.role && ReactPage && <ReactPage key={islandKey} />}
+      <LegacyIsland islandKey={islandKey} hidden={!nav.role || converted} />
       <Fabs />
       <Overlays />
     </div>
