@@ -30,7 +30,84 @@ function applyChrome(role) {
   if (simfab) simfab.style.display = 'none';
 }
 
-function hookReactNav(setNav) {
+const IDENTITIES = [
+  { key: 'fleet', label: '車隊管理', color: '#2e9e4f' },
+  { key: 'lead', label: '總負責人', color: '#0d9488' },
+  { key: 'driver', label: '車輛使用者', color: '#4a6cf0' },
+  { key: 'shipper', label: '貨主', color: '#2e9e4f' },
+  { key: 'competition', label: '競賽', color: '#c45c12', href: 'pages/competition/driver/index.html' },
+];
+
+function accountPhone(role) {
+  return window.ACCOUNTS?.[role]?.phone ?? '';
+}
+
+function Welcome({ onPick }) {
+  return (
+    <div className="screen" data-react>
+      <div className="welcome welcome-simple">
+        <div className="wpick">
+          <div className="lbl">選擇身份</div>
+          <div className="identity-grid">
+            {IDENTITIES.map((role) => (
+              <button
+                key={role.key}
+                type="button"
+                className="idcard idcard-simple"
+                style={{ '--role-color': role.color }}
+                onClick={() => {
+                  if (role.href) {
+                    location.href = role.href;
+                    return;
+                  }
+                  if (!window.ACCOUNTS) return;
+                  onPick(role.key);
+                }}
+              >
+                <span>{role.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LoginPage({ role, onBack }) {
+  const inputRef = useRef(null);
+  const meta = IDENTITIES.find((item) => item.key === role);
+
+  useEffect(() => {
+    const timer = setTimeout(() => inputRef.current?.focus(), 120);
+    return () => clearTimeout(timer);
+  }, [role]);
+
+  function submit() {
+    const value = (inputRef.current?.value || '').trim();
+    if (!value) {
+      window.toast?.('請先輸入手機號碼', '請確認手機號碼後再登入。', 'wn');
+      return;
+    }
+    window.login?.(role);
+  }
+
+  return (
+    <div className="screen" data-react>
+      <div className="loginpg">
+        <button type="button" className="back" onClick={onBack}>← 返回選擇身份</button>
+        <h2 style={{ color: meta.color }}>{meta.label} 登入</h2>
+        <div className="field">
+          <label>手機號碼</label>
+          <input ref={inputRef} id="loginInput" type="text" inputMode="tel" defaultValue={accountPhone(role)} aria-label="手機號碼" autoComplete="tel" />
+        </div>
+        <button type="button" className="btn pri block" onClick={submit}>登入</button>
+      </div>
+    </div>
+  );
+}
+
+function hookReactNav(setNav, setLoginRole) {
   const origLogin = window.login;
   window.login = (role) => {
     origLogin(role);
@@ -43,6 +120,20 @@ function hookReactNav(setNav) {
   window.logout = () => {
     origLogout();
     applyChrome(null);
+  };
+
+  window.renderWelcome = () => {
+    const appbar = document.getElementById('appbar');
+    const tabbar = document.getElementById('tabbar');
+    if (appbar) {
+      appbar.style.display = 'none';
+      appbar.classList.remove('mobile-nav-open');
+    }
+    if (tabbar) tabbar.style.display = 'none';
+    const menuToggle = document.getElementById('menuToggle');
+    if (menuToggle) menuToggle.hidden = true;
+    applyChrome(null);
+    setLoginRole(null);
     setNav({ role: null, tab: null, itraqPage: null });
   };
 
@@ -101,6 +192,7 @@ const Overlays = memo(function Overlays() {
 
 function ItraqApplication() {
   const [nav, setNav] = useState({ role: null, tab: null, itraqPage: null });
+  const [loginRole, setLoginRole] = useState(null);
   const booted = useRef(false);
 
   useEffect(() => {
@@ -114,7 +206,7 @@ function ItraqApplication() {
 
       bindLegacyControl('menuToggle', 'toggleMobileNav');
       bindLegacyControl('noticeButton', 'openItraqNotifications');
-      hookReactNav(setNav);
+      hookReactNav(setNav, setLoginRole);
     } catch (error) {
       console.error('Unable to start iTRAQ application', error);
       document.getElementById('screen').innerHTML = '<div class="empty"><b>頁面載入失敗</b><p>請重新整理後再試。</p></div>';
@@ -130,7 +222,10 @@ function ItraqApplication() {
   return (
     <div className="app" id="app" data-runtime="react">
       <AppBar />
-      <LegacyIsland islandKey={islandKey} />
+      {!nav.role && (loginRole
+        ? <LoginPage key={loginRole} role={loginRole} onBack={() => setLoginRole(null)} />
+        : <Welcome onPick={setLoginRole} />)}
+      <LegacyIsland islandKey={islandKey} hidden={!nav.role} />
       <Fabs />
       <Overlays />
     </div>

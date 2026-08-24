@@ -105,6 +105,8 @@ const TABS={
 };
 let curTab=null;
 
+window.ACCOUNTS=ACCOUNTS;
+
 function login(role){
  SESSION={role, acc:ACCOUNTS[role]};
  appbar.style.display="flex";
@@ -1554,5 +1556,5 @@ function runSim(k){
  }
 }
 
-/* boot */
-renderWelcome();
+/* boot: React owns welcome / login; island fills after login() */
+
