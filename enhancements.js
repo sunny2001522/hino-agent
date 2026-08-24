@@ -761,6 +761,7 @@
     if (fromModal) closeOv();
     renderShipperTrackEnhanced();
     toast('已開啟狀態推播', '貨況更新時會通知您；不會顯示司機資訊或地圖。', 'ok');
+    window.onShipperPushChange?.();
   };
   window.openCompetitionRules = function () { showModal(`<h3>安全聯賽公平規則</h3><p>競賽目的是降低風險與表揚改善，不是以壓力逼迫駕駛趕工。</p><ul class="mini-checks"><li>個人名次只顯示給本人；團隊名次可公開比較。</li><li>以安全改善、法遵與休息合規計分，不以多跑趟次加分。</li><li>車況、路況與派工造成的異常可申訴並人工覆核。</li><li>不把末名、單一安全分或競賽結果作為自動扣薪／解雇依據。</li></ul><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`); };
   window.openCompetitionLaunch = function () { showModal(`<h3>發起 4 週安全聯賽</h3><p>建議先與駕駛代表確認規則與獎勵。第一名團隊獎金 NT$6,000；個人第一名 NT$3,000；所有分數月結後人工抽查。</p><div class="guardrail">不以競賽排名直接影響底薪、排班或去留。遇到壓力、車況或工時問題，可直接回報並停止計分。</div><div class="mb"><button class="btn gho" onclick="closeOv()">再討論</button><button class="btn pri" onclick="act('已建立安全聯賽草案，待駕駛代表與人資共同確認。','ok');closeOv()">送交共同確認</button></div>`); };
@@ -799,6 +800,10 @@
   window.renderDriverTask = renderDriverTaskEnhanced;
   window.renderDriverAlerts = renderDriverAlertsEnhanced;
   window.renderFleetMe = renderFleetSettingsEnhanced;
+  window.shipperPushState = shipperPushState;
+  window.shipmentLabel = shipmentLabel;
+  window.shipmentStatus = shipmentStatus;
+  window.shipmentUpdatedAt = shipmentUpdatedAt;
   function sourceFuelAnswer(question) {
     if (!/油耗|耗油|油錢|省油|百公里/.test(question)) return null;
     const scoped = SESSION.role === 'lead' ? myRegion().drivers : regions.flatMap(region => region.drivers);

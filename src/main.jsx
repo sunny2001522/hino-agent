@@ -5,6 +5,7 @@ import enhancements from '../enhancements.js?raw';
 import legacyApp from './legacy/legacy-app.js?raw';
 import LegacyIsland from './legacy/LegacyIsland.jsx';
 import DriverHome from './pages/DriverHome.jsx';
+import ShipperShipments from './pages/ShipperShipments.jsx';
 import { ROLE_TABS, tabSpec } from './legacy/tabs.js';
 import './legacy/legacy.css';
 import '../enhancements.css';
@@ -33,6 +34,8 @@ function applyChrome(role) {
 
 const REACT_PAGES = {
   'driver:home': DriverHome,
+  'shipper:track': ShipperShipments,
+  'shipper:orders': ShipperShipments,
 };
 
 const IDENTITIES = [

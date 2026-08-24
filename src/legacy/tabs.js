@@ -27,8 +27,8 @@ export const ROLE_TABS = {
     { id: 'home', l: '我的車況', converted: true },
   ],
   shipper: [
-    { id: 'track', l: '追蹤', converted: false },
-    { id: 'orders', l: '我的貨件', converted: false },
+    { id: 'track', l: '追蹤', converted: true },
+    { id: 'orders', l: '我的貨件', converted: true },
   ],
 };
 
