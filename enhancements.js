@@ -1,7 +1,5 @@
 /* Role-aware RWD upgrades: people decisions, safe-driving competition, and privacy-safe shipper tracking. */
 (function () {
-  const baseLogin = login;
-  const baseLogout = logout;
   const baseDriverHome = renderDriverHome;
   const baseDriverTask = renderDriverTask;
   const baseDriverAlerts = renderDriverAlerts;
@@ -791,8 +789,6 @@
     toast('已回報車隊', '回報已記錄；請以行車安全為優先，必要時安全停靠後再聯繫車隊。', 'ok');
   };
 
-  window.login = function (role) { baseLogin(role); document.body.classList.toggle('office', role === 'fleet' || role === 'lead'); document.getElementById('simfab').style.display = 'none'; if (role === 'shipper') document.getElementById('aifab').style.display = 'grid'; };
-  window.logout = function () { document.body.classList.remove('office'); baseLogout(); };
   window.selectOrder = function (id) { openShipmentDetail(id); };
   window.renderDriverHome = renderDriverHomeEnhanced;
   window.renderDriverTask = renderDriverTaskEnhanced;
@@ -888,15 +884,6 @@
     event.stopImmediatePropagation();
     renderItraqPage(page, sectionForPage(page));
     closeOv();
-  }, true);
-  // Keep sign-out deterministic across the legacy inline UI and the role-aware layer.
-  document.addEventListener('click', event => {
-    const button = event.target.closest('button.barbtn');
-    if (!button || button.textContent.trim() !== '登出') return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    document.body.classList.remove('office');
-    baseLogout();
   }, true);
   document.addEventListener('click', event => {
     const button = event.target.closest('button');

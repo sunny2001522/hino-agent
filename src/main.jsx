@@ -22,10 +22,19 @@ function bindLegacyControl(id, handler) {
   element.onclick = () => window[handler]?.();
 }
 
+function applyChrome(role) {
+  document.body.classList.toggle('office', role === 'fleet' || role === 'lead');
+  const aifab = document.getElementById('aifab');
+  const simfab = document.getElementById('simfab');
+  if (aifab) aifab.style.display = role ? 'grid' : 'none';
+  if (simfab) simfab.style.display = 'none';
+}
+
 function hookReactNav(setNav) {
   const origLogin = window.login;
   window.login = (role) => {
     origLogin(role);
+    applyChrome(role);
     const first = ROLE_TABS[role][0];
     setNav({ role, tab: first.id, itraqPage: first.page ?? null });
   };
@@ -33,6 +42,7 @@ function hookReactNav(setNav) {
   const origLogout = window.logout;
   window.logout = () => {
     origLogout();
+    applyChrome(null);
     setNav({ role: null, tab: null, itraqPage: null });
   };
 
@@ -65,7 +75,7 @@ const AppBar = memo(function AppBar() {
       <nav className="tabbar" id="tabbar" style={{ display: 'none' }} />
       <button className="noticebtn" id="noticeButton" type="button" aria-label="通知中心">♧<span /></button>
       <div className="whoami"><div className="nm" id="waName">—</div><div className="rl" id="waRole">—</div></div>
-      <button className="barbtn" id="logoutButton" type="button">登出</button>
+      <button className="barbtn" id="logoutButton" type="button" onClick={() => window.logout?.()}>登出</button>
     </div>
   );
 });
@@ -73,7 +83,7 @@ const AppBar = memo(function AppBar() {
 const Fabs = memo(function Fabs() {
   return (
     <>
-      <button className="aifab" id="aifab" data-react style={{ display: 'none' }} type="button">AI<br />助理<span className="dt2" /></button>
+      <button className="aifab" id="aifab" data-react style={{ display: 'none' }} type="button" onClick={() => window.openAIChat?.()}>AI<br />助理<span className="dt2" /></button>
       <button className="simfab" id="simfab" data-react style={{ display: 'none' }} type="button">模擬<br />事件</button>
     </>
   );
@@ -104,15 +114,16 @@ function ItraqApplication() {
 
       bindLegacyControl('menuToggle', 'toggleMobileNav');
       bindLegacyControl('noticeButton', 'openItraqNotifications');
-      bindLegacyControl('logoutButton', 'logout');
-      bindLegacyControl('aifab', 'openAIChat');
-      bindLegacyControl('simfab', 'openSimPanel');
       hookReactNav(setNav);
     } catch (error) {
       console.error('Unable to start iTRAQ application', error);
       document.getElementById('screen').innerHTML = '<div class="empty"><b>頁面載入失敗</b><p>請重新整理後再試。</p></div>';
     }
   }, []);
+
+  useEffect(() => {
+    applyChrome(nav.role);
+  }, [nav.role]);
 
   const islandKey = nav.role ? `${nav.role}-${nav.tab}-${nav.itraqPage ?? ''}` : 'welcome';
 
