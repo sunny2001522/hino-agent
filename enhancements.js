@@ -900,7 +900,7 @@
   }, true);
   document.addEventListener('click', event => {
     const button = event.target.closest('button');
-    if (!button || button.disabled || button.hasAttribute('onclick') || button.dataset.itraqAction || button.dataset.itraqFilter || button.dataset.itraqPage || button.closest('.tabbar') || button.closest('.itraq-native') || button.classList.contains('native-action')) return;
+    if (!button || button.closest('[data-react]') || !button.closest('#screen') || button.disabled || button.hasAttribute('onclick') || button.dataset.itraqAction || button.dataset.itraqFilter || button.dataset.itraqPage || button.closest('.tabbar') || button.closest('.itraq-native') || button.classList.contains('native-action')) return;
     const label = button.textContent.replace(/\s+/g, ' ').trim();
     toast('操作已接收', `${label || '此功能'}已執行。`, 'ok');
   });
