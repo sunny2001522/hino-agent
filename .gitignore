@@ -4,6 +4,8 @@ npm-debug.log
 .env
 .env.*
 .claude/
+.cursor/agents/
+.cursor/skills/
 developnote/
 .vercel
 dist
