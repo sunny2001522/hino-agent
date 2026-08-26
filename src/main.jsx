@@ -188,11 +188,47 @@ const Fabs = memo(function Fabs() {
   );
 });
 
+let toastSeq = 0;
+
+function Toasts() {
+  const [toasts, setToasts] = useState([]);
+
+  useEffect(() => {
+    window.__toastPush = (t, m, k) => {
+      const id = ++toastSeq;
+      setToasts((prev) => [...prev, { id, t, m, k, exiting: false }]);
+      setTimeout(() => {
+        setToasts((prev) => prev.map((x) => (x.id === id ? { ...x, exiting: true } : x)));
+        setTimeout(() => {
+          setToasts((prev) => prev.filter((x) => x.id !== id));
+        }, 300);
+      }, 4200);
+    };
+    return () => { window.__toastPush = undefined; };
+  }, []);
+
+  return (
+    <div id="toasts">
+      {toasts.map(({ id, t, m, k, exiting }) => (
+        <div
+          key={id}
+          className={`toast ${k || ''}`}
+          style={{
+            pointerEvents: 'auto',
+            ...(exiting ? { opacity: 0, transform: 'translateY(12px)' } : {}),
+          }}
+          dangerouslySetInnerHTML={{ __html: `<b>${t}</b>${m || ''}` }}
+        />
+      ))}
+    </div>
+  );
+}
+
 const Overlays = memo(function Overlays() {
   return (
     <>
       <div id="tourMask"><div id="tourHole" /><div id="tourTip" /></div>
-      <div id="toasts" />
+      <Toasts />
       <div className="ov" id="ov"><div className="modal" id="modal" /></div>
     </>
   );

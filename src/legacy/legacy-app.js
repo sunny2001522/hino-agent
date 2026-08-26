@@ -1104,7 +1104,7 @@ function endTour(){document.getElementById('tourMask').classList.remove('on');tr
 ===================================================================== */
 const ov=document.getElementById('ov'),modal=document.getElementById('modal');
 function showModal(h){modal.innerHTML=`<div class="grip"></div>`+h;ov.classList.add("on");}
-function toast(t,m,k){const x=el(`<div class="toast ${k||''}" style="pointer-events:auto"><b>${t}</b>${m||''}</div>`);document.getElementById('toasts').appendChild(x);setTimeout(()=>{x.style.opacity=0;x.style.transform='translateY(12px)';setTimeout(()=>x.remove(),300)},4200);}
+function toast(t,m,k){window.__toastPush?.(t,m,k);}
 function act(m,k){toast('已執行',m,k||'ok');}
 function closeOv(){ov.classList.remove('on');}
 ov.addEventListener('click',e=>{if(e.target===ov)closeOv();});
