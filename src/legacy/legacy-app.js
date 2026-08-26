@@ -1299,20 +1299,15 @@ function openAIChat(){
  const c=aiContext();
  const roleLabel=(c.role==='fleet')?'全隊省油×安全軍師':(c.role==='lead')?c.region+'省油×安全夥伴':'我的省油×安全教練';
  const sug=aiSuggestions().map(s=>`<span class="chip2" onclick="aiAsk('${s.replace(/'/g,"")}')">${s}</span>`).join('');
- showModal(`<div class="chatwrap">
- <div class="chathd"><div class="ci">AI</div><div><div class="cn">Gemini 智慧夥伴 <span id="chatModeTag">${DATA_TAG}</span></div><div class="cs" id="chatSub">${roleLabel} · 正在確認 Gemini 服務…</div></div></div>
- <div class="chatlog" id="chatlog"></div>
- <div class="chips2" id="chatChips">${sug}</div>
- <div class="chatin">
- <input id="chatInput" type="text" placeholder="問我省油或安全，例如：今天怎麼開比較省油又安全？" onkeydown="if(event.key==='Enter')aiAskInput()">
- <button class="send" id="chatSend" onclick="aiAskInput()">↑</button>
- </div></div>`);
- // 開場白
- const log=document.getElementById('chatlog');
  const hi=c.role==='driver'?`${c.name} 你好，我是你的省油＋安全 AI 教練，已讀取你今天的 iTRAQ 數據。點下面的問題，或直接打字問我。`
  :(c.role==='lead')?`${SESSION.acc.name} 你好，我掌握 ${c.region} 的即時數據，幫你把省油與安全變成可執行的決策。`
  :`${SESSION.acc.name} 你好，我是全隊省油×安全 AI 軍師，已接上 iTRAQ 全隊大數據。`;
- log.innerHTML=`<div class="bub ai"><div class="lbl" id="initialAiLabel">${DATA_TAG}</div>${hi}</div>`;
+ window.__chatOpen?.({
+  headHtml:`<div class="cn">Gemini 智慧夥伴 <span id="chatModeTag">${DATA_TAG}</span></div><div class="cs" id="chatSub">${roleLabel} · 正在確認 Gemini 服務…</div>`,
+  greetingHtml:`<div class="bub ai"><div class="lbl" id="initialAiLabel">${DATA_TAG}</div>${hi}</div>`,
+  sugHtml:sug,
+  placeholder:'問我省油或安全，例如：今天怎麼開比較省油又安全？'
+ });
  if(c.role==='fleet'||c.role==='lead'){checkBackend().then(on=>{const s=document.getElementById('chatSub');const tag=document.getElementById('chatModeTag');const label=document.getElementById('initialAiLabel');if(s)s.textContent=roleLabel+' · '+(on?'Gemini 已連線，依車聯網資料生成':'資料分析模式（Gemini 尚未連線）');if(tag)tag.innerHTML=on?AI_TAG:DATA_TAG;if(label)label.innerHTML=on?AI_TAG:DATA_TAG;});}
 }
 function aiAskInput(){const i=document.getElementById('chatInput');const v=(i.value||'').trim();if(!v)return;i.value='';aiAsk(v);}

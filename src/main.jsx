@@ -224,25 +224,48 @@ function Toasts() {
   );
 }
 
+function ChatBody({ headHtml, greetingHtml, sugHtml, placeholder }) {
+  return (
+    <div className="chatwrap">
+      <div className="chathd">
+        <div className="ci">AI</div>
+        <div dangerouslySetInnerHTML={{ __html: headHtml }} />
+      </div>
+      <div className="chatlog" id="chatlog" dangerouslySetInnerHTML={{ __html: greetingHtml }} />
+      <div className="chips2" id="chatChips" dangerouslySetInnerHTML={{ __html: sugHtml }} />
+      <div className="chatin">
+        <input id="chatInput" type="text" placeholder={placeholder} onKeyDown={(e) => { if (e.key === 'Enter') window.aiAskInput?.(); }} />
+        <button className="send" id="chatSend" type="button" onClick={() => window.aiAskInput?.()}>↑</button>
+      </div>
+    </div>
+  );
+}
+
 function Modal() {
-  const [state, setState] = useState({ open: false, html: '' });
+  const [state, setState] = useState({ open: false, html: '', chat: null });
 
   useEffect(() => {
-    window.__modalShow = (h) => setState({ open: true, html: h });
+    window.__modalShow = (h) => setState({ open: true, html: h, chat: null });
     window.__modalClose = () => setState((prev) => ({ ...prev, open: false }));
+    window.__chatOpen = (chat) => setState({ open: true, html: '', chat });
     return () => {
       window.__modalShow = undefined;
       window.__modalClose = undefined;
+      window.__chatOpen = undefined;
     };
   }, []);
 
   return (
     <div className={`ov${state.open ? ' on' : ''}`} id="ov">
-      <div
-        className="modal"
-        id="modal"
-        dangerouslySetInnerHTML={{ __html: state.html ? `<div class="grip"></div>${state.html}` : '' }}
-      />
+      {state.chat ? (
+        <div className="modal" id="modal"><div className="grip" /><ChatBody {...state.chat} /></div>
+      ) : (
+        <div
+          className="modal"
+          id="modal"
+          dangerouslySetInnerHTML={{ __html: state.html ? `<div class="grip"></div>${state.html}` : '' }}
+        />
+      )}
     </div>
   );
 }
