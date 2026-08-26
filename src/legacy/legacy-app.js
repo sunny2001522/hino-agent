@@ -1103,10 +1103,10 @@ function endTour(){document.getElementById('tourMask').classList.remove('on');tr
  UTILS: modal / toast (scoped to phone frame)
 ===================================================================== */
 const ov=document.getElementById('ov'),modal=document.getElementById('modal');
-function showModal(h){modal.innerHTML=`<div class="grip"></div>`+h;ov.classList.add("on");}
+function showModal(h){window.__modalShow?.(h);}
 function toast(t,m,k){window.__toastPush?.(t,m,k);}
 function act(m,k){toast('已執行',m,k||'ok');}
-function closeOv(){ov.classList.remove('on');}
+function closeOv(){window.__modalClose?.();}
 ov.addEventListener('click',e=>{if(e.target===ov)closeOv();});
 
 /* =====================================================================

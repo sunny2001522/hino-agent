@@ -224,12 +224,35 @@ function Toasts() {
   );
 }
 
+function Modal() {
+  const [state, setState] = useState({ open: false, html: '' });
+
+  useEffect(() => {
+    window.__modalShow = (h) => setState({ open: true, html: h });
+    window.__modalClose = () => setState((prev) => ({ ...prev, open: false }));
+    return () => {
+      window.__modalShow = undefined;
+      window.__modalClose = undefined;
+    };
+  }, []);
+
+  return (
+    <div className={`ov${state.open ? ' on' : ''}`} id="ov">
+      <div
+        className="modal"
+        id="modal"
+        dangerouslySetInnerHTML={{ __html: state.html ? `<div class="grip"></div>${state.html}` : '' }}
+      />
+    </div>
+  );
+}
+
 const Overlays = memo(function Overlays() {
   return (
     <>
       <div id="tourMask"><div id="tourHole" /><div id="tourTip" /></div>
       <Toasts />
-      <div className="ov" id="ov"><div className="modal" id="modal" /></div>
+      <Modal />
     </>
   );
 });
