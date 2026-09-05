@@ -796,6 +796,10 @@
   window.activeDriverWeek = activeDriverWeek;
   window.driverAcknowledgements = driverAcknowledgements;
   window.TABS = TABS;
+  window.activeCompetition = activeCompetition;
+  window.seasonalTeamRanks = seasonalTeamRanks;
+  window.seasonalTeamRankRows = seasonalTeamRankRows;
+  window.competitionRules = competitionRules;
   window.renderDriverHome = renderDriverHomeEnhanced;
   window.renderDriverTask = renderDriverTaskEnhanced;
   window.renderDriverAlerts = renderDriverAlertsEnhanced;

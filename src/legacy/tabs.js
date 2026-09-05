@@ -21,7 +21,7 @@ export const ROLE_TABS = {
     { id: 'kpi', l: '本區管理', converted: true },
     { id: 'focus', l: '管理重點', converted: true },
     { id: 'drivers', l: '駕駛', converted: true },
-    { id: 'competition', l: '安全競賽', converted: false },
+    { id: 'competition', l: '安全競賽', converted: true },
   ],
   driver: [
     { id: 'home', l: '我的車況', converted: true },

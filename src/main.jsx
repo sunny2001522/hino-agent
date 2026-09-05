@@ -5,6 +5,7 @@ import enhancements from '../enhancements.js?raw';
 import legacyApp from './legacy/legacy-app.js?raw';
 import LegacyIsland from './legacy/LegacyIsland.jsx';
 import DriverHome from './pages/DriverHome.jsx';
+import LeadCompetition from './pages/LeadCompetition.jsx';
 import LeadDrivers from './pages/LeadDrivers.jsx';
 import LeadFocus from './pages/LeadFocus.jsx';
 import LeadKpi from './pages/LeadKpi.jsx';
@@ -42,6 +43,7 @@ const REACT_PAGES = {
   'lead:kpi': LeadKpi,
   'lead:focus': LeadFocus,
   'lead:drivers': LeadDrivers,
+  'lead:competition': LeadCompetition,
 };
 
 const IDENTITIES = [
