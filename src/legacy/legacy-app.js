@@ -83,24 +83,24 @@ const appbar=document.getElementById('appbar');
 
 const TABS={
  fleet:[
- {id:"todo", l:"待辦", render:renderFleetTodo},
- {id:"analytic",l:"分析", render:renderFleetAnalytics},
- {id:"team", l:"車隊", render:renderFleetTeam},
- {id:"me", l:"我的", render:renderFleetMe},
+ {id:"todo", l:"待辦", render:()=>{}},
+ {id:"analytic",l:"分析", render:()=>{}},
+ {id:"team", l:"車隊", render:()=>{}},
+ {id:"me", l:"我的", render:()=>{}},
  ],
  lead:[
- {id:"kpi", l:"本區", render:renderLeadKpi},
- {id:"focus", l:"重點", render:renderLeadFocus},
- {id:"drivers",l:"駕駛", render:renderLeadDrivers},
+ {id:"kpi", l:"本區", render:()=>{}},
+ {id:"focus", l:"重點", render:()=>{}},
+ {id:"drivers",l:"駕駛", render:()=>{}},
  ],
  driver:[
- {id:"home", l:"首頁", render:renderDriverHome},
- {id:"task", l:"任務", render:renderDriverTask},
- {id:"alert", l:"提醒", render:renderDriverAlerts},
+ {id:"home", l:"首頁", render:()=>{}},
+ {id:"task", l:"任務", render:()=>{}},
+ {id:"alert", l:"提醒", render:()=>{}},
  ],
  shipper:[
- {id:"track", l:"追蹤", render:renderShipperTrack},
- {id:"orders", l:"我的貨件", render:renderShipperOrders},
+ {id:"track", l:"追蹤", render:()=>{}},
+ {id:"orders", l:"我的貨件", render:()=>{}},
  ],
 };
 let curTab=null;
@@ -322,43 +322,6 @@ let advice=[
 function autoLine(status){if(!status)return'';
  const dg=status.by!=='AI';
  return `<div class="autoline"><span class="abadge ${dg?'dg':''}">${status.by==='AI'?'AI 已自動':'已委派 '+status.by}</span><span>${status.txt}</span></div>`;}
-function renderFleetTodo(){
- const rank={bad:3,warn:2,info:1},uname={bad:"緊急",warn:"待辦",info:"留意"};
- // 需要老闆拍板的排前面（decide），其餘（已自動處理）排後面
- const sorted=todos.map((t,i)=>({t,i})).sort((a,b)=>(b.t.decide?1:0)-(a.t.decide?1:0)||rank[b.t.sev]-rank[a.t.sev]);
- const decideN=todos.filter(t=>t.decide).length;
- const todoHtml=sorted.map(({t,i})=>{const b=t.acts.map(a=>`<button class="btn ${a.c} sm" onclick="${a.fn}">${a.l}</button>`).join("");
- return `<div class="todo ${t.sev}">
- <div class="cat">${t.cat}<span class="upill u-${t.sev}">${uname[t.sev]}</span>${t.decide?'<span class="decidetag">需您拍板</span>':''}</div>
- <div class="tt">${t.tt}</div><div class="dt">${t.dt}</div>
- ${autoLine(t.status)}
- <div class="acts">${todoData[i]?`<button class="btn gho sm" onclick="toggleTodo(${i})"><span id="ta_${i}">▸</span>看數據</button>`:''}${b}</div>
- <div class="tdata" id="tp_${i}" style="display:none">${todoData[i]||''}</div></div>`;}).join("");
- const adv=advice.map(a=>{const b=a.acts.map(x=>`<button class="btn ${x.c} sm" onclick="${x.fn}">${x.l}</button>`).join("");
- return `<div class="adv"><div class="f">系統發現：${a.f}</div><div class="why">${a.why}</div>${autoLine(a.status)}<div class="acts">${b}</div></div>`;}).join("");
- screen.innerHTML=`
- <section id="autosum">
- <div class="sh"><h2 class="sm">AI 與負責人 今日已自動處理</h2></div>
- <div class="subt">前線執行不需老闆逐一手按，往下只保留需要您決策的事項</div>
- ${autoSummaryCard()}
- </section>
- <section id="risk">
- <div class="sh"><h2 class="sm">今日高風險預警</h2><span class="aibadge"><span class="sp"></span>AI 事前預測</span></div>
- <div class="subt">AI 事前預測誰／何時／哪段最可能出事並自動介入，您只需看成效或設政策</div>
- ${renderRiskForecast(false)}
- </section>
- <section id="todo">
- <div class="sh"><h2>需要您拍板</h2><span class="num" style="background:var(--warn)">${decideN} 件</span></div>
- <div class="subt">只列出需要老闆決策 / 核准的事項；已自動處理者顯示於下方供追蹤</div>
- <div class="todos">${todoHtml}</div>
- </section>
- <section id="advice">
- <div class="sh"><h2 class="sm">AI 洞察與您的決策</h2><span class="aibadge"><span class="sp"></span>AI 生成</span></div>
- <div class="subt">AI 已自動處理前線動作，這裡只留需要您核准 / 下達的決策</div>
- <div class="advice">${adv}</div>
- </section>
- <div class="foot">HINO 省油 × 安全 AI 軍師 · 依來源資料與人工覆核執行</div>`;
-}
 // 老闆決策 modal：年度訓練預算（額度內自動排訓，同「維修預算內自動進廠」邏輯）
 function openTrainApprove(){showModal(`<h3>年度安全訓練預算</h3>
  <p>您已核定年度預算，額度內 AI 依高風險名單自動排訓（總負責人安排上課），超額才需您加碼核准 — 與「維修預算內自動進廠」同一套授權邏輯。</p>
@@ -455,28 +418,6 @@ function metricPredict(m){
  const pct=m.key==='idle'||m.key==='fuel';
  return [1,2,3].map(k=>{let v=last+slope*k;if(pct)v=Math.max(0,Math.min(100,v));return +v.toFixed(1);});
 }
-function renderFleetAnalytics(){
- screen.innerHTML=`
- <section id="trend">
- <div class="sh"><h2>趨勢與原因</h2><span class="newbadge">新增</span></div>
- <div class="subt">切換面向看全隊趨勢與 AI 推測成因</div>
- <div class="regsel" id="metricTabs"></div>
- <div class="chartcard"><div class="ch-h"><span class="ttl" id="m_ttl"></span><span class="sub" id="m_sub"></span></div>
- <div id="m_now" style="font-size:14px;font-weight:800;margin:2px 0 4px"></div>
- <div id="chart_metric"></div>
- <div id="m_legend" style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--mut);padding:8px 2px 2px"></div></div>
- <div class="cause" id="m_cause" style="margin-top:12px"></div>
- </section>
- <section id="rank">
- <div class="sh"><h2 class="sm">車隊排行</h2><span class="tag">前三綠／後三紅</span></div>
- <div class="regsel" id="dimsel"></div>
- <div class="bars"><div id="barList"></div>
- <div class="bar-leg"><span><b class="g">■</b>前三名</span><span><b class="r">■</b>後三名</span><span id="dimhint"></span></div></div>
- <div class="dimsol" id="dimSol"></div>
- </section>
- <div class="foot">各區 + 全隊趨勢 · 2025/01–11</div>`;
- renderMetricTabs();renderTrend();renderDimSel();renderBars();renderDimSol();
-}
 function renderMetricTabs(){document.getElementById("metricTabs").innerHTML=metrics.map(m=>`<div class="regchip ${curMetric===m.key?'on':''}" onclick="setMetric('${m.key}')">${m.name}</div>`).join("");}
 function setMetric(k){curMetric=k;renderMetricTabs();renderTrend();}
 function renderTrend(){const m=metrics.find(x=>x.key===curMetric);
@@ -517,49 +458,6 @@ function driverLines(r){
  <div class="row2"><span class="ntag" style="color:${nc}">${handled}</span>
  ${n>=2?'<span class="upill u-bad" style="margin-left:auto">已升級總負責人約談</span>':''}</div>
  </div>`;}).join("");
-}
-function renderFleetTeam(){
- const sorted=regions.slice().sort((a,b)=>b.anomaly-a.anomaly);
- const cards=sorted.map(r=>{
- const ac=r.anomaly>=8?"var(--bad)":r.anomaly>=5?"var(--warn)":"var(--good)";
- return `<div class="litem">
- <div class="lh" onclick="toggleReg('${r.id}')">
- <span class="dot" style="background:${r.color}"></span>
- <span class="nm">${r.name}車隊</span>
- <span class="chev" id="rt_${r.id}">展開 ▸</span></div>
- <div class="stats">
- <span>車號 <b>${r.drivers.length}</b></span>
- <span>安全分 <b style="color:${scoreColor(r.safety.at(-1))}">${r.safety.at(-1)}</b></span>
- <span>遙測風險率 <b style="color:${ac}">${r.anomaly}%</b></span>
- <span>DTC <b>${r.seatbelt}</b> 筆</span></div>
- <div class="regdet" id="rd_${r.id}"><div id="db_${r.id}">${driverLines(r)}</div></div>
- </div>`;}).join("");
- screen.innerHTML=`
- <section id="region">
- <div class="sh"><h2>區域比較</h2></div>
- <div class="subt">依遙測風險率排序 · 點卡片看該區車號的計算安全分（來源未提供駕駛姓名）</div>
- ${cards}
- <div class="quickacts">
- <button class="btn pri block" onclick="openBatchApprove()">低分車隊改善信（已自動化）· 查看狀態</button>
- <button class="btn gho block" onclick="openIdleMessage()">各區怠速目標 · AI 催辦狀態</button>
- <button class="btn gho block" onclick="act('已開啟本月自動生成的 ESG 碳排月報（GHG 格式）。','ok')">查看 ESG 月報（自動生成）</button>
- </div>
- </section>
- <section id="staffing">
- <div class="sh"><h2 class="sm">營運量能參考</h2><span class="newbadge">資料限制</span></div>
- <div class="subt">journeyCode 數 vs 車號數；可供調度覆核，不可用來推導招募人數</div>
- <div class="card">
- <div style="font-weight:800;font-size:14.5px">人資資料未提供，系統不提出招募／加薪／裁員建議</div>
- <div class="dt" id="staffInsight" style="font-size:12.5px;color:var(--mut);margin-top:5px"></div>
- <div class="acts" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px">
- <button class="btn gho sm" onclick="toggleStaff()"><span id="staffArr">▸</span>看數據</button>
- <button class="btn pri sm" onclick="act('已標記需補齊人員主檔、班表、出勤與訂單資料。','ok')">建立資料串接需求</button>
- <button class="btn gho sm" onclick="act('已建立以 journeyCode 為單位的車輛調度覆核清單。','ok')">查看調度覆核</button></div>
- <div id="staffPanel" style="display:none;margin-top:11px;border-top:1px solid var(--line);padding-top:8px"></div>
- </div>
- </section>
- <div class="foot">HINO × GenAI · 僅以來源提供的車聯網資料呈現</div>`;
- renderStaffing();
 }
 function toggleReg(id){const d=document.getElementById("rd_"+id),t=document.getElementById("rt_"+id),o=!d.classList.contains('on');d.classList.toggle('on',o);t.textContent=o?"收合 ▾":"展開 ▸";}
 function toggleStaff(){const p=document.getElementById("staffPanel"),a=document.getElementById("staffArr"),o=p.style.display==="none";p.style.display=o?"block":"none";a.textContent=o?"▾":"▸";}
@@ -602,53 +500,6 @@ function fleetFuelGoalCard(){
  </div>`;
 }
 /* ---- fleet me tab: overview ---- */
-function renderFleetMe(){
- const worst=regions.slice().sort((a,b)=>b.anomaly-a.anomaly)[0];
- screen.innerHTML=`
- <section id="fleet_goal">
- <div class="sh"><h2 class="sm">全隊省油戰情（團隊目標）</h2><span class="newbadge">協同</span></div>
- <div class="subt">老闆設目標 → 各區負責人分解 → 駕駛端看到自己任務，AI 全程追蹤</div>
- ${fleetFuelGoalCard()}
- </section>
- <section id="fleet_auto">
- <div class="sh"><h2 class="sm">AI 自動化授權</h2><span class="newbadge">新增</span></div>
- <div class="subt">把低風險前線動作一次授權給 AI，老闆端只留決策</div>
- ${aiAutoCard()}
- </section>
- <section id="fleet_benefit">
- <div class="sh"><h2 class="sm">導入後預期效益</h2><span class="aibadge"><span class="sp"></span>量化推估</span></div>
- <div class="subt">省油 × 安全 雙軸，可衡量的預期成效</div>
- ${benefitCard()}
- </section>
- <section>
- <div class="sh"><h2>整體概覽</h2></div>
- <div class="subt">全隊背景指標 · 登入者：${SESSION.acc.name}（車隊總管）</div>
- <div class="kpis">
- <div class="kpi"><div class="k">車輛數</div><div class="v">20</div><div class="s">HINO 300/500/700</div></div>
- <div class="kpi"><div class="k">怠速佔比</div><div class="v">14%</div><div class="s">≈1,150 小時空轉</div></div>
- <div class="kpi"><div class="k">待修車輛</div><div class="v">3</div><div class="s">DTC/過熱/過載</div></div>
- <div class="kpi"><div class="k">平均準時率</div><div class="v">94%</div><div class="s">本月 -1.5%</div></div>
- <div class="kpi"><div class="k">全隊安全分</div><div class="v" style="color:${scoreColor(aggSafety.at(-1))}">${aggSafety.at(-1)}</div><div class="s">最弱：${worst.name}</div></div>
- <div class="kpi"><div class="k">駕駛總數</div><div class="v">${regions.reduce((a,r)=>a+r.drivers.length,0)}</div><div class="s">6 區</div></div>
- </div>
- </section>
- <section>
- <div class="sh"><h2 class="sm">帳號與導覽</h2></div>
- <div class="card">
- <div style="font-size:13px;line-height:1.9">
- <div>登入身份：<b>${SESSION.acc.name}</b></div>
- <div>帳號：${SESSION.acc.phone}</div>
- <div>權限範圍：全隊（6 區 / 20 車）</div>
- </div>
- <div class="quickacts">
- <button class="btn pri block" onclick="startTour()">重新看新功能導覽</button>
- <button class="btn gho block" onclick="logout()">登出</button>
- </div>
- </div>
- </section>
- <div class="foot">HINO × GenAI · 車隊管理帳號</div>`;
-}
-
 /* =====================================================================
  ROLE: 總負責人 (lead — 陳國華, 中區 only) 3 tabs
  — no region switcher; region fixed to session account —
@@ -666,120 +517,7 @@ function driverLines2(r){return r.drivers.map((d,i)=>{const[lv,col]=lvl(d.s);con
  </div>`;}).join("");}
 function notifyDriverL(id,i){notify[id+'_'+i]=(notify[id+'_'+i]||0)+1;const r=regions.find(x=>x.id===id);const dv=document.getElementById("leadDrv");if(dv)dv.innerHTML=driverLines2(r);const n=notify[id+'_'+i];toast('已通知駕駛',`已通知 ${r.drivers[i].n}（第 ${n} 次）。`+(n>=2?' 已達 2 次，建議約談。':''),n>=2?'dn':'wn');}
 
-function renderLeadKpi(){
- const r=myRegion(),sc=r.safety.at(-1);
- const ac=r.anomaly>=8?'var(--bad)':r.anomaly>=5?'var(--warn)':'var(--good)';
- screen.innerHTML=`
- <section>
- <div class="sh"><h2>${r.name} · 本區 KPI</h2></div>
- <div class="subt">負責人 ${r.lead}（只看 ${r.name}，看不到其他區）</div>
- <div class="kpis">
- <div class="kpi"><div class="k">本區安全分</div><div class="v" style="color:${scoreColor(sc)}">${sc}</div><div class="s">全隊平均 ${aggSafety.at(-1)}</div></div>
- <div class="kpi"><div class="k">異常率</div><div class="v" style="color:${ac}">${r.anomaly}%</div><div class="s">越低越好</div></div>
- <div class="kpi"><div class="k">準時率</div><div class="v" style="color:${r.onTime>=95?'var(--good)':'var(--warn)'}">${r.onTime}%</div><div class="s">${r.name}</div></div>
- <div class="kpi"><div class="k">人均單量</div><div class="v">${Math.round(ordersByRegion[r.id]/r.drivers.length)}</div><div class="s">${r.drivers.length} 位駕駛</div></div>
- </div>
- </section>
- <section>
- <div class="sh"><h2 class="sm">本區狀態</h2></div>
- <div class="card">
- <div style="font-size:13px;line-height:1.9">
- <div>怠速佔比：<b style="color:${r.idlePct>=14?'var(--bad)':r.idlePct>=10?'var(--warn)':'var(--good)'}">${r.idlePct}%</b>（目標 ≤8%）</div>
- <div>引擎過載：<b>${r.overload}</b>次 · 未繫安全帶：<b>${r.seatbelt}</b>次</div>
- <div>百公里油耗：<b>${r.fuel} L</b></div>
- </div>
- </div>
- </section>
- <div class="foot">總負責人視角 · 僅限 ${r.name}</div>`;
-}
-function renderLeadFocus(){
- const r=myRegion();
- const pts=[];
- r.drivers.forEach(d=>{if(d.s<55)pts.push(`<b style="color:var(--txt)">${d.n}</b>（安全分 ${d.s}・紅）建議今日約談`);});
- r.drivers.forEach(d=>{if(d.i.includes('超載'))pts.push(`${d.n} ${d.c} 疑似超載，需處理`);if(d.i.includes('疲勞'))pts.push(`${d.n} 疲勞風險，安排休息/交接`);if(d.i.includes('點檢'))pts.push(`${d.n} 未完成出車前點檢`);});
- fatigueSet.forEach(code=>{if(code[0]===r.id){const d=r.drivers[+code.slice(1)];if(d&&!pts.some(p=>p.includes(d.n+' 疲勞')))pts.push(`${d.n} 疲勞風險，安排休息/交接`);}});
- if(!pts.length)pts.push('本區狀況良好，無急件');
- const idleP=[1,2,3].map(k=>+(r.idlePct-1.6*k).toFixed(1)).map(v=>Math.max(6,v));
- screen.innerHTML=`
- <section id="lrisk">
- <div class="sh"><h2 class="sm">今日高風險預警</h2><span class="aibadge"><span class="sp"></span>AI 事前預測</span></div>
- <div class="subt">AI 事前預測本區今天誰／何時最可能出事，主動介入</div>
- ${renderRiskForecast(true)}
- </section>
- <section>
- <div class="sh"><h2 class="sm">${r.name} 省油目標</h2><span class="newbadge">協同</span></div>
- <div class="subt">上級目標 ≤8%，分解到本區與駕駛，AI 追蹤進度</div>
- <div class="goalcard">
- <div class="gt">本區怠速目標 ≤8% <span class="aibadge"><span class="sp"></span>AI 追蹤</span></div>
- <div class="gnums"><span class="big" style="color:${r.idlePct<=8?'var(--good)':'var(--warn)'}">${r.idlePct}%</span><span class="gl">目前 · 目標 8%</span><span class="aibadge" style="margin-left:auto">預測 3 個月可達 ${idleP[2]}%</span></div>
- <div class="prog"><div class="fl" style="width:${Math.round(Math.max(0,Math.min(1,(16-r.idlePct)/(16-8)))*100)}%"></div><div class="tk" style="left:100%"></div></div>
- <div class="acts" style="margin-top:11px"><button class="btn pri sm" onclick="openFuelCoach('${r.drivers[0].n}')">檢視優先改善車號</button></div>
- </div>
- </section>
- <section>
- <div class="sh"><h2>${r.name} · 今日重點</h2></div>
- <div class="subt">誰該約談、誰要處理，一目了然</div>
- <div class="cause" style="border-left-color:var(--bad)"><ul style="margin-left:18px">${pts.map(p=>`<li>${p}</li>`).join("")}</ul>
- <div class="acts" style="margin-top:6px">
- <button class="btn pri sm" onclick="openFleetMail('${r.id}')">對全區寄信限期改善</button>
- <button class="btn gho sm" onclick="act('已替本區高風險駕駛排安全訓練。','ok')">安排安全訓練</button>
- <button class="btn gho sm" onclick="msgLead('${r.id}')">回報上級</button></div></div>
- </section>
- <div class="foot">總負責人視角 · 僅限 ${r.name}</div>`;
-}
-function renderLeadDrivers(){
- const r=myRegion();
- screen.innerHTML=`
- <section>
- <div class="sh"><h2>${r.name} · 我的駕駛</h2></div>
- <div class="subt">紅黃綠 · 已通知次數 · 可直接通知／語音／派交接</div>
- <div id="leadDrv">${driverLines2(r)}</div>
- </section>
- <div class="foot">總負責人視角 · 僅限 ${r.name}</div>`;
-}
-
-/* =====================================================================
- ROLE: 車輛使用者（駕駛／車主共用） 3 tabs
- — no driver-name switcher; fixed to session account —
-===================================================================== */
 function myDriver(){return dref(SESSION.acc.drvCode);}
-function renderDriverHome(){
- const{r,d}=myDriver();const[lv,col]=lvl(d.s);
- const sorted=[...r.drivers].sort((x,y)=>y.s-x.s),rank=sorted.findIndex(x=>x.c===d.c)+1;
- screen.innerHTML=`
- <section>
- <div class="sh"><h2>${d.n} 的安全儀表</h2></div>
- <div class="subt">${r.name} · 只看自己的車與任務狀態</div>
- <div class="kpis">
- <div class="kpi"><div class="k">我的安全分</div><div class="v" style="color:${col}">${d.s}</div><div class="s">${lv}燈 · ${r.name}排第 ${rank}/${r.drivers.length}</div></div>
- <div class="kpi"><div class="k">本月趟次</div><div class="v">${18+(d.s%7)}</div><div class="s">準時 ${Math.min(99,80+Math.round(d.s/5))}%</div></div>
- <div class="kpi"><div class="k">安全獎金</div><div class="v" style="color:${d.s>=70?'var(--good)':'var(--mut2)'}">${d.s>=70?'NT$1,200':'—'}</div><div class="s">${d.s>=70?'本月達標 ':'安全分達 70 可領'}</div></div>
- <div class="kpi"><div class="k">我的車</div><div class="v" style="font-size:18px">${d.c}</div><div class="s">HINO 車型</div></div>
- </div>
- </section>
- <section id="drv_coach">
- <div class="sh"><h2 class="sm">我的 AI 教練</h2><span class="aibadge"><span class="sp"></span>AI 生成</span></div>
- <div class="subt">省油 × 安全，AI 依你的數據即時生成</div>
- <div class="adv"><div class="f">AI 省油教練</div>
- <div class="why">依你的怠速 ${r.idlePct}%、油耗 ${r.fuel}L、${d.i}，生成 3 條個人化省油教學，照做本趟預估油耗 -8%。</div>
- <div class="acts"><button class="btn pri sm" onclick="openFuelCoach()">看我的省油建議</button></div></div>
- <div class="adv" style="background:#eef4fb;border-color:#cddcf0"><div class="f" style="color:#2e4d7a">AI 安全教練 · 出車前風險評估</div>
- <div class="why">${fatigueSet.has(SESSION.acc.drvCode)?'AI 事前預測你今天 15–17 時為疲勞高風險段，建議先排小休。':'AI 依你今日路線與歷史，事前評估風險時段，提前提醒你。'}</div>
- <div class="acts"><button class="btn pri sm" style="background:linear-gradient(135deg,#5a86d6,#2e4d7a);color:#fff" onclick="openSafetyCoach()">看今天的安全叮嚀</button></div></div>
- </section>
- <section id="drv_goal">
- <div class="sh"><h2 class="sm">團隊省油目標（我的貢獻）</h2><span class="newbadge">協同</span></div>
- <div class="subt">省油不是你一個人的事 — 駕駛 + 車隊 + AI 一起達標</div>
- ${driverFuelGoalCard(d,r)}
- </section>
- <section>
- <div class="sh"><h2 class="sm">安全獎金激勵</h2></div>
- <div class="adv"><div class="f">${d.s>=70?'已達安全獎金門檻':'再加把勁就能領獎金'}</div>
- <div class="why">安全分達 70（綠燈）當月可領 NT$1,200 安全獎金；${d.s>=70?'保持下去，連 3 個月再加碼！':'目前 '+d.s+' 分，距離門檻還差 '+Math.max(0,70-d.s)+' 分。'}</div>
- <div class="acts"><button class="btn pri sm" onclick="act('已開啟安全駕駛小技巧與獎金規則。','ok')">看如何提分</button></div></div>
- </section>
- <div class="foot">車輛使用者視角 · 只看自己</div>`;
-}
 // 駕駛端：團隊省油目標 + 我的貢獻（把個人激勵綁進團隊 KPI）
 function driverFuelGoalCard(d,r){
  const teamCur=r.idlePct,teamGoal=8,teamStart=16;
@@ -800,47 +538,6 @@ function driverFuelGoalCard(d,r){
  <div class="acts" style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px">
  <button class="btn pri sm" onclick="openFuelCoach()">看我怎麼再省</button></div>
  </div>`;
-}
-function renderDriverTask(){
- const{d}=myDriver();
- screen.innerHTML=`
- <section>
- <div class="sh"><h2>今日任務 + 預估到達時間</h2></div>
- <div class="card">
- <div style="font-weight:800;font-size:15px">台中港倉 → 台積電 中科廠</div>
- <div style="font-size:12.5px;color:var(--mut);margin-top:4px">下一站 預估到達時間 約 <b style="color:var(--accent)">14 分</b>· 國道一號 大雅段 · 卸貨點 B12</div>
- <div class="acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
- <button class="btn pri sm" onclick="act('已開啟導航。','ok')">開始導航</button>
- <button class="btn gho sm" onclick="act('已回報抵達卸貨點。','ok')">回報抵達</button></div>
- </div>
- <div class="card">
- <div style="font-weight:800;font-size:15px">中科廠 → 台中港倉（回程）</div>
- <div style="font-size:12.5px;color:var(--mut);margin-top:4px">預計 15:30 出發 · 空車回收棧板</div>
- <div class="acts" style="margin-top:12px"><button class="btn gho sm" onclick="act('已加入行程排程。','ok')">加入排程</button></div>
- </div>
- </section>
- <div class="foot">駕駛 ${d.n} · 只看自己的任務</div>`;
-}
-function renderDriverAlerts(){
- const{r,d}=myDriver();
- const al=[];
- if(d.i.includes('疲勞'))al.push({t:"疲勞警示（AI 事前預測）",m:"AI 依你連續工時預測今天 15–17 時將進入疲勞高風險段，建議提前小休或等待交接，別等真的累了才處理。",b:[{l:"我要休息",c:"pri",fn:"act('已回報就近休息，調度將安排交接。','ok')"},{l:"看安全教練",c:"gho",fn:"openSafetyCoach()"}]});
- if(d.i.includes('超速'))al.push({t:"超速提醒",m:"近期多次超速，請依路段限速行駛。",b:[{l:"我知道了",c:"gho",fn:"act('已確認超速提醒。','ok')"}]});
- if(d.i.includes('未繫'))al.push({t:"未繫安全帶",m:"請全程繫好安全帶。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
- if(d.i.includes('點檢'))al.push({t:"出車前點檢未完成",m:"請先完成車況點檢再出車。",b:[{l:"前往點檢",c:"pri",fn:"act('已開啟出車前點檢表。','ok')"}]});
- if(d.i.includes('分心'))al.push({t:"分心提醒",m:"行車中請勿使用手機、保持專注。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
- if(d.i.includes('急')||d.i.includes('煞'))al.push({t:"急煞/急減速偏高",m:"近期急煞偏多，請提早減速、保持安全車距。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
- if(d.i.includes('怠速'))al.push({t:"怠速提醒",m:"怠速時間偏高，等候時請熄火，省油又減碳。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
- if(d.i.includes('超載')||d.i.includes('過載'))al.push({t:"疑似超載提醒",m:"載重可能超出核定，請配合過磅與裝載調整。",b:[{l:"我知道了",c:"gho",fn:"act('已確認。','ok')"}]});
- if(!al.length)al.push({t:"表現良好",m:"本月無重大事件，繼續保持，安全獎金穩穩入袋！",b:[]});
- const alerts=al.map(a=>`<div class="adv"><div class="f">${a.t}</div><div class="why">${a.m}</div>${a.b.length?`<div class="acts">${a.b.map(x=>`<button class="btn ${x.c} sm" onclick="${x.fn}">${x.l}</button>`).join("")}</div>`:''}</div>`).join("");
- screen.innerHTML=`
- <section>
- <div class="sh"><h2>我的提醒</h2></div>
- <div class="subt">依你本人的實際問題顯示</div>
- <div class="advice">${alerts}</div>
- </section>
- <div class="foot">駕駛 ${d.n} · 只看自己的提醒</div>`;
 }
 
 /* =====================================================================
@@ -871,96 +568,7 @@ shippers=window.HINO_EXCEL_DATA.shippers;
 let curOrder=null,animTimer=null;
 function myShipper(){return shippers.find(x=>x.id===SESSION.acc.shipperId);}
 function myOrders(){return myShipper().orders.slice().sort((a,b)=>(b.risk-a.risk)||String(b.cur).localeCompare(String(a.cur)));}
-/* ---- Leaflet 真實地圖引擎（OpenStreetMap 免金鑰） ---- */
 let shipMap=null,truckMarker=null;
-// 純色圓點 marker（L.divIcon，無 emoji）
-function dotIcon(color,size,ring){size=size||16;
- const cls=ring?'mkring':'mkdot';const bg=ring?`border-color:${color};background:${color}`:`background:${color}`;
- return L.divIcon({className:'',html:`<div class="${cls}" style="width:${size}px;height:${size}px;${bg}"></div>`,iconSize:[size,size],iconAnchor:[size/2,size/2]});}
-// 沿真實 polyline 依 progress(0–1) 做經緯度線性插值，回傳 [lat,lng]
-function interpLL(route,p){
- if(!route||route.length<2)return route&&route[0];
- p=Math.max(0,Math.min(1,p));
- // 依各段實際長度佔比分配，移動更符合真實距離
- const segs=[];let total=0;
- for(let i=0;i<route.length-1;i++){const a=route[i],b=route[i+1];
- const dy=(b[0]-a[0])*111,dx=(b[1]-a[1])*101;const len=Math.hypot(dx,dy);segs.push(len);total+=len;}
- let want=p*total,acc=0;
- for(let i=0;i<segs.length;i++){
- if(acc+segs[i]>=want||i===segs.length-1){const a=route[i],b=route[i+1];const t=segs[i]?(want-acc)/segs[i]:0;
- return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];}
- acc+=segs[i];}
- return route[route.length-1];
-}
-// 在 .mapwrap 內初始化 Leaflet，畫真實路線 + 起訖點 + 卡車
-function initShipMap(o){
- if(shipMap){shipMap.remove();shipMap=null;truckMarker=null;}
- const elm=document.getElementById('shipMap');if(!elm||typeof L==='undefined')return;
- shipMap=L.map(elm,{zoomControl:false,attributionControl:true,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,tap:false});
- L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,subdomains:'abc',attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(shipMap);
- const route=o.routeLL;
- // 底線（淺）＋主路線（綠）
- L.polyline(route,{color:'#cfdadd',weight:9,lineCap:'round'}).addTo(shipMap);
- L.polyline(route,{color:o.risk?'#e5484d':'#7bb42e',weight:4,opacity:.92,lineCap:'round'}).addTo(shipMap);
- // 起點（深色圓點）＋終點（紅圈）
- L.marker(o.fromLL,{icon:dotIcon('#14414f',14)}).addTo(shipMap).bindTooltip(o.from,{direction:'top',offset:[0,-8]});
- L.marker(o.toLL,{icon:dotIcon('#f87171',18,true)}).addTo(shipMap).bindTooltip(o.to,{direction:'top',offset:[0,-10]});
- // 卡車 marker（純色圓點，沿真實座標移動）
- truckMarker=L.marker(interpLL(route,o.progress),{icon:dotIcon('#7bb42e',20,true),zIndexOffset:1000}).addTo(shipMap);
- shipMap.fitBounds(L.latLngBounds(route),{padding:[26,26]});
- // bottom-sheet/tab 切換後容器尺寸才正確，需重算
- setTimeout(()=>{if(shipMap)shipMap.invalidateSize();},150);
- setTimeout(()=>{if(shipMap)shipMap.invalidateSize();},450);
-}
-function positionTruck(p,o){if(!truckMarker||!o)return;truckMarker.setLatLng(interpLL(o.routeLL,Math.min(p,1)));}
-function startAnim(o){if(animTimer)clearInterval(animTimer);let p=o.progress;
- animTimer=setInterval(()=>{if(p>=1){positionTruck(1,o);clearInterval(animTimer);return;}p=Math.min(1,p+0.006);positionTruck(p,o);
- const denom=(1-o.progress)||1;const eta=Math.max(0,Math.round(o.etaMin*(1-p)/denom));const eb=document.getElementById("etaBig");if(eb)eb.textContent=eta;},1200);}
-function selectOrder(id){curOrder=id;renderShipperTrack();}
-function renderShipperTrack(){
- const list=myOrders();if(!curOrder||!list.find(o=>o.id===curOrder))curOrder=list[0].id;
- const o=list.find(x=>x.id===curOrder)||list[0];
- const tabs=list.map(x=>`<div class="regchip ${curOrder===x.id?'on':''}" onclick="selectOrder('${x.id}')">${x.id} · ${x.to}${x.risk?' <b style="color:var(--bad)">· 延誤</b>':''}</div>`).join("");
- const steps=["已取貨","運送中","即將到達","已送達"];const cur=o.progress>=1?3:o.progress>=.85?2:o.progress>0?1:0;
- const tl=steps.map((s,i)=>`<div class="tstep ${i<cur?'done':i===cur?'cur':''}"><div class="d"></div><div class="t">${s}</div></div>`).join("");
- screen.innerHTML=`
- <section id="ship">
- <div class="sh"><h2>即時追蹤您的貨件</h2></div>
- <div class="subt">${myShipper().name} · ${SESSION.acc.name}（只看自己公司的單）</div>
- <div class="regsel">${tabs}</div>
- <div class="card">
- <div class="eta-hero"><span class="big" id="etaBig">${o.etaMin}</span><span class="lbl">分鐘後到達</span>
- <span class="stpill ${o.risk?'st-risk':o.progress>=.85?'st-soon':'st-go'}" style="margin-left:auto">${o.status}</span></div>
- <div style="font-size:12.5px;color:var(--mut)">${o.from} → <b style="color:var(--txt)">${o.to}</b>｜ 目前：${o.cur}</div>
- <div class="mapwrap"><div id="shipMap" class="lmap"></div></div>
- <div class="tline">${tl}</div>
- <div class="drvbar"><div class="av"></div><div><div style="font-weight:700;font-size:13px">司機 ${o.driver}</div><div style="font-size:11px;color:var(--mut)">${o.car}</div></div>
- <div style="margin-left:auto;display:flex;gap:7px;flex-wrap:wrap"><button class="btn gho sm" onclick="act('已撥打司機 ${o.driver} 電話。','ok')">聯絡司機</button><button class="btn pri sm" onclick="act('已複製即時追蹤連結，可分享給收貨方。','ok')">分享連結</button></div></div>
- ${o.risk?`<div class="cause" style="margin-top:12px;border-left-color:var(--bad)"><div class="h">預計延誤約 35 分</div><ul style="margin-left:18px"><li>原因：中壢市區交通壅塞</li><li>系統已自動改走替代路線並更新 預估到達時間</li></ul><div class="acts"><button class="btn pri sm" onclick="act('已開啟延誤即時通知。','wn')">接收延誤通知</button></div></div>`:''}
- </div>
- </section>
- <div class="foot">貨主視角 · 僅限 ${myShipper().name} 的貨件</div>`;
- initShipMap(o);startAnim(o);
-}
-function renderShipperOrders(){
- if(animTimer)clearInterval(animTimer);
- const list=myOrders();
- const cards=list.map(o=>`<div class="shipcard">
- <div class="top"><span class="id">${o.id}</span>
- <span class="stpill ${o.risk?'st-risk':o.progress>=.85?'st-soon':'st-go'}" style="margin-left:auto">${o.status}</span></div>
- <div class="cust">${o.from} → <b style="color:var(--txt)">${o.to}</b></div>
- <div class="cust">預估到達時間 ${o.etaMin} 分 · 目前 ${o.cur} · 司機 ${o.driver}</div>
- <div class="acts"><button class="btn pri sm" onclick="selectOrderTab('${o.id}')">即時追蹤</button>
- <button class="btn gho sm" onclick="act('已撥打司機 ${o.driver} 電話。','ok')">聯絡司機</button></div>
- </div>`).join("");
- screen.innerHTML=`
- <section>
- <div class="sh"><h2>我的貨件</h2><span class="num" style="background:var(--accent);color:#04121f">${list.length}</span></div>
- <div class="subt">${myShipper().name} · ${SESSION.acc.name}（延誤優先）</div>
- ${cards}
- </section>
- <div class="foot">貨主視角 · 僅限 ${myShipper().name} 的貨件</div>`;
-}
 function selectOrderTab(id){curOrder=id;gotoTab('track');}
 
 /* =====================================================================
@@ -1144,13 +752,6 @@ function riskCard(f,forLead){
  `<div class="autoline" style="margin-top:11px"><span class="abadge">AI 已自動</span><span>已於高風險時段前 30 分主動預警並語音關懷${f.lv==='bad'?'，並已請總負責人備妥改派 / 交接':''}</span></div>`
  }
  </div>`;
-}
-function renderRiskForecast(forLead){
- const scoped=forLead?myRegion().drivers:regions.flatMap(region=>region.drivers);
- const list=scoped.slice().sort((a,b)=>a.s-b.s).slice(0,3);
- if(!list.length)return `<div class="card"><div class="dt">沒有可判讀的 車聯網紀錄。</div></div>`;
- return `<div class="private-note"><b>資料限制：</b>來源未提供事故、疲勞、急煞或即時風險預測欄位；以下僅依 遙測計算安全分排序，作為人工覆核優先序。</div>`+
-   list.map(vehicle=>`<div class="riskcard ${vehicle.s<55?'bad':vehicle.s<70?'mid':'low'}"><div class="rtop"><span class="rname">${vehicle.c}</span><span class="stpill" style="background:var(--card2);color:var(--mut)">計算安全分 ${vehicle.s}</span></div><div class="rwhy">超速 ${vehicle.overspeed_count.toLocaleString()} 筆 · 怠速 ${vehicle.idle_pct}% · 高引擎負載 ${vehicle.high_load_count.toLocaleString()} 筆 · DTC ${vehicle.dtc_count.toLocaleString()} 筆</div><div class="rwhy" style="margin-top:5px">優先覆核：${vehicle.i}</div>${forLead?`<div class="racts"><button class="btn pri sm" onclick="act('已建立 ${vehicle.c} 的遙測資料覆核提醒。','wn')">建立覆核提醒</button></div>`:`<div class="autoline" style="margin-top:11px"><span class="abadge">AI 草稿</span><span>可建立提醒草稿；發送前需確認車況、路況與派車情境。</span></div>`}</div>`).join('');
 }
 
 /* =====================================================================
@@ -1541,13 +1142,12 @@ function runSim(k){
  if(on){
  s.steps.slice(1).forEach((st,i)=>{const last=i===s.steps.length-2;
  setTimeout(()=>toast(last?'AI 自動處理完成':'AI 自動處理中…',st,last?'ok':''),(i+1)*1300);});
- setTimeout(()=>{simLog.push({t:s.log,by:'AI'});
- if(SESSION&&SESSION.role==='fleet'&&curTab==='todo')renderFleetTodo();},s.steps.length*1300);
+ setTimeout(()=>{simLog.push({t:s.log,by:'AI'});},s.steps.length*1300);
  }else{
  setTimeout(()=>{
  toast('授權已關閉 → 轉入需您拍板',`「${aiAutoMeta[s.sw].t}」未授權，AI 不自動執行，已列入待辦等待您核准。`,'dn');
  if(!s.pendAdded){s.pendAdded=true;todos.push(Object.assign({decide:true},s.pend));todoData.push('');}
- if(SESSION&&SESSION.role==='fleet'&&curTab==='todo')renderFleetTodo();},1300);
+ },1300);
  }
 }
 
