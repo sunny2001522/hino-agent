@@ -4,6 +4,10 @@ const TABS = ['全部', '事件通知', '任務通知', '圍籬通知', '語音�
 const SEARCH = '搜尋車號／駕駛／姓名／車牌';
 const MAINT_KEY = 'hino-maintenance-records-v1';
 const MAINT_SEARCH = '搜尋車號／工單編號／保修項目';
+const VEHICLE_SEARCH = '搜尋車號／狀態／經緯度…';
+const DRIVER_SEARCH = '搜尋手機號碼/姓名/車號…';
+const VEHICLE_ICONS = [['edit', '✎', '編輯車輛'], ['refresh', '♲', '重新納管'], ['delete', '▢', '刪除車輛']];
+const DRIVER_ICONS = [['edit', '✎', '補齊駕駛資料'], ['delete', '▢', '移除綁定']];
 const EVENT_DATE = '2025-01-01 - 2025-11-30';
 const EVENT_SPECS = [
   ['GPS 超速', 'overspeed_count', 'gps.speed > gps.speedLimit'],
@@ -46,6 +50,16 @@ function MaintIcons({ car }) {
     <span className="native-row-actions">
       {items.map(([key, icon, label]) => (
         <button key={key} type="button" className="native-icon-action" data-itraq-action={key} data-vehicle={car} aria-label={label} title={label}>{icon}</button>
+      ))}
+    </span>
+  );
+}
+
+function IconActions({ items }) {
+  return (
+    <span className="native-row-actions">
+      {items.map(([key, icon, label]) => (
+        <button key={key} type="button" className="native-icon-action" data-itraq-action={key} aria-label={label} title={label}>{icon}</button>
       ))}
     </span>
   );
@@ -178,7 +192,10 @@ export default function ItraqWorkspace({ pageNo }) {
         window.toast(labels[action] || '操作已完成', '操作已收到，原始資料維持不變。', action === 'delete' ? 'wn' : 'ok');
         return;
       }
-      if (button.classList.contains('native-action')) { window.nativeActionFeedback(button.textContent); return; }
+      if (button.classList.contains('native-action')) {
+        if (/管理行程/.test(button.textContent)) { window.__itraqSetPage?.(13); return; }
+        window.nativeActionFeedback(button.textContent); return;
+      }
     };
     const onInput = (event) => {
       if (!event.target.matches('.native-search input')) return;
@@ -192,7 +209,7 @@ export default function ItraqWorkspace({ pageNo }) {
     };
   }, [pageNo]);
 
-  if (![6, 7, 8, 9, 10, 16].includes(pageNo)) return null;
+  if (![6, 7, 8, 9, 10, 11, 12, 13, 14, 16].includes(pageNo)) return null;
 
   const data = window.HINO_EXCEL_DATA;
   const period = data.meta.period;
@@ -387,6 +404,136 @@ export default function ItraqWorkspace({ pageNo }) {
               </table>
             </div>
             <NativePager />
+          </div>
+        </div>
+      </>
+    );
+  } else if (pageNo === 11) {
+    const rows = data.vehicleSnapshot.map((vehicle) => ({
+      car: vehicle.c, status: vehicle.last_status, time: vehicle.last_time, speed: vehicle.last_speed,
+      limit: vehicle.last_limit, position: vehicle.position, mileage: 0, fuel: 0, engine: 0,
+    })).filter((vehicle) => !q || [vehicle.car, vehicle.status, vehicle.time, vehicle.speed, vehicle.limit, vehicle.mileage.toLocaleString(), vehicle.fuel.toLocaleString(), vehicle.engine.toLocaleString(), vehicle.position].join('').toLowerCase().includes(q));
+    body = (
+      <>
+        <div className="native-breadcrumb"><span className="native-crumb-text">車隊管理 <i>›</i> 車輛管理</span></div>
+        <div className="native-workspace">
+          <div className="native-filter">
+            <button type="button" className="native-input" data-itraq-filter="date">{`◫\u00a0 ${period}`}</button>
+            <button type="button" className="native-input" data-itraq-filter="department">部門 (all)⌄</button>
+            <SearchLabel query={query} search={VEHICLE_SEARCH} onChange={(event) => setQuery(event.target.value)} /><button type="button" className="native-action">＋ 新增車輛</button>
+          </div>
+          <div className="native-table-wrap">
+            <table className="native-table">
+              <thead><tr><th>車號 ↕</th><th>車輛狀態 ↕</th><th>最後紀錄時間 ↕</th><th>GPS速度 ↕</th><th>路段限速 ↕</th><th>總里程(km) ↕</th><th>總油耗(L) ↕</th><th>引擎時數 ↕</th><th>經緯度 ↕</th><th>操作</th></tr></thead>
+              <tbody>
+                {rows.map((vehicle) => (
+                  <tr key={vehicle.car}>
+                    <td>{vehicle.car}</td>
+                    <td>{vehicle.status}</td>
+                    <td>{vehicle.time}</td>
+                    <td>{vehicle.speed}</td>
+                    <td>{vehicle.limit}</td>
+                    <td>{vehicle.mileage.toLocaleString()}</td>
+                    <td>{vehicle.fuel.toLocaleString()}</td>
+                    <td>{vehicle.engine.toLocaleString()}</td>
+                    <td>{vehicle.position}</td>
+                    <td><IconActions items={VEHICLE_ICONS} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <NativePager />
+        </div>
+      </>
+    );
+  } else if (pageNo === 12) {
+    const rows = data.vehicleSnapshot.map((vehicle) => ['原始資料未提供', '原始資料未提供', `${vehicle.region}區`, '原始資料未提供', vehicle.c, vehicle.s]).filter((row) => !q || row.join('').toLowerCase().includes(q));
+    body = (
+      <>
+        <div className="native-breadcrumb"><span className="native-crumb-text">車隊管理 <i>›</i> 駕駛管理</span></div>
+        <div className="native-workspace">
+          <div className="native-filter">
+            <button type="button" className="native-input" data-itraq-filter="date">{`◫\u00a0 ${period}`}</button>
+            <button type="button" className="native-input" data-itraq-filter="department">部門 (all)⌄</button>
+            <SearchLabel query={query} search={DRIVER_SEARCH} onChange={(event) => setQuery(event.target.value)} /><button type="button" className="native-action">▣ 管理行程</button><button type="button" className="native-action">＋ 新增駕駛</button>
+          </div>
+          <div className="source-note">來源未含司機姓名、電話、身分證或實際車輛綁定；本頁僅以車號與計算安全分呈現待補資料。</div>
+          <div className="native-table-wrap">
+            <table className="native-table">
+              <thead><tr><th>手機號碼 ↕</th><th>姓名 ↕</th><th>歸屬區域 ↕</th><th>身分證字號 ↕</th><th>對應車號 ↕</th><th>計算安全分 ↕</th><th>操作</th></tr></thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row[4]}>
+                    {row.map((cell, i) => <td key={i}>{cell}</td>)}
+                    <td><IconActions items={DRIVER_ICONS} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <NativePager />
+        </div>
+      </>
+    );
+  } else if (pageNo === 13) {
+    const [first, second] = data.vehicleSnapshot;
+    const journeyRow = (vehicle) => [vehicle.last_time.slice(0, 10), `${vehicle.last_time.slice(11)}（最後遙測）`, '原始資料未提供', `journeyCode ${vehicle.journey}`, '原始資料未提供', '原始資料未提供'];
+    const groups = [first, second].map((vehicle) => ({ vehicle, rows: [journeyRow(vehicle)].filter((row) => !q || row.join('').toLowerCase().includes(q)) }));
+    body = (
+      <>
+        <div className="native-breadcrumb"><span className="native-crumb-text">車隊管理 <i>›</i> 管理行程</span></div>
+        <div className="native-workspace">
+          <div className="native-filter">
+            <button type="button" className="native-input" data-itraq-filter="date">{`◫\u00a0 ${period}`}</button>
+            <button type="button" className="native-input" data-itraq-filter="department">部門 (all)⌄</button>
+            <SearchLabel query={query} search={DRIVER_SEARCH} onChange={(event) => setQuery(event.target.value)} /><button type="button" className="native-action">▣ 結算成績</button>
+          </div>
+          <div className="source-note">來源提供 journeyCode 與車號，但沒有駕駛歸屬、任務配給或系統預設資料。</div>
+          {groups.map(({ vehicle, rows }) => (
+            <div className="journey-group" key={vehicle.c}>
+              <h3>{`${vehicle.c}⌃`}</h3>
+              <div className="native-table-wrap">
+                <table className="native-table">
+                  <thead><tr><th>日期 ↕</th><th>最後遙測時間 ↕</th><th>行程歸屬駕駛 ↕</th><th>備註 ↕</th><th>任務配給</th><th>系統預設</th><th>操作</th></tr></thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row[3]}>
+                        {row.map((cell, i) => <td key={i}>{cell}</td>)}
+                        <td><button type="button" className="native-text-action" data-itraq-action="save">建立對照</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  } else if (pageNo === 14) {
+    const vehicle = data.vehicleSnapshot[0];
+    body = (
+      <>
+        <div className="native-breadcrumb"><span className="native-crumb-text">車隊管理 <i>›</i> 駕駛成績</span></div>
+        <div className="native-workspace score-page">
+          <div className="score-head">
+            <button type="button" className="native-input" data-itraq-filter="month">{period}</button>
+            <button type="button" className="native-action">⇩ 匯出成績單</button>
+          </div>
+          <div className="score-layout">
+            <aside {...{ ['dangerously' + 'SetInnerHTML']: { __html: `<h2>${vehicle.c}</h2><span>駕駛姓名 原始資料未提供</span><span>歸屬區域 ${vehicle.region}區</span><span>結算期間 ${period}</span><hr><span>journeyCode 數 <b>${vehicle.journeys}</b></span><span>超速紀錄 <b>${vehicle.overspeed_count.toLocaleString()} 筆</b></span><span>怠速佔比 <b>${vehicle.idle_pct}%</b></span><span>高引擎負載 <b>${vehicle.high_load_count.toLocaleString()} 筆</b></span><span>DTC <b>${vehicle.dtc_count} 筆</b></span><span>計算安全分 <b>${vehicle.s}</b></span>` } }} />
+            <article>
+              <h2>計算安全分 <b>{`${vehicle.s}分`}</b></h2>
+              <div className="native-tabs">
+                <button type="button" className="on">超速分析</button>
+                <button type="button">怠速分析</button>
+                <button type="button">高引擎負載</button>
+                <button type="button">DTC</button>
+              </div>
+              <div className="speed-pie"></div>
+              <p>分數由超速率、怠速率、高引擎負載率與 DTC 紀錄加權計算；非原廠駕駛成績。</p>
+            </article>
           </div>
         </div>
       </>
