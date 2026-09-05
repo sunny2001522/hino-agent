@@ -3,6 +3,5 @@ npm-debug.log
 .git
 .gitignore
 .claude
-scratch_script.js
 *.md.bak
 .DS_Store
