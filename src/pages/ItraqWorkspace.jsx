@@ -168,14 +168,55 @@ export default function ItraqWorkspace({ pageNo }) {
     };
   }, [pageNo]);
 
-  if (pageNo !== 9 && pageNo !== 10 && pageNo !== 16) return null;
+  if (![6, 9, 10, 16].includes(pageNo)) return null;
 
   const data = window.HINO_EXCEL_DATA;
   const period = data.meta.period;
   const q = query.trim().toLowerCase();
 
   let body;
-  if (pageNo === 16) {
+  if (pageNo === 6) {
+    const tone = { '執行中': 'running', '調度中': 'dispatch', '已完成': 'done', '已中斷': 'stopped', '待執行': 'pending' };
+    const rows = data.vehicleSnapshot.slice(0, 8).map((vehicle) => [
+      '可覆核', vehicle.journey, `${vehicle.journeys} 段`, '原始資料未提供', vehicle.c, 'journeyCode 遙測', '來源未提供',
+    ]).filter((row) => !q || row.join('').toLowerCase().includes(q));
+    body = (
+      <>
+        <div className="native-breadcrumb"><span className="native-crumb-text">任務派遣 <i>›</i> 任務管理</span></div>
+        <div className="native-workspace">
+          <div className="native-filter">
+            <button type="button" className="native-input" data-itraq-filter="date">{`◫\u00a0 ${period}`}</button>
+            <button type="button" className="native-input" data-itraq-filter="department">部門 (all)⌄</button>
+            <SearchLabel query={query} onChange={(event) => setQuery(event.target.value)} /><button type="button" className="native-action">＋ 新增任務</button><button type="button" className="native-action">⇧ 批量匯入</button>
+          </div>
+          <div className="native-tabs">
+            <button type="button" className="on">依任務</button>
+            <button type="button">依駕駛</button>
+          </div>
+          <div className="native-table-wrap">
+            <table className="native-table">
+              <thead><tr><th>任務狀態 ↕</th><th>任務編號 ↕</th><th>進度 ↕</th><th>駕駛/手機號碼 ↕</th><th>車號 ↕</th><th>任務類型 ↕</th><th>下一站點 ↕</th><th>操作</th></tr></thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row[1]}>
+                    {row.map((cell, i) => <td key={i} className={i === 0 ? tone[cell] || undefined : undefined}>{cell}</td>)}
+                    <td>
+                      <span className="native-row-actions">
+                        <button type="button" className="native-icon-action" data-itraq-action="edit" aria-label="編輯任務" title="編輯任務">✎</button>
+                        <button type="button" className="native-icon-action" data-itraq-action="copy" aria-label="複製任務" title="複製任務">▢</button>
+                        <button type="button" className="native-icon-action" data-itraq-action="refresh" aria-label="更新狀態" title="更新狀態">♲</button>
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <NativePager />
+        </div>
+      </>
+    );
+  } else if (pageNo === 16) {
     const snapshot = data.vehicleSnapshot;
     const rows = [...snapshot].sort((a, b) => b.s - a.s).slice(0, 4).filter((vehicle) => !q || rowBlob(vehicle).toLowerCase().includes(q));
     body = (

@@ -45,6 +45,8 @@ const REACT_PAGES = {
   'lead:settings': ItraqWorkspace,
   'fleet:data': ItraqWorkspace,
   'lead:data': ItraqWorkspace,
+  'fleet:task': ItraqWorkspace,
+  'lead:task': ItraqWorkspace,
   'shipper:track': ShipperShipments,
   'shipper:orders': ShipperShipments,
   'lead:kpi': LeadKpi,
