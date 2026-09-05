@@ -314,8 +314,9 @@
   }
   function refreshMaintenancePage(message) {
     closeOv();
-    renderItraqPage(7, 'maintenance');
     toast(message, '已更新目前瀏覽器的保修資料；遙測資料未被修改。', 'ok');
+    window.onMaintenanceChange?.();
+    window.__itraqSetPage?.(7);
   }
   window.saveMaintenanceValues = function (car) {
     const values = modalValues('[data-maintenance-values]');
@@ -334,8 +335,9 @@
     if (!values) return;
     saveMaintenanceRecord(car, { booking: values });
     closeOv();
-    renderItraqPage(8, 'maintenance');
     toast('原廠保修需求已送出', '預約資料已列入待服務廠確認清單。', 'ok');
+    window.onMaintenanceChange?.();
+    window.__itraqSetPage?.(8);
   };
   window.saveWorkOrder = function (car) {
     const values = modalValues('[data-work-order]');

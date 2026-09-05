@@ -47,6 +47,8 @@ const REACT_PAGES = {
   'lead:data': ItraqWorkspace,
   'fleet:task': ItraqWorkspace,
   'lead:task': ItraqWorkspace,
+  'fleet:maintenance': ItraqWorkspace,
+  'lead:maintenance': ItraqWorkspace,
   'shipper:track': ShipperShipments,
   'shipper:orders': ShipperShipments,
   'lead:kpi': LeadKpi,
@@ -181,6 +183,8 @@ function hookReactNav(setNav, setLoginRole) {
       itraqPage: Number(sub.dataset.headerPage),
     }));
   });
+
+  window.__itraqSetPage = (n) => setNav((prev) => ({ ...prev, itraqPage: Number(n) }));
 }
 
 const AppBar = memo(function AppBar() {

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 
 const TABS = ['全部', '事件通知', '任務通知', '圍籬通知', '語音通知', '納管通知', '平台通知', '保修通知', '駕駛成績', '影像通知'];
 const SEARCH = '搜尋車號／駕駛／姓名／車牌';
+const MAINT_KEY = 'hino-maintenance-records-v1';
+const MAINT_SEARCH = '搜尋車號／工單編號／保修項目';
 const EVENT_DATE = '2025-01-01 - 2025-11-30';
 const EVENT_SPECS = [
   ['GPS 超速', 'overspeed_count', 'gps.speed > gps.speedLimit'],
@@ -32,14 +34,31 @@ function eventRows(snapshot, period) {
   return EVENT_SPECS.map(([label, field, source]) => [label, sum(field).toLocaleString(), source, period]);
 }
 
-function SearchLabel({ query, onChange }) {
+function loadMaint() {
+  try { return JSON.parse(localStorage.getItem(MAINT_KEY) || '{}'); } catch { return {}; }
+}
+function maintenanceValueLabel(value, unit = '') {
+  return value === undefined || value === '' ? '尚未設定' : `${Number(value).toLocaleString('zh-TW')}${unit}`;
+}
+function MaintIcons({ car }) {
+  const items = [['book-maintenance', '◷', '預約原廠保修'], ['maintenance-schedule', '▣', '查看保修週期排程'], ['edit-work-order', '✎', '編輯工單']];
+  return (
+    <span className="native-row-actions">
+      {items.map(([key, icon, label]) => (
+        <button key={key} type="button" className="native-icon-action" data-itraq-action={key} data-vehicle={car} aria-label={label} title={label}>{icon}</button>
+      ))}
+    </span>
+  );
+}
+
+function SearchLabel({ query, onChange, search = SEARCH }) {
   // harness compares Island `<input>` (no self-close); React SSR emits `/>`.
   if (import.meta.env.SSR) {
-    const inner = { __html: `⌕ <input value="${query}" placeholder="${SEARCH}" aria-label="${SEARCH}">` };
+    const inner = { __html: `⌕ <input value="${query}" placeholder="${search}" aria-label="${search}">` };
     return <label className="native-search" {...{ ['dangerously' + 'SetInnerHTML']: inner }} />;
   }
   return (
-    <label className="native-search">⌕ <input value={query} placeholder={SEARCH} aria-label={SEARCH} onChange={onChange} /></label>
+    <label className="native-search">⌕ <input value={query} placeholder={search} aria-label={search} onChange={onChange} /></label>
   );
 }
 
@@ -93,6 +112,11 @@ export default function ItraqWorkspace({ pageNo }) {
   const [, redraw] = useState(0);
 
   useEffect(() => {
+    window.onMaintenanceChange = () => redraw((n) => n + 1);
+    return () => { window.onMaintenanceChange = undefined; };
+  }, []);
+
+  useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
     const onClick = (event) => {
@@ -105,7 +129,7 @@ export default function ItraqWorkspace({ pageNo }) {
       }
       const pager = button.closest('.native-pager');
       if (pager && button.dataset.itraqPage) { window.updateNativePager(pager, button.dataset.itraqPage); return; }
-      if (button.dataset.itraqPage && /^\d+$/.test(button.dataset.itraqPage)) { window.renderItraqPage(Number(button.dataset.itraqPage)); return; }
+      if (button.dataset.itraqPage && /^\d+$/.test(button.dataset.itraqPage)) { window.__itraqSetPage?.(Number(button.dataset.itraqPage)); return; }
       if (button.closest('.native-tabs')) {
         const tabbar = button.closest('.native-tabs');
         tabbar.querySelectorAll('button').forEach((item) => item.classList.toggle('on', item === button));
@@ -168,7 +192,7 @@ export default function ItraqWorkspace({ pageNo }) {
     };
   }, [pageNo]);
 
-  if (![6, 9, 10, 16].includes(pageNo)) return null;
+  if (![6, 7, 8, 9, 10, 16].includes(pageNo)) return null;
 
   const data = window.HINO_EXCEL_DATA;
   const period = data.meta.period;
@@ -207,6 +231,92 @@ export default function ItraqWorkspace({ pageNo }) {
                         <button type="button" className="native-icon-action" data-itraq-action="refresh" aria-label="更新狀態" title="更新狀態">♲</button>
                       </span>
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <NativePager />
+        </div>
+      </>
+    );
+  } else if (pageNo === 7) {
+    const records = loadMaint();
+    const rows = data.vehicleSnapshot.slice(0, 8).map((vehicle) => {
+      const record = records[vehicle.c] || {};
+      return [vehicle.c, record.workOrder || '—', record.date || '尚未設定', maintenanceValueLabel(record.mileage, ' km'), maintenanceValueLabel(record.engineHours, ' h'), record.item || '尚未設定'];
+    }).filter((row) => !q || row.join('').toLowerCase().includes(q));
+    body = (
+      <>
+        <div className="native-breadcrumb"><span className="native-crumb-text">保修系統 <i>›</i> 保修系統｜車輛週期</span></div>
+        <div className="native-workspace native-maintenance-workspace">
+          <div className="native-filter">
+            <button type="button" className="native-input" data-itraq-filter="date">{`◫\u00a0 ${period}`}</button>
+            <button type="button" className="native-input" data-itraq-filter="department">部門 (all)⌄</button>
+            <SearchLabel query={query} search={MAINT_SEARCH} onChange={(event) => setQuery(event.target.value)} />
+          </div>
+          <div className="native-tabs">
+            <button type="button" className="on" data-itraq-view="maintenance-cycle">車輛週期一覽</button>
+            <button type="button" data-itraq-page="8">預約資料</button>
+            <button type="button" data-itraq-view="work-order">工單資料</button>
+          </div>
+          <h3 className="native-list-title">近一次保修紀錄</h3>
+          <div className="native-table-wrap">
+            <table className="native-table">
+              <thead><tr><th>車號 ↕</th><th>工單編號 ↕</th><th>保修日期 ↕</th><th>總里程數 ↕</th><th>引擎運轉時數 ↕</th><th>保修項目 ↕</th><th>操作</th></tr></thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row[0]}>
+                    <td>{row[0]}</td>
+                    <td>{row[1]}</td>
+                    <td><button type="button" className="native-maint-unset" data-itraq-action="maintenance-values" data-vehicle={row[0]}>{row[2]}</button></td>
+                    <td><button type="button" className="native-maint-unset" data-itraq-action="maintenance-values" data-vehicle={row[0]}>{row[3]}</button></td>
+                    <td><button type="button" className="native-maint-unset" data-itraq-action="maintenance-values" data-vehicle={row[0]}>{row[4]}</button></td>
+                    <td><button type="button" className="native-maint-unset" data-itraq-action="maintenance-items" data-vehicle={row[0]}>{row[5]}</button></td>
+                    <td><MaintIcons car={row[0]} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <NativePager />
+        </div>
+      </>
+    );
+  } else if (pageNo === 8) {
+    const records = loadMaint();
+    const bookings = Object.entries(records).filter(([, record]) => record.booking).map(([car, record]) => [
+      '待服務廠確認', record.item || '原廠保修', car, '使用者輸入', record.booking.date, '—',
+      record.booking.serviceCenter, '待確認', record.booking.detail, '查看需求',
+    ]);
+    const detected = data.vehicleSnapshot.filter((vehicle) => vehicle.dtc_count).slice(0, 6).map((vehicle) => [
+      '待人工確認', 'DTC 遙測', vehicle.c, '原始資料未提供', '—', '—', '待串接', '—',
+      `DTC ${vehicle.dtc_count} 筆`, '建立需求',
+    ]);
+    const rows = [...bookings, ...detected].filter((row) => !q || row.join('').toLowerCase().includes(q));
+    body = (
+      <>
+        <div className="native-breadcrumb"><span className="native-crumb-text">保修系統 <i>›</i> 保修系統｜預約資料</span></div>
+        <div className="native-workspace">
+          <div className="native-filter">
+            <button type="button" className="native-input" data-itraq-filter="date">{`◫\u00a0 ${period}`}</button>
+            <button type="button" className="native-input" data-itraq-filter="department">部門 (all)⌄</button>
+            <SearchLabel query={query} onChange={(event) => setQuery(event.target.value)} /><button type="button" className="native-action">⇩ 匯出資料</button><button type="button" className="native-action">◷ 建立預約需求</button>
+          </div>
+          <div className="native-tabs">
+            <button type="button" data-itraq-page="7">車輛週期一覽</button>
+            <button type="button" className="on">預約資料</button>
+            <button type="button" data-itraq-view="work-order">工單資料</button>
+          </div>
+          <div className="source-note">來源未提供原廠、服務廠、聯絡人或預約日期；使用者送出的預約會顯示在此清單，DTC 車輛則維持待串接狀態。</div>
+          <div className="native-table-wrap">
+            <table className="native-table">
+              <thead><tr><th>狀態 ↕</th><th>類別 ↕</th><th>車號 ↕</th><th>聯絡人 ↕</th><th>預約日期 ↕</th><th>預約編號 ↕</th><th>服務廠 ↕</th><th>預計進廠時段 ↕</th><th>派工項目 ↕</th><th>操作</th></tr></thead>
+              <tbody>
+                {rows.map((row, i) => (
+                  <tr key={`${row[2]}-${row[0]}-${i}`}>
+                    {row.slice(0, 9).map((cell, j) => <td key={j} className={j === 0 && row[0] === '待人工確認' ? 'pending' : undefined}>{cell}</td>)}
+                    <td><button type="button" className="native-text-action" data-itraq-action="open">{row[9]}</button></td>
                   </tr>
                 ))}
               </tbody>
