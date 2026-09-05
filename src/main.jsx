@@ -43,6 +43,8 @@ const REACT_PAGES = {
   'fleet:decision': FleetOverview,
   'fleet:settings': ItraqWorkspace,
   'lead:settings': ItraqWorkspace,
+  'fleet:data': ItraqWorkspace,
+  'lead:data': ItraqWorkspace,
   'shipper:track': ShipperShipments,
   'shipper:orders': ShipperShipments,
   'lead:kpi': LeadKpi,
