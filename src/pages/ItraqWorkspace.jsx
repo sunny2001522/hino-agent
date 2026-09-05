@@ -209,14 +209,54 @@ export default function ItraqWorkspace({ pageNo }) {
     };
   }, [pageNo]);
 
-  if (![4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16].includes(pageNo)) return null;
+  if (![3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16].includes(pageNo)) return null;
 
   const data = window.HINO_EXCEL_DATA;
   const period = data.meta.period;
   const q = query.trim().toLowerCase();
 
   let body;
-  if (pageNo === 4) {
+  if (pageNo === 3) {
+    const dvr = 'assets/simulated-dvr/fleet-dvr-mosaic-v1.png';
+    const tiles = [
+      ['v1', '模擬 DVR 前鏡頭影像', '模擬 DVR · ①', '前鏡頭 · ABC-5310'],
+      ['v2', '模擬 DVR 右側鏡頭影像', '模擬 DVR · ②', '右側鏡頭'],
+      ['v3', '模擬 DVR 左側鏡頭影像', '模擬 DVR · ③', '左側鏡頭'],
+      ['v4', '模擬 DVR 後鏡頭影像', '模擬 DVR · ④', '後鏡頭'],
+    ];
+    const rows = data.vehicleSnapshot.slice(0, 4).map((v) => [v.c, '—', v.last_status, '—', v.last_speed, v.position, v.last_time]);
+    body = (
+      <>
+        <div className="native-breadcrumb"><span className="native-crumb-text">即時監控 <i>›</i> 即時影像</span></div>
+        <div className="native-workspace">
+          <div className="native-video-layout">
+            <div className="native-video-grid">
+              {tiles.map(([cls, alt, title, cap]) => (
+                <div key={cls} className={`video-tile ${cls}`} {...{ ['dangerously' + 'SetInnerHTML']: { __html: `<img src="${dvr}" alt="${alt}"><b>${title}</b><span>${cap}</span>` } }} />
+              ))}
+            </div>
+            <div className="native-list-panel">
+              <b>雙擊車輛即可查看即時影像</b>
+              <div className="native-table-wrap">
+                <table className="native-table">
+                  <thead><tr><th>車號</th><th>駕駛</th><th>車輛狀態</th><th>手機號碼</th><th>車速(km/h)</th><th>經緯度</th><th>最後紀錄時間</th></tr></thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row[0]}>
+                        {row.map((cell, i) => (
+                          <td key={i} {...(i === 0 ? { className: cell === '行駛中' ? 'run' : 'lost' } : null)}>{cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  } else if (pageNo === 4) {
     body = (
       <>
         <div className="native-breadcrumb"><span className="native-crumb-text">歷史車輛 <i>›</i> 軌跡回放</span></div>

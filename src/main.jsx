@@ -344,7 +344,8 @@ function ItraqApplication() {
   const islandKey = nav.role ? `${nav.role}-${nav.tab}-${nav.itraqPage ?? ''}` : 'welcome';
   const currentTab = nav.role && nav.tab ? tabSpec(nav.role, nav.tab) : null;
   const converted = currentTab?.converted ?? false;
-  const ReactPage = converted ? REACT_PAGES[`${nav.role}:${nav.tab}`] : null;
+  const liveVideo = nav.tab === 'monitor' && nav.itraqPage === 3;
+  const ReactPage = converted ? REACT_PAGES[`${nav.role}:${nav.tab}`] : liveVideo ? ItraqWorkspace : null;
 
   return (
     <div className="app" id="app" data-runtime="react">
@@ -353,7 +354,7 @@ function ItraqApplication() {
         ? <LoginPage key={loginRole} role={loginRole} onBack={() => setLoginRole(null)} />
         : <Welcome onPick={setLoginRole} />)}
       {nav.role && ReactPage && <ReactPage key={islandKey} pageNo={nav.itraqPage} />}
-      <LegacyIsland islandKey={islandKey} hidden={!nav.role || converted} />
+      <LegacyIsland islandKey={islandKey} hidden={!nav.role || converted || liveVideo} />
       <Fabs />
       <Overlays />
     </div>
