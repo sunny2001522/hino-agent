@@ -241,6 +241,9 @@
     refreshNativeMapMarkers();
     requestAnimationFrame(() => nativeLeafletMap && nativeLeafletMap.invalidateSize());
   }
+  function destroyNativeMap() {
+    if (nativeLeafletMap) { nativeLeafletMap.remove(); nativeLeafletMap = undefined; nativeLeafletMarkers = []; }
+  }
   function nativeMonitor() {
     return `<div class="native-workspace"><div class="native-monitor-layout"><div><div class="native-map-switch"><button type="button" class="on" data-map-layer="vehicle">車號</button><button type="button" data-map-layer="driver" data-map-unavailable="駕駛姓名">駕駛</button><button type="button" data-map-layer="speed">速度</button><button type="button" data-map-layer="fence" data-map-unavailable="電子圍籬">電子圍籬</button></div>${nativeMap()}</div><div class="native-list-panel"><b>資料：${excelSource.vehicles} 台車輛 / ${excelSource.records.toLocaleString()} 筆紀錄</b>${nativeTable(['車號 ↕','駕駛 ↕','車輛狀態 ↕','手機號碼 ↕','車速(km/h) ↕','經緯度 ↕','最後紀錄時間 ↕'], nativeVehicles, state => state === '行駛中' ? 'run' : state.includes('怠速') ? 'idle' : 'lost')}</div></div></div>`;
   }
@@ -427,7 +430,7 @@
     const pageIds = itraqSections[currentItraqSection] || itraqSections.monitor;
     const pages = pageIds.map(pageNo => manualPages.find(item => item.p === pageNo)).filter(Boolean);
     const page = pages.find(item => item.p === currentManualPage) || pages[0];
-    if (nativeLeafletMap) { nativeLeafletMap.remove(); nativeLeafletMap = undefined; nativeLeafletMarkers = []; }
+    destroyNativeMap();
     screen.innerHTML = `<section class="itraq-native">${nativePageTitle(page.t, nativeSectionLabel(page.p))}${renderItraqNative(page.p)}</section>`;
     if (page.p === 2) initializeNativeMap('native-live-map');
     if (page.p === 15) initializeNativeMap('native-fence-map');
@@ -821,6 +824,8 @@
   window.maintenanceDialog = maintenanceDialog;
   window.renderItraqPage = renderItraqPage;
   window.refreshNativeMapMarkers = refreshNativeMapMarkers;
+  window.initializeNativeMap = initializeNativeMap;
+  window.destroyNativeMap = destroyNativeMap;
   function sourceFuelAnswer(question) {
     if (!/油耗|耗油|油錢|省油|百公里/.test(question)) return null;
     const scoped = SESSION.role === 'lead' ? myRegion().drivers : regions.flatMap(region => region.drivers);

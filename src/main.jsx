@@ -53,6 +53,8 @@ const REACT_PAGES = {
   'lead:fleet': ItraqWorkspace,
   'fleet:history': ItraqWorkspace,
   'lead:history': ItraqWorkspace,
+  'fleet:monitor': ItraqWorkspace,
+  'lead:monitor': ItraqWorkspace,
   'shipper:track': ShipperShipments,
   'shipper:orders': ShipperShipments,
   'lead:kpi': LeadKpi,
@@ -344,8 +346,7 @@ function ItraqApplication() {
   const islandKey = nav.role ? `${nav.role}-${nav.tab}-${nav.itraqPage ?? ''}` : 'welcome';
   const currentTab = nav.role && nav.tab ? tabSpec(nav.role, nav.tab) : null;
   const converted = currentTab?.converted ?? false;
-  const liveVideo = nav.tab === 'monitor' && nav.itraqPage === 3;
-  const ReactPage = converted ? REACT_PAGES[`${nav.role}:${nav.tab}`] : liveVideo ? ItraqWorkspace : null;
+  const ReactPage = converted ? REACT_PAGES[`${nav.role}:${nav.tab}`] : null;
 
   return (
     <div className="app" id="app" data-runtime="react">
@@ -354,7 +355,7 @@ function ItraqApplication() {
         ? <LoginPage key={loginRole} role={loginRole} onBack={() => setLoginRole(null)} />
         : <Welcome onPick={setLoginRole} />)}
       {nav.role && ReactPage && <ReactPage key={islandKey} pageNo={nav.itraqPage} />}
-      <LegacyIsland islandKey={islandKey} hidden={!nav.role || converted || liveVideo} />
+      <LegacyIsland islandKey={islandKey} hidden={!nav.role || converted} />
       <Fabs />
       <Overlays />
     </div>

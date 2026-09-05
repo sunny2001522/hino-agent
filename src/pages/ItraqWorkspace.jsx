@@ -126,6 +126,12 @@ export default function ItraqWorkspace({ pageNo }) {
   const [, redraw] = useState(0);
 
   useEffect(() => {
+    if (pageNo !== 2) return;
+    window.initializeNativeMap('native-live-map');
+    return () => { window.destroyNativeMap(); };
+  }, [pageNo]);
+
+  useEffect(() => {
     window.onMaintenanceChange = () => redraw((n) => n + 1);
     return () => { window.onMaintenanceChange = undefined; };
   }, []);
@@ -209,14 +215,55 @@ export default function ItraqWorkspace({ pageNo }) {
     };
   }, [pageNo]);
 
-  if (![3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16].includes(pageNo)) return null;
+  if (![2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16].includes(pageNo)) return null;
 
   const data = window.HINO_EXCEL_DATA;
   const period = data.meta.period;
   const q = query.trim().toLowerCase();
 
   let body;
-  if (pageNo === 3) {
+  if (pageNo === 2) {
+    const tone = (state) => (state === '行駛中' ? 'run' : String(state).includes('怠速') ? 'idle' : 'lost');
+    const rows = data.vehicleSnapshot.map((v) => [v.c, '—', v.last_status, '—', v.last_speed, v.position, v.last_time]);
+    body = (
+      <>
+        <div className="native-breadcrumb"><span className="native-crumb-text">即時監控 <i>›</i> 監控地圖</span></div>
+        <div className="native-workspace">
+          <div className="native-monitor-layout">
+            <div>
+              <div className="native-map-switch">
+                <button type="button" className="on" data-map-layer="vehicle">車號</button>
+                <button type="button" data-map-layer="driver" data-map-unavailable="駕駛姓名">駕駛</button>
+                <button type="button" data-map-layer="speed">速度</button>
+                <button type="button" data-map-layer="fence" data-map-unavailable="電子圍籬">電子圍籬</button>
+              </div>
+              <div className="native-map-shell">
+                <div id="native-live-map" className="native-map" role="application" aria-label="車輛最後 GPS 位置地圖"></div>
+                <p className="native-map-caption">底圖 © OpenStreetMap contributors；標記為 各車最後 GPS 紀錄，並非即時位置。</p>
+              </div>
+            </div>
+            <div className="native-list-panel">
+              <b>{`資料：${data.meta.vehicles} 台車輛 / ${data.meta.records.toLocaleString()} 筆紀錄`}</b>
+              <div className="native-table-wrap">
+                <table className="native-table">
+                  <thead><tr><th>車號 ↕</th><th>駕駛 ↕</th><th>車輛狀態 ↕</th><th>手機號碼 ↕</th><th>車速(km/h) ↕</th><th>經緯度 ↕</th><th>最後紀錄時間 ↕</th></tr></thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row[0]}>
+                        {row.map((cell, i) => (
+                          <td key={i} {...(i === 0 ? { className: tone(cell) } : null)}>{cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  } else if (pageNo === 3) {
     const dvr = 'assets/simulated-dvr/fleet-dvr-mosaic-v1.png';
     const tiles = [
       ['v1', '模擬 DVR 前鏡頭影像', '模擬 DVR · ①', '前鏡頭 · ABC-5310'],
