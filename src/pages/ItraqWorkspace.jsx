@@ -209,14 +209,54 @@ export default function ItraqWorkspace({ pageNo }) {
     };
   }, [pageNo]);
 
-  if (![6, 7, 8, 9, 10, 11, 12, 13, 14, 16].includes(pageNo)) return null;
+  if (![4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16].includes(pageNo)) return null;
 
   const data = window.HINO_EXCEL_DATA;
   const period = data.meta.period;
   const q = query.trim().toLowerCase();
 
   let body;
-  if (pageNo === 6) {
+  if (pageNo === 4) {
+    body = (
+      <>
+        <div className="native-breadcrumb"><span className="native-crumb-text">歷史車輛 <i>›</i> 軌跡回放</span></div>
+        <div className="native-workspace">
+          <div className="journey-flow">
+            <article><b>第一層</b><div><strong>單日車隊內所有車輛歷史軌跡列表</strong><span>車號、駕駛、累積里程數、行駛總時長</span></div></article>
+            <article><b>第二層</b><div><strong>單日單一車輛的所有軌跡列表</strong><span>每一行程的啟動與熄火時間、累積時長及起訖點</span></div></article>
+            <article><b>第三層</b><div><strong>單日單一車輛單一軌跡的各點位列表</strong><span>點位時間、位置、車輛狀態、觸發事件</span></div></article>
+          </div>
+        </div>
+      </>
+    );
+  } else if (pageNo === 5) {
+    body = (
+      <>
+        <div className="native-breadcrumb"><span className="native-crumb-text">歷史車輛 <i>›</i> 影像調閱</span></div>
+        <div className="native-workspace native-video-archive">
+          <div className="archive-grid">
+            <div className="archive-empty"><span>來源僅含遙測資料；影像檔需由 DVR 平台串接後才可調閱</span></div>
+            <aside>
+              <div className="native-filter">
+                <button type="button" className="native-input" data-itraq-filter="vehicle">車號 (all)⌄</button>
+                <button type="button" className="native-input" data-itraq-filter="date">{`◫ ${period}`}</button>
+              </div>
+              <div className="native-table-wrap">
+                <table className="native-table">
+                  <thead><tr><th>車號</th><th>影像資料</th></tr></thead>
+                  <tbody>
+                    {data.vehicleSnapshot.map((vehicle) => (
+                      <tr key={vehicle.c}><td>{vehicle.c}</td><td>來源未提供影像檔</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </>
+    );
+  } else if (pageNo === 6) {
     const tone = { '執行中': 'running', '調度中': 'dispatch', '已完成': 'done', '已中斷': 'stopped', '待執行': 'pending' };
     const rows = data.vehicleSnapshot.slice(0, 8).map((vehicle) => [
       '可覆核', vehicle.journey, `${vehicle.journeys} 段`, '原始資料未提供', vehicle.c, 'journeyCode 遙測', '來源未提供',
