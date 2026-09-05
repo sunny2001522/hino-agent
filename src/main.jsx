@@ -5,6 +5,7 @@ import enhancements from '../enhancements.js?raw';
 import legacyApp from './legacy/legacy-app.js?raw';
 import LegacyIsland from './legacy/LegacyIsland.jsx';
 import DriverHome from './pages/DriverHome.jsx';
+import LeadDrivers from './pages/LeadDrivers.jsx';
 import LeadFocus from './pages/LeadFocus.jsx';
 import LeadKpi from './pages/LeadKpi.jsx';
 import ShipperShipments from './pages/ShipperShipments.jsx';
@@ -40,6 +41,7 @@ const REACT_PAGES = {
   'shipper:orders': ShipperShipments,
   'lead:kpi': LeadKpi,
   'lead:focus': LeadFocus,
+  'lead:drivers': LeadDrivers,
 };
 
 const IDENTITIES = [

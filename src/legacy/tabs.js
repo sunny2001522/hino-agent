@@ -20,7 +20,7 @@ export const ROLE_TABS = {
     { id: 'settings', l: '系統設定', converted: false, page: 16 },
     { id: 'kpi', l: '本區管理', converted: true },
     { id: 'focus', l: '管理重點', converted: true },
-    { id: 'drivers', l: '駕駛', converted: false },
+    { id: 'drivers', l: '駕駛', converted: true },
     { id: 'competition', l: '安全競賽', converted: false },
   ],
   driver: [
