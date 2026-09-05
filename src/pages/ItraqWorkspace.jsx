@@ -126,8 +126,9 @@ export default function ItraqWorkspace({ pageNo }) {
   const [, redraw] = useState(0);
 
   useEffect(() => {
-    if (pageNo !== 2) return;
-    window.initializeNativeMap('native-live-map');
+    if (pageNo === 2) window.initializeNativeMap('native-live-map');
+    else if (pageNo === 15) window.initializeNativeMap('native-fence-map');
+    else return;
     return () => { window.destroyNativeMap(); };
   }, [pageNo]);
 
@@ -215,7 +216,7 @@ export default function ItraqWorkspace({ pageNo }) {
     };
   }, [pageNo]);
 
-  if (![2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16].includes(pageNo)) return null;
+  if (![2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].includes(pageNo)) return null;
 
   const data = window.HINO_EXCEL_DATA;
   const period = data.meta.period;
@@ -661,6 +662,40 @@ export default function ItraqWorkspace({ pageNo }) {
               <div className="speed-pie"></div>
               <p>分數由超速率、怠速率、高引擎負載率與 DTC 紀錄加權計算；非原廠駕駛成績。</p>
             </article>
+          </div>
+        </div>
+      </>
+    );
+  } else if (pageNo === 15) {
+    body = (
+      <>
+        <div className="native-breadcrumb"><span className="native-crumb-text">車隊管理 <i>›</i> 圍籬管理</span></div>
+        <div className="native-workspace">
+          <div className="native-fence-layout">
+            <div>
+              <div className="native-map-shell">
+                <div id="native-fence-map" className="native-map" role="application" aria-label="車輛最後 GPS 位置地圖"></div>
+                <p className="native-map-caption">底圖 © OpenStreetMap contributors；標記為 各車最後 GPS 紀錄，並非即時位置。</p>
+              </div>
+            </div>
+            <div>
+              <button type="button" className="native-action">＋ 新增圍籬</button>
+              <div className="source-note">此底圖使用 車輛最後 GPS 位置；來源沒有圍籬名稱、範圍與進出規則，需另行設定。</div>
+              <div className="native-table-wrap">
+                <table className="native-table">
+                  <thead><tr><th>圍籬名稱 ↕</th><th>顯示</th><th>進出通知設定 ↕</th><th>時效性 ↕</th><th>操作</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td>電子圍籬資料</td>
+                      <td>—</td>
+                      <td>—</td>
+                      <td>來源未提供</td>
+                      <td><IconActions items={[['edit', '✎', '建立串接需求']]} /></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </>
