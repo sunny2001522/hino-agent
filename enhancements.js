@@ -1,5 +1,6 @@
 /* Role-aware RWD upgrades: people decisions, safe-driving competition, and privacy-safe shipper tracking. */
 (function () {
+  const { aiContext, aiSuggestions, aiGenerate, openAIChat, addChatActions, regions, TABS, tabbar, scoreColor, myOrders, myDriver, myRegion, myShipper, el, gotoTab, toast, showModal, closeOv, act, TARGET_PER_DRIVER, ordersByRegion } = window;
   const baseAiContext = aiContext;
   const baseAiSuggestions = aiSuggestions;
   const baseAiGenerate = aiGenerate;
@@ -426,10 +427,7 @@
     const pageIds = itraqSections[currentItraqSection] || itraqSections.monitor;
     const pages = pageIds.map(pageNo => manualPages.find(item => item.p === pageNo)).filter(Boolean);
     const page = pages.find(item => item.p === currentManualPage) || pages[0];
-    destroyNativeMap();
-    screen.innerHTML = `<section class="itraq-native">${nativePageTitle(page.t, nativeSectionLabel(page.p))}${renderItraqNative(page.p)}</section>`;
-    if (page.p === 2) initializeNativeMap('native-live-map');
-    if (page.p === 15) initializeNativeMap('native-fence-map');
+    if (page) currentManualPage = page.p;
   }
   function nativeForm(title, hint, confirmLabel='儲存') {
     showModal(`<h3>${title}</h3><p>${hint}</p><div class="native-modal-fields"><label>名稱／車號<input type="text" placeholder="請輸入資料"></label><label>備註<textarea placeholder="可補充說明（選填）"></textarea></label></div><div class="mb"><button class="btn gho" onclick="closeOv()">取消</button><button class="btn pri" onclick="closeOv();toast('${title}已送出','已完成送出流程；既有紀錄維持不變。','ok')">${confirmLabel}</button></div>`);
@@ -454,6 +452,8 @@
     toast(`已切換第 ${next} 頁`, '目前顯示相同資料集的下一頁檢視。', 'ok');
   }
   function attachItraqInteractions() {
+    const screen = document.getElementById('screen');
+    if (!screen) return;
     screen.addEventListener('click', event => {
       const button = event.target.closest('button');
       if (!button || !screen.contains(button) || button.classList.contains('itraq-web-tab')) return;
@@ -650,11 +650,9 @@
   window.openWorkforceGuardrail = function () { showModal(`<h3>人資決策覆核流程</h3><p>1. 檢視單量、車況與班表；2. 提供轉調／訓練／合理調整；3. 設定改善目標與申訴管道；4. 人資與主管依適用法規個案核准。</p><div class="guardrail">安全分是輔助訊號，不是裁員按鈕。所有解約／裁撤均須人為審核與法遵確認。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`); };
   window.openManualChecklist = function () { gotoTab('monitor'); };
   window.openItraqNotifications = function () {
-    if (!SESSION || SESSION.role !== 'fleet') { toast('通知中心', '請由目前身份可見的通知頁面查看。', 'in'); return; }
-    curTab = null;
-    tabbar.querySelectorAll('button').forEach(button => button.classList.remove('on'));
-    renderItraqPage(16, 'settings');
-    screen.scrollTo({top:0,behavior:'smooth'});
+    if (!window.SESSION || window.SESSION.role !== 'fleet') { toast('通知中心', '請由目前身份可見的通知頁面查看。', 'in'); return; }
+    window.gotoTab('settings');
+    window.__itraqSetPage?.(16);
   };
   window.openItraqDataDetail = function (pageNo) { const page = manualPages.find(item => item.p === pageNo); showModal(`<h3>${page.t}｜資料欄位</h3><p>${page.d}</p><ul class="mini-checks">${page.b.map(item => `<li>${item}</li>`).join('')}</ul><div class="source-note"><b>使用方式：</b>${page.m}會回填到車隊決策、AI 問答、風險預警與競賽改善計畫；資料仍依登入身份限縮可見範圍。</div><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`); };
   window.openDriverSafetyPlan = function () { const {r,d} = myDriver(), p = improvementPlan(d,r); showModal(`<h3>${d.n} 的 7 天安全提分計畫</h3><p>目標：安全分 ${d.s} → ${Math.min(100,d.s+p.gain)}，${p.forward ? '預估前進 ' + p.forward + ' 名' : '先穩定降低事件'}。</p><ul class="mini-checks">${p.reasons.map((item,i)=>`<li>第 ${i+1} 項：${item}</li>`).join('')}<li>每天結束前查看自己的事件摘要；有車況或工時問題直接回報。</li></ul><div class="mb"><button class="btn gho" onclick="closeOv()">稍後再說</button><button class="btn pri" onclick="act('已啟動 7 天安全提分計畫，提醒不影響休息與安全判斷。','ok');closeOv()">開始計畫</button></div>`); };
@@ -696,7 +694,7 @@
   window.destroyNativeMap = destroyNativeMap;
   function sourceFuelAnswer(question) {
     if (!/油耗|耗油|油錢|省油|百公里/.test(question)) return null;
-    const scoped = SESSION.role === 'lead' ? myRegion().drivers : regions.flatMap(region => region.drivers);
+    const scoped = window.SESSION.role === 'lead' ? myRegion().drivers : regions.flatMap(region => region.drivers);
     const ranked = scoped
       .filter(vehicle => Number(vehicle.fuel_per_100km) > 0 && Number(vehicle.mileage_km) > 0)
       .sort((a, b) => Number(b.fuel_per_100km) - Number(a.fuel_per_100km));
@@ -710,7 +708,7 @@
     const sample = Number(top.mileage_km) < 500
       ? `本月僅 ${top.mileage_km.toLocaleString()} km，樣本偏短，需先覆核。`
       : `本月累積油耗 ${top.fuel_liters.toLocaleString()} L、里程 ${top.mileage_km.toLocaleString()} km。`;
-    return `${DATA_TAG} 依 ${top.fuel_month} 的 CAN 累積油耗／里程差分，${SESSION.role === 'lead' ? '本區' : '全隊'}百公里油耗最高的是 <b>${top.c}</b>：<b>${top.fuel_per_100km} L/100km</b>。\n\n· ${sample}\n· 需優先覆核：${signals.join('、') || '來源未發現可列出的異常訊號'}。\n· 下一步：確認等待、裝卸、路況、載重與保修紀錄，再對該車建立改善與追蹤清單；不以單一數值推定駕駛責任。`;
+    return `${DATA_TAG} 依 ${top.fuel_month} 的 CAN 累積油耗／里程差分，${window.SESSION.role === 'lead' ? '本區' : '全隊'}百公里油耗最高的是 <b>${top.c}</b>：<b>${top.fuel_per_100km} L/100km</b>。\n\n· ${sample}\n· 需優先覆核：${signals.join('、') || '來源未發現可列出的異常訊號'}。\n· 下一步：確認等待、裝卸、路況、載重與保修紀錄，再對該車建立改善與追蹤清單；不以單一數值推定駕駛責任。`;
   }
   function originalDataAnswer(question) {
     const topic = [
@@ -729,36 +727,36 @@
     return `${AI_TAG} 依 iTRAQ「${page.t}」資料快照：\n\n${values.map(([label,value]) => `· ${label}：<b>${value}</b>`).join('\n')}\n\n${topic.next} 這些數據也會回填到風險預警與管理決策，但人事與安全處置仍需依權限與人工覆核。`;
   }
   window.aiContext = function () {
-    if (SESSION && SESSION.role === 'shipper') { const order = myOrders()[0]; return { role:'shipper', name:SESSION.acc.name, company:myShipper().name, order, vehicle:order.car.split(' · ')[0] }; }
+    if (window.SESSION && window.SESSION.role === 'shipper') { const order = myOrders()[0]; return { role:'shipper', name:window.SESSION.acc.name, company:myShipper().name, order, vehicle:order.car.split(' · ')[0] }; }
     return baseAiContext();
   };
-  window.aiSuggestions = function () { if (SESSION && SESSION.role === 'shipper') return ['目前貨件狀態是什麼？', '車輛目前狀態？', '貨況更新會怎麼通知我？']; if (SESSION && (SESSION.role === 'fleet' || SESSION.role === 'lead')) return [...baseAiSuggestions(), '目前待保修車輛與工單？', '本月營運月報的油耗與里程？']; return baseAiSuggestions(); };
+  window.aiSuggestions = function () { if (window.SESSION && window.SESSION.role === 'shipper') return ['目前貨件狀態是什麼？', '車輛目前狀態？', '貨況更新會怎麼通知我？']; if (window.SESSION && (window.SESSION.role === 'fleet' || window.SESSION.role === 'lead')) return [...baseAiSuggestions(), '目前待保修車輛與工單？', '本月營運月報的油耗與里程？']; return baseAiSuggestions(); };
   window.aiGenerate = function (question) {
-    if (SESSION && SESSION.role === 'shipper') { const c = aiContext(), o = c.order, index = myOrders().findIndex(order => order.id === o.id); if (/預估到達時間|多久|到達|延誤/.test(question)) return `${AI_TAG} 目前未串接可計算抵達時間的訂單與調度資料，因此不顯示 預估到達時間 或延誤預測。`; if (/車輛|狀況|摘要|貨件/.test(question)) return `${AI_TAG} ${shipmentLabel(index)}目前為「${shipmentStatus(o)}」，負責車輛為 ${o.car}，最後更新 ${shipmentUpdatedAt(o)}。為保護隱私，不提供司機個資或精確位置。`; return `${AI_TAG} 我可以說明貨件狀態、車輛編號與最後更新時間；此介面不顯示地圖、司機聯絡方式，也不能取消貨件。`; }
-    if (SESSION && (SESSION.role === 'fleet' || SESSION.role === 'lead')) {
+    if (window.SESSION && window.SESSION.role === 'shipper') { const c = aiContext(), o = c.order, index = myOrders().findIndex(order => order.id === o.id); if (/預估到達時間|多久|到達|延誤/.test(question)) return `${AI_TAG} 目前未串接可計算抵達時間的訂單與調度資料，因此不顯示 預估到達時間 或延誤預測。`; if (/車輛|狀況|摘要|貨件/.test(question)) return `${AI_TAG} ${shipmentLabel(index)}目前為「${shipmentStatus(o)}」，負責車輛為 ${o.car}，最後更新 ${shipmentUpdatedAt(o)}。為保護隱私，不提供司機個資或精確位置。`; return `${AI_TAG} 我可以說明貨件狀態、車輛編號與最後更新時間；此介面不顯示地圖、司機聯絡方式，也不能取消貨件。`; }
+    if (window.SESSION && (window.SESSION.role === 'fleet' || window.SESSION.role === 'lead')) {
       const fuelAnswer = sourceFuelAnswer(question);
       if (fuelAnswer) return fuelAnswer;
       const answer = originalDataAnswer(question);
       if (answer) return answer;
       return `${AI_TAG} 目前可依來源資料回答車號、GPS、車況、超速、怠速、高引擎負載與 DTC 的摘要。油價、事故、工時、人資、訂單、準時率與 ROI 不在來源中，不能據此產生金額、事故率或人事結論。`;
     }
-    if (SESSION && SESSION.role === 'driver') {
+    if (window.SESSION && window.SESSION.role === 'driver') {
       const { d } = myDriver();
       return `${AI_TAG} ${d.c} 的來源期間為 ${window.HINO_EXCEL_DATA.meta.period}：超速 ${d.overspeed_count.toLocaleString()} 筆、怠速 ${d.idle_pct}%、高引擎負載 ${d.high_load_count.toLocaleString()} 筆、DTC ${d.dtc_count} 筆。系統可建立提醒與覆核清單，但不會推論疲勞、安全帶、路線、預估到達時間 或獎金。`;
     }
     return `${AI_TAG} 請先登入後查看可見的車聯網資料。`;
   };
   window.openAIChat = function () {
-    if (!SESSION || SESSION.role !== 'shipper') return baseOpenAIChat();
+    if (!window.SESSION || window.SESSION.role !== 'shipper') return baseOpenAIChat();
     const suggestions = aiSuggestions().map(item => `<span class="chip2" onclick="aiAsk('${item}')">${item}</span>`).join('');
     window.__chatOpen?.({
       headHtml: `<div class="cn">AI 貨況助理 ${AI_TAG}</div><div class="cs">貨況、車輛與推播說明</div>`,
-      greetingHtml: `<div class="bub ai"><div class="lbl">${AI_TAG}</div>${SESSION.acc.name} 您好，我可以說明貨件狀態、車輛編號與最後更新時間；不顯示地圖或駕駛個資。</div>`,
+      greetingHtml: `<div class="bub ai"><div class="lbl">${AI_TAG}</div>${window.SESSION.acc.name} 您好，我可以說明貨件狀態、車輛編號與最後更新時間；不顯示地圖或駕駛個資。</div>`,
       sugHtml: suggestions,
       placeholder: '例如：目前貨件狀態？',
     });
   };
-  window.addChatActions = function (bubble, question) { if (SESSION && SESSION.role === 'shipper') { const order = myOrders()[0]; bubble.appendChild(el(`<div style="margin-top:9px"><button class="btn pri sm" onclick="toggleShipperPush('${order.id}')">開啟貨況推播</button></div>`)); document.getElementById('chatlog').scrollTop = 99999; return; } baseAddChatActions(bubble, question); };
+  window.addChatActions = function (bubble, question) { if (window.SESSION && window.SESSION.role === 'shipper') { const order = myOrders()[0]; bubble.appendChild(el(`<div style="margin-top:9px"><button class="btn pri sm" onclick="toggleShipperPush('${order.id}')">開啟貨況推播</button></div>`)); document.getElementById('chatlog').scrollTop = 99999; return; } baseAddChatActions(bubble, question); };
 
   attachItraqInteractions();
   tabbar.addEventListener('click', event => {
@@ -796,30 +794,4 @@
     toast('操作已接收', `${label || '此功能'}已執行。`, 'ok');
   });
 
-  TABS.fleet.splice(0, TABS.fleet.length,
-    { id:'decision', l:'管理總覽', render:()=>{} },
-    { id:'monitor', l:'即時監控', render:() => renderItraqPage(2, 'monitor') },
-    { id:'history', l:'歷史車輛', render:() => renderItraqPage(4, 'history') },
-    { id:'task', l:'任務派遣', render:() => renderItraqPage(6, 'task') },
-    { id:'maintenance', l:'保修系統', render:() => renderItraqPage(7, 'maintenance') },
-    { id:'data', l:'數據中心', render:() => renderItraqPage(9, 'data') },
-    { id:'fleet', l:'車隊管理', render:() => renderItraqPage(11, 'fleet') },
-    { id:'settings', l:'系統設定', render:() => renderItraqPage(16, 'settings') }
-  );
-  TABS.lead.splice(0, TABS.lead.length,
-    { id:'monitor', l:'即時監控', render:() => renderItraqPage(2, 'monitor') },
-    { id:'history', l:'歷史車輛', render:() => renderItraqPage(4, 'history') },
-    { id:'task', l:'任務派遣', render:() => renderItraqPage(6, 'task') },
-    { id:'maintenance', l:'保修系統', render:() => renderItraqPage(7, 'maintenance') },
-    { id:'data', l:'數據中心', render:() => renderItraqPage(9, 'data') },
-    { id:'fleet', l:'車隊管理', render:() => renderItraqPage(11, 'fleet') },
-    { id:'settings', l:'系統設定', render:() => renderItraqPage(16, 'settings') },
-    { id:'kpi', l:'本區管理', render:()=>{} },
-    { id:'focus', l:'管理重點', render:()=>{} },
-    { id:'drivers', l:'駕駛', render:()=>{} },
-    { id:'competition', l:'安全競賽', render:()=>{} }
-  );
-  TABS.driver.splice(0, TABS.driver.length, { id:'home', l:'我的車況', render:()=>{} });
-  TABS.shipper.find(tab => tab.id === 'track').render = ()=>{};
-  TABS.shipper.find(tab => tab.id === 'orders').render = ()=>{};
 })();

@@ -1,9 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import telemetryData from '../excel-derived-data.js?raw';
-import enhancements from '../enhancements.js?raw';
-import legacyApp from './legacy/legacy-app.js?raw';
-import LegacyIsland from './legacy/LegacyIsland.jsx';
+import '../excel-derived-data.js';
 import DriverHome from './pages/DriverHome.jsx';
 import FleetOverview from './pages/FleetOverview.jsx';
 import ItraqWorkspace from './pages/ItraqWorkspace.jsx';
@@ -15,14 +12,6 @@ import ShipperShipments from './pages/ShipperShipments.jsx';
 import { ROLE_TABS, tabSpec } from './legacy/tabs.js';
 import './legacy/legacy.css';
 import '../enhancements.css';
-
-function runClassicScript(source) {
-  const script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.textContent = source;
-  document.body.appendChild(script);
-  script.remove();
-}
 
 function bindLegacyControl(id, handler) {
   const element = document.getElementById(id);
@@ -316,27 +305,17 @@ function ItraqApplication() {
     if (booted.current) return;
     booted.current = true;
 
-    try {
-      runClassicScript(telemetryData);
-      runClassicScript(legacyApp);
-      runClassicScript(enhancements);
-
-      // enhancements splice 的 .render 仍指向 legacy innerHTML；converted tab 改 no-op 避免寫進 Island
-      for (const [role, tabs] of Object.entries(ROLE_TABS)) {
-        for (const tab of tabs) {
-          if (!tab.converted) continue;
-          const entry = window.TABS?.[role]?.find((item) => item.id === tab.id);
-          if (entry) entry.render = () => {};
-        }
+    (async () => {
+      try {
+        await import('./legacy/legacy-app.js');
+        await import('../enhancements.js');
+        bindLegacyControl('menuToggle', 'toggleMobileNav');
+        bindLegacyControl('noticeButton', 'openItraqNotifications');
+        hookReactNav(setNav, setLoginRole);
+      } catch (error) {
+        console.error('Unable to start iTRAQ application', error);
       }
-
-      bindLegacyControl('menuToggle', 'toggleMobileNav');
-      bindLegacyControl('noticeButton', 'openItraqNotifications');
-      hookReactNav(setNav, setLoginRole);
-    } catch (error) {
-      console.error('Unable to start iTRAQ application', error);
-      document.getElementById('screen').innerHTML = '<div class="empty"><b>頁面載入失敗</b><p>請重新整理後再試。</p></div>';
-    }
+    })();
   }, []);
 
   useEffect(() => {
@@ -355,7 +334,6 @@ function ItraqApplication() {
         ? <LoginPage key={loginRole} role={loginRole} onBack={() => setLoginRole(null)} />
         : <Welcome onPick={setLoginRole} />)}
       {nav.role && ReactPage && <ReactPage key={islandKey} pageNo={nav.itraqPage} />}
-      <LegacyIsland islandKey={islandKey} hidden={!nav.role || converted} />
       <Fabs />
       <Overlays />
     </div>

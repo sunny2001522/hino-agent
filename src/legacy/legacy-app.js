@@ -77,26 +77,35 @@ let SESSION=null; // {role, acc}
 /* =====================================================================
  NAV: screens + tab bars per identity
 ===================================================================== */
-const screen=document.getElementById('screen');
 const tabbar=document.getElementById('tabbar');
 const appbar=document.getElementById('appbar');
 
 const TABS={
  fleet:[
- {id:"todo", l:"待辦", render:()=>{}},
- {id:"analytic",l:"分析", render:()=>{}},
- {id:"team", l:"車隊", render:()=>{}},
- {id:"me", l:"我的", render:()=>{}},
+ {id:"decision", l:"管理總覽", render:()=>{}},
+ {id:"monitor", l:"即時監控", render:()=>{}},
+ {id:"history", l:"歷史車輛", render:()=>{}},
+ {id:"task", l:"任務派遣", render:()=>{}},
+ {id:"maintenance", l:"保修系統", render:()=>{}},
+ {id:"data", l:"數據中心", render:()=>{}},
+ {id:"fleet", l:"車隊管理", render:()=>{}},
+ {id:"settings", l:"系統設定", render:()=>{}},
  ],
  lead:[
- {id:"kpi", l:"本區", render:()=>{}},
- {id:"focus", l:"重點", render:()=>{}},
- {id:"drivers",l:"駕駛", render:()=>{}},
+ {id:"monitor", l:"即時監控", render:()=>{}},
+ {id:"history", l:"歷史車輛", render:()=>{}},
+ {id:"task", l:"任務派遣", render:()=>{}},
+ {id:"maintenance", l:"保修系統", render:()=>{}},
+ {id:"data", l:"數據中心", render:()=>{}},
+ {id:"fleet", l:"車隊管理", render:()=>{}},
+ {id:"settings", l:"系統設定", render:()=>{}},
+ {id:"kpi", l:"本區管理", render:()=>{}},
+ {id:"focus", l:"管理重點", render:()=>{}},
+ {id:"drivers", l:"駕駛", render:()=>{}},
+ {id:"competition", l:"安全競賽", render:()=>{}},
  ],
  driver:[
- {id:"home", l:"首頁", render:()=>{}},
- {id:"task", l:"任務", render:()=>{}},
- {id:"alert", l:"提醒", render:()=>{}},
+ {id:"home", l:"我的車況", render:()=>{}},
  ],
  shipper:[
  {id:"track", l:"追蹤", render:()=>{}},
@@ -109,6 +118,7 @@ window.ACCOUNTS=ACCOUNTS;
 
 function login(role){
  SESSION={role, acc:ACCOUNTS[role]};
+ window.SESSION=SESSION;
  appbar.style.display="flex";
  appbar.classList.remove('mobile-nav-open');
  document.getElementById('waName').textContent=SESSION.acc.name;
@@ -124,14 +134,14 @@ function login(role){
  document.getElementById('tourMask').classList.remove('on');
 }
 function logout(){
- SESSION=null;curTab=null;
+ SESSION=null;window.SESSION=null;curTab=null;
  appbar.classList.remove('mobile-nav-open');
  appbar.style.display="none";tabbar.style.display="none";
  document.getElementById('aifab').style.display="none";
  document.getElementById('simfab').style.display="none";
  if(animTimer)clearInterval(animTimer);
  if(typeof chatTyping!=='undefined'&&chatTyping)clearInterval(chatTyping);
- renderWelcome();
+ window.renderWelcome();
 }
 function buildTabs(){
  const list=TABS[SESSION.role];
@@ -164,7 +174,6 @@ function gotoTab(id){
  const t=TABS[SESSION.role].find(x=>x.id===id);
  t.render();
  tabbar.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
- screen.scrollTo({top:0,behavior:'smooth'});
 }
 
 /* =====================================================================
@@ -174,35 +183,9 @@ function renderWelcome(){
  appbar.style.display="none";tabbar.style.display="none";
  closeMobileNav();
  document.getElementById('menuToggle').hidden=true;
- const cards=Object.entries(ROLES).map(([key,r])=>`
- <button type="button" class="idcard idcard-simple" style="--role-color:${r.color}" onclick="${r.href?`location.href='${r.href}'`:`renderLoginPage('${key}')`}">
- <span>${r.label}</span>
- </button>`).join("");
- screen.innerHTML=`
- <div class="welcome welcome-simple">
- <div class="wpick">
- <div class="lbl">選擇身份</div>
- <div class="identity-grid">${cards}</div>
- </div>
- </div>`;
- screen.scrollTo({top:0});
 }
 
-function renderLoginPage(role){
- const r=ROLES[role],acc=ACCOUNTS[role];
- screen.innerHTML=`
- <div class="loginpg">
- <button class="back" onclick="renderWelcome()">← 返回選擇身份</button>
- <h2 style="color:${r.color}">${r.label} 登入</h2>
- <div class="field">
- <label>手機號碼</label>
- <input id="loginInput" type="text" inputmode="tel" value="${acc.phone}" aria-label="手機號碼" autocomplete="tel">
- </div>
- <button class="btn pri block" onclick="doLogin('${role}')">登入</button>
- </div>`;
- screen.scrollTo({top:0});
- setTimeout(()=>{const i=document.getElementById('loginInput');if(i)i.focus();},120);
-}
+function renderLoginPage(role){}
 function doLogin(role){
  const v=(document.getElementById('loginInput').value||'').trim();
  if(!v){toast('請先輸入手機號碼','請確認手機號碼後再登入。','wn');return;}
@@ -715,7 +698,7 @@ function showModal(h){window.__modalShow?.(h);}
 function toast(t,m,k){window.__toastPush?.(t,m,k);}
 function act(m,k){toast('已執行',m,k||'ok');}
 function closeOv(){window.__modalClose?.();}
-ov.addEventListener('click',e=>{if(e.target===ov)closeOv();});
+ov?.addEventListener('click',e=>{if(e.target===ov)closeOv();});
 
 /* =====================================================================
  AI 安全教練｜事前風險預測（全隊 / 區域）— 從「事後裁罰」→「事前預測」
@@ -1151,5 +1134,42 @@ function runSim(k){
  }
 }
 
-/* boot: React owns welcome / login; island fills after login() */
+window.regions=regions;
+window.TABS=TABS;
+window.tabbar=tabbar;
+window.el=el;
+window.TARGET_PER_DRIVER=TARGET_PER_DRIVER;
+window.ordersByRegion=ordersByRegion;
+window.SESSION=SESSION;
+window.curTab=curTab;
+window.login=login;
+window.logout=logout;
+window.gotoTab=gotoTab;
+window.toast=toast;
+window.showModal=showModal;
+window.closeOv=closeOv;
+window.act=act;
+window.openAIChat=openAIChat;
+window.aiAskInput=aiAskInput;
+window.aiAsk=aiAsk;
+window.myDriver=myDriver;
+window.myRegion=myRegion;
+window.myOrders=myOrders;
+window.myShipper=myShipper;
+window.lvl=lvl;
+window.scoreColor=scoreColor;
+window.voiceCall=voiceCall;
+window.openHandover=openHandover;
+window.openFuelCoach=openFuelCoach;
+window.openFleetMail=openFleetMail;
+window.msgLead=msgLead;
+window.toggleMobileNav=toggleMobileNav;
+window.renderWelcome=renderWelcome;
+window.aiContext=aiContext;
+window.aiSuggestions=aiSuggestions;
+window.aiGenerate=aiGenerate;
+window.addChatActions=addChatActions;
+window.openSafetyCoach=openSafetyCoach;
+
+/* boot: React owns welcome / login */
 
