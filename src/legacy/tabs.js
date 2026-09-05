@@ -8,7 +8,7 @@ export const ROLE_TABS = {
     { id: 'maintenance', l: '保修系統', converted: false, page: 7 },
     { id: 'data', l: '數據中心', converted: false, page: 9 },
     { id: 'fleet', l: '車隊管理', converted: false, page: 11 },
-    { id: 'settings', l: '系統設定', converted: false, page: 16 },
+    { id: 'settings', l: '系統設定', converted: true, page: 16 },
   ],
   lead: [
     { id: 'monitor', l: '即時監控', converted: false, page: 2 },
@@ -17,7 +17,7 @@ export const ROLE_TABS = {
     { id: 'maintenance', l: '保修系統', converted: false, page: 7 },
     { id: 'data', l: '數據中心', converted: false, page: 9 },
     { id: 'fleet', l: '車隊管理', converted: false, page: 11 },
-    { id: 'settings', l: '系統設定', converted: false, page: 16 },
+    { id: 'settings', l: '系統設定', converted: true, page: 16 },
     { id: 'kpi', l: '本區管理', converted: true },
     { id: 'focus', l: '管理重點', converted: true },
     { id: 'drivers', l: '駕駛', converted: true },

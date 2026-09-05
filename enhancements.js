@@ -813,6 +813,12 @@
   window.shipmentLabel = shipmentLabel;
   window.shipmentStatus = shipmentStatus;
   window.shipmentUpdatedAt = shipmentUpdatedAt;
+  window.nativeFilterDialog = nativeFilterDialog;
+  window.updateNativePager = updateNativePager;
+  window.nativeActionFeedback = nativeActionFeedback;
+  window.maintenanceDialog = maintenanceDialog;
+  window.renderItraqPage = renderItraqPage;
+  window.refreshNativeMapMarkers = refreshNativeMapMarkers;
   function sourceFuelAnswer(question) {
     if (!/油耗|耗油|油錢|省油|百公里/.test(question)) return null;
     const scoped = SESSION.role === 'lead' ? myRegion().drivers : regions.flatMap(region => region.drivers);
