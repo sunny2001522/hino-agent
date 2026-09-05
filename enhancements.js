@@ -658,6 +658,7 @@
     closeOv();
     renderExecutiveBrief();
     toast('已建立人資覆核案件', kind === 'recognition' ? '請人資比對人員主檔，補齊薪酬與績效資料。' : '請總負責人先完成原因覆核與改善支持，再送人資個案審查。', 'ok');
+    window.onWorkforceReviewChange?.();
   };
   window.openExecutiveCompetition = function () {
     const season = activeCompetition();
@@ -800,6 +801,10 @@
   window.seasonalTeamRanks = seasonalTeamRanks;
   window.seasonalTeamRankRows = seasonalTeamRankRows;
   window.competitionRules = competitionRules;
+  window.executiveManagementFocus = executiveManagementFocus;
+  window.workforceCandidates = workforceCandidates;
+  window.workforceReviewBadge = workforceReviewBadge;
+  window.driverLeaderboardRows = driverLeaderboardRows;
   window.renderDriverHome = renderDriverHomeEnhanced;
   window.renderDriverTask = renderDriverTaskEnhanced;
   window.renderDriverAlerts = renderDriverAlertsEnhanced;

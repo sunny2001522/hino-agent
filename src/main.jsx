@@ -5,6 +5,7 @@ import enhancements from '../enhancements.js?raw';
 import legacyApp from './legacy/legacy-app.js?raw';
 import LegacyIsland from './legacy/LegacyIsland.jsx';
 import DriverHome from './pages/DriverHome.jsx';
+import FleetOverview from './pages/FleetOverview.jsx';
 import LeadCompetition from './pages/LeadCompetition.jsx';
 import LeadDrivers from './pages/LeadDrivers.jsx';
 import LeadFocus from './pages/LeadFocus.jsx';
@@ -38,6 +39,7 @@ function applyChrome(role) {
 
 const REACT_PAGES = {
   'driver:home': DriverHome,
+  'fleet:decision': FleetOverview,
   'shipper:track': ShipperShipments,
   'shipper:orders': ShipperShipments,
   'lead:kpi': LeadKpi,
