@@ -8,10 +8,12 @@ import LeadCompetition from './pages/LeadCompetition.jsx';
 import LeadDrivers from './pages/LeadDrivers.jsx';
 import LeadFocus from './pages/LeadFocus.jsx';
 import LeadKpi from './pages/LeadKpi.jsx';
+import PartnerWorkbench from './pages/PartnerWorkbench.jsx';
 import ShipperShipments from './pages/ShipperShipments.jsx';
 import { ROLE_TABS, tabSpec } from './legacy/tabs.js';
 import './legacy/legacy.css';
 import '../enhancements.css';
+import './partner/workbench.css';
 
 function bindLegacyControl(id, handler) {
   const element = document.getElementById(id);
@@ -29,7 +31,10 @@ function applyChrome(role) {
 
 const REACT_PAGES = {
   'driver:home': DriverHome,
-  'fleet:decision': FleetOverview,
+  'fleet:decision': PartnerWorkbench,
+  'fleet:overview': FleetOverview,
+  'lead:partner': PartnerWorkbench,
+  'driver:partner': PartnerWorkbench,
   'fleet:settings': ItraqWorkspace,
   'lead:settings': ItraqWorkspace,
   'fleet:data': ItraqWorkspace,

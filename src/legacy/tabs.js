@@ -1,7 +1,8 @@
 // Mirrors enhancements.js TABS after splice. converted flips in later page commits.
 export const ROLE_TABS = {
   fleet: [
-    { id: 'decision', l: '管理總覽', converted: true },
+    { id: 'decision', l: '智慧夥伴', converted: true },
+    { id: 'overview', l: '管理總覽', converted: true },
     { id: 'monitor', l: '即時監控', converted: true, page: 2 },
     { id: 'history', l: '歷史車輛', converted: true, page: 4 },
     { id: 'task', l: '任務派遣', converted: true, page: 6 },
@@ -11,6 +12,7 @@ export const ROLE_TABS = {
     { id: 'settings', l: '系統設定', converted: true, page: 16 },
   ],
   lead: [
+    { id: 'partner', l: '智慧夥伴', converted: true },
     { id: 'monitor', l: '即時監控', converted: true, page: 2 },
     { id: 'history', l: '歷史車輛', converted: true, page: 4 },
     { id: 'task', l: '任務派遣', converted: true, page: 6 },
@@ -24,6 +26,7 @@ export const ROLE_TABS = {
     { id: 'competition', l: '安全競賽', converted: true },
   ],
   driver: [
+    { id: 'partner', l: '改善與回報', converted: true },
     { id: 'home', l: '我的車況', converted: true },
   ],
   shipper: [
