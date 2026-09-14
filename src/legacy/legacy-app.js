@@ -378,38 +378,22 @@ dims=window.HINO_EXCEL_DATA.dims.map(item=>({
 dimSolData=window.HINO_EXCEL_DATA.dimSolData;
 function lineChart(series,opts){
  opts=opts||{};
- const pred=opts.predict||[]; // 未來預測值（接在歷史後面）
- const nFut=pred.length,total=MONTHS.length+nFut;
+ const total=MONTHS.length;
  const W=560,H=220,pl=40,pr=14,pt=12,pb=24;
- const all=series.flatMap(s=>s.vals).concat(pred);
+ const all=series.flatMap(s=>s.vals);
  let mn=opts.min!=null?opts.min:Math.min(...all),mx=opts.max!=null?opts.max:Math.max(...all);if(mn===mx){mn-=1;mx+=1;}const pad=(mx-mn)*.12;mn-=pad;mx+=pad;
  const x=i=>pl+(W-pl-pr)*(i/(total-1)),y=v=>pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));
  let g="";for(let k=0;k<=3;k++){const gv=mn+(mx-mn)*k/3,gy=y(gv);g+=`<line x1="${pl}" y1="${gy}" x2="${W-pr}" y2="${gy}" stroke="#e4ebed"/><text x="${pl-6}" y="${gy+4}" text-anchor="end">${Math.round(gv)}</text>`;}
- const futLbl=['12月','1月','2月'];
  MONTHS.forEach((m,i)=>{if(i%2===0||i===MONTHS.length-1)g+=`<text x="${x(i)}" y="${H-7}" text-anchor="middle">${m}</text>`;});
- pred.forEach((_,k)=>{g+=`<text x="${x(MONTHS.length+k)}" y="${H-7}" text-anchor="middle" fill="#a08bd0">${futLbl[k]||''}</text>`;});
- // 預測區底色 + 分隔線
- if(nFut){const sx=x(MONTHS.length-1);g+=`<rect x="${sx}" y="${pt}" width="${W-pr-sx}" height="${H-pt-pb}" fill="#f2edfb" opacity=".7"/><line x1="${sx}" y1="${pt}" x2="${sx}" y2="${H-pb}" stroke="#c9b8e8" stroke-dasharray="3 3"/><text x="${(sx+W-pr)/2}" y="${pt+12}" text-anchor="middle" fill="#7e57c2" font-size="10">AI 預測（線性趨勢外推）</text>`;}
  let ln="";series.forEach(s=>{const p=s.vals.map((v,i)=>`${x(i)},${y(v)}`).join(" ");ln+=`<polyline points="${p}" fill="none" stroke="${s.color}" stroke-width="${s.bold?3:1.5}" opacity="${s.bold?1:.45}" stroke-linejoin="round"/>`;if(s.bold)s.vals.forEach((v,i)=>ln+=`<circle cx="${x(i)}" cy="${y(v)}" r="${i===s.vals.length-1?4:2.4}" fill="${s.color}"/>`);});
- // 預測虛線（接續主線末端）
- if(nFut){const lastI=MONTHS.length-1,lastV=series.find(s=>s.bold).vals.at(-1);const pts=[[x(lastI),y(lastV)]].concat(pred.map((v,k)=>[x(MONTHS.length+k),y(v)]));
- ln+=`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#7e57c2" stroke-width="2.6" stroke-dasharray="5 4" stroke-linejoin="round"/>`+pred.map((v,k)=>`<circle cx="${x(MONTHS.length+k)}" cy="${y(v)}" r="3.2" fill="#7e57c2"/>`).join('');}
  return `<svg class="lc" viewBox="0 0 ${W} ${H}">${g}${ln}</svg>`;
-}
-// 各面向的未來 3 個月 AI 預測值（線性趨勢外推，非情境模擬）
-function metricPredict(m){
- const d=m.data,last=d.at(-1),slope=(d.at(-1)-d.at(-4))/3;
- if(m.key==='safety')return null; // 安全分改在專屬預測卡呈現
- // 百分比類（怠速/油耗）加上下限夾制，避免單調累積序列給出無意義外推
- const pct=m.key==='idle'||m.key==='fuel';
- return [1,2,3].map(k=>{let v=last+slope*k;if(pct)v=Math.max(0,Math.min(100,v));return +v.toFixed(1);});
 }
 function renderMetricTabs(){document.getElementById("metricTabs").innerHTML=metrics.map(m=>`<div class="regchip ${curMetric===m.key?'on':''}" onclick="setMetric('${m.key}')">${m.name}</div>`).join("");}
 function setMetric(k){curMetric=k;renderMetricTabs();renderTrend();}
 function renderTrend(){const m=metrics.find(x=>x.key===curMetric);
  const series=regions.map(r=>({vals:regionSeries(m,r),color:r.color}));
  series.push({vals:m.data,color:"#7bb42e",bold:true});
- document.getElementById("chart_metric").innerHTML=lineChart(series,{min:m.min,max:m.max,predict:metricPredict(m)});
+ document.getElementById("chart_metric").innerHTML=lineChart(series,{min:m.min,max:m.max});
  document.getElementById("m_legend").innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:16px;height:3px;border-radius:3px;background:#7bb42e;display:inline-block"></i>全隊平均</span>`+
  regions.map(r=>`<span style="display:inline-flex;align-items:center;gap:5px"><i style="width:14px;height:3px;border-radius:3px;background:${r.color};display:inline-block"></i>${r.name}</span>`).join("");
  document.getElementById("m_ttl").textContent=m.name;

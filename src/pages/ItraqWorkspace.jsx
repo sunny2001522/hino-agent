@@ -92,28 +92,46 @@ function NativePager() {
   );
 }
 
+function metricLabel(v, unit, fmt) {
+  return v == null ? '缺' : `${fmt(v)}${unit}`;
+}
+
 function barInner(values, color, suffix, title, month, months, fmt) {
-  const max = Math.max(...values, 1), width = 720, height = 188, pad = { l: 35, r: 12, t: 16, b: 30 };
+  const max = Math.max(...values.filter((v) => v != null), 1), width = 720, height = 188, pad = { l: 35, r: 12, t: 16, b: 30 };
   const graphW = width - pad.l - pad.r, graphH = height - pad.t - pad.b, step = graphW / values.length;
   const grid = [0, .25, .5, .75, 1].map((ratio) => `<line x1="${pad.l}" x2="${width - pad.r}" y1="${pad.t + graphH * (1 - ratio)}" y2="${pad.t + graphH * (1 - ratio)}" class="mr-grid"/>`).join('');
   const columns = values.map((item, index) => {
-    const h = Math.max(2, graphH * item / max), x = pad.l + index * step + step * .24, y = pad.t + graphH - h;
-    return `<g><title>${months[index]}：${fmt(item)}${suffix}</title><rect x="${x}" y="${y}" width="${Math.max(5, step * .52)}" height="${h}" rx="2" fill="${color}"/><text x="${pad.l + index * step + step / 2}" y="${height - 9}" text-anchor="middle">${index + 1}</text></g>`;
+    const x = pad.l + index * step + step * .24;
+    const label = `<text x="${pad.l + index * step + step / 2}" y="${height - 9}" text-anchor="middle">${index + 1}</text>`;
+    const tip = `<title>${months[index]}：${metricLabel(item, suffix, fmt)}</title>`;
+    if (item == null) return `<g>${tip}${label}</g>`;
+    const h = Math.max(2, graphH * item / max), y = pad.t + graphH - h;
+    return `<g>${tip}<rect x="${x}" y="${y}" width="${Math.max(5, step * .52)}" height="${h}" rx="2" fill="${color}"/>${label}</g>`;
   }).join('');
   const monthLabel = months[month];
-  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${title}">${grid}<text x="${pad.l}" y="12" class="mr-unit">${suffix}</text>${columns}</svg><div class="mr-legend"><span><i style="background:${color}"></i>${title}</span><b>${monthLabel}：${fmt(values[month])}${suffix}</b></div>`;
+  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${title}">${grid}<text x="${pad.l}" y="12" class="mr-unit">${suffix}</text>${columns}</svg><div class="mr-legend"><span><i style="background:${color}"></i>${title}</span><b>${monthLabel}：${metricLabel(values[month], suffix, fmt)}</b></div>`;
 }
 
 function comboInner(metrics, month, months, fmt, value) {
-  const speed = metrics.speed, load = metrics.load, fuel = metrics.fuel, maxBars = Math.max(...speed, ...load, 1), maxFuel = Math.max(...fuel, 1), width = 720, height = 188, pad = { l: 35, r: 18, t: 16, b: 30 }, graphH = height - pad.t - pad.b, step = (width - pad.l - pad.r) / speed.length;
+  const speed = metrics.speed, load = metrics.load, fuel = metrics.fuel, maxBars = Math.max(...[...speed, ...load].filter((v) => v != null), 1), maxFuel = Math.max(...fuel.filter((v) => v != null), 1), width = 720, height = 188, pad = { l: 35, r: 18, t: 16, b: 30 }, graphH = height - pad.t - pad.b, step = (width - pad.l - pad.r) / speed.length;
   const grid = [0, .25, .5, .75, 1].map((ratio) => `<line x1="${pad.l}" x2="${width - pad.r}" y1="${pad.t + graphH * (1 - ratio)}" y2="${pad.t + graphH * (1 - ratio)}" class="mr-grid"/>`).join('');
   const bars = speed.map((item, index) => {
-    const x = pad.l + index * step + step * .13, sw = Math.max(3, step * .23), sh = Math.max(2, graphH * item / maxBars), lh = Math.max(2, graphH * load[index] / maxBars);
-    return `<g><title>${months[index]}：超速 ${fmt(item)} 筆、高引擎負載 ${fmt(load[index])} 筆、百公里油耗 ${fmt(fuel[index])} L</title><rect x="${x}" y="${pad.t + graphH - sh}" width="${sw}" height="${sh}" rx="2" fill="#7ec6ca"/><rect x="${x + sw + 2}" y="${pad.t + graphH - lh}" width="${sw}" height="${lh}" rx="2" fill="#f2b4bd"/><text x="${pad.l + index * step + step / 2}" y="${height - 9}" text-anchor="middle">${index + 1}</text></g>`;
+    const x = pad.l + index * step + step * .13, sw = Math.max(3, step * .23);
+    const speedBar = item == null ? '' : `<rect x="${x}" y="${pad.t + graphH - Math.max(2, graphH * item / maxBars)}" width="${sw}" height="${Math.max(2, graphH * item / maxBars)}" rx="2" fill="#7ec6ca"/>`;
+    const loadBar = load[index] == null ? '' : `<rect x="${x + sw + 2}" y="${pad.t + graphH - Math.max(2, graphH * load[index] / maxBars)}" width="${sw}" height="${Math.max(2, graphH * load[index] / maxBars)}" rx="2" fill="#f2b4bd"/>`;
+    return `<g><title>${months[index]}：超速 ${metricLabel(item, ' 筆', fmt)}、高引擎負載 ${metricLabel(load[index], ' 筆', fmt)}、百公里油耗 ${metricLabel(fuel[index], ' L', fmt)}</title>${speedBar}${loadBar}<text x="${pad.l + index * step + step / 2}" y="${height - 9}" text-anchor="middle">${index + 1}</text></g>`;
   }).join('');
-  const line = fuel.map((item, index) => `${pad.l + index * step + step / 2},${pad.t + graphH - (item / maxFuel) * graphH}`).join(' ');
+  const segs = [];
+  let cur = [];
+  fuel.forEach((item, index) => {
+    if (item == null) { if (cur.length > 1) segs.push(cur); cur = []; return; }
+    cur.push(`${pad.l + index * step + step / 2},${pad.t + graphH - (item / maxFuel) * graphH}`);
+  });
+  if (cur.length > 1) segs.push(cur);
+  const line = segs.map((pts) => `<polyline points="${pts.join(' ')}" class="mr-line"/>`).join('');
+  const dots = fuel.map((item, index) => item == null ? '' : `<circle cx="${pad.l + index * step + step / 2}" cy="${pad.t + graphH - (item / maxFuel) * graphH}" r="3" class="mr-dot"/>`).join('');
   const monthLabel = months[month];
-  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="每月超速、高引擎負載與油耗趨勢">${grid}${bars}<polyline points="${line}" class="mr-line"/>${fuel.map((item, index) => `<circle cx="${pad.l + index * step + step / 2}" cy="${pad.t + graphH - (item / maxFuel) * graphH}" r="3" class="mr-dot"/>`).join('')}</svg><div class="mr-legend"><span><i class="mr-a"></i>超速</span><span><i class="mr-b"></i>高引擎負載</span><span><i class="mr-c"></i>百公里油耗</span><b>${monthLabel}：${fmt(value('fuel'))} L/100km</b></div>`;
+  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="每月超速、高引擎負載與油耗趨勢">${grid}${bars}${line}${dots}</svg><div class="mr-legend"><span><i class="mr-a"></i>超速</span><span><i class="mr-b"></i>高引擎負載</span><span><i class="mr-c"></i>百公里油耗</span><b>${monthLabel}：${metricLabel(value('fuel'), ' L/100km', fmt)}</b></div>`;
 }
 
 function Chart({ html }) {
@@ -180,7 +198,8 @@ export default function ItraqWorkspace({ pageNo }) {
           const month = monthIndex();
           const rows = [['月份', '計算安全分', '超速紀錄', '怠速佔比', '高引擎負載', 'DTC', '百公里油耗']].concat(window.HINO_EXCEL_DATA.months.map((label, index) => {
             const metrics = Object.fromEntries(window.HINO_EXCEL_DATA.metrics.map((metric) => [metric.key, metric.data]));
-            return [label, metrics.safety[index], metrics.speed[index], metrics.idle[index], metrics.load[index], metrics.dtc[index], metrics.fuel[index]];
+            const cell = (v) => (v == null ? '缺' : v);
+            return [label, cell(metrics.safety[index]), cell(metrics.speed[index]), cell(metrics.idle[index]), cell(metrics.load[index]), cell(metrics.dtc[index]), cell(metrics.fuel[index])];
           }));
           const csv = '\ufeff' + rows.map((row) => row.join(',')).join('\n');
           const link = document.createElement('a');
@@ -704,7 +723,7 @@ export default function ItraqWorkspace({ pageNo }) {
     const month = monthIndex();
     const metrics = Object.fromEntries(data.metrics.map((metric) => [metric.key, metric.data]));
     const monthLabel = data.months[month];
-    const value = (key) => Number(metrics[key]?.[month] || 0);
+    const value = (key) => { const v = metrics[key]?.[month]; return v == null ? null : Number(v); };
     const fmt = (number) => Number(number).toLocaleString('zh-TW', { maximumFractionDigits: 2 });
     const maintenance = data.maintenance || {};
     const aggregate = data.aggregate || {};
@@ -731,19 +750,19 @@ export default function ItraqWorkspace({ pageNo }) {
             <article className="mr-panel mr-mobility">
               <h3>車輛移動率</h3>
               <div className="mr-summary">
-                <div><i>◷</i><span>計算安全分</span><b>{`${fmt(value('safety'))} 分`}</b></div>
-                <div><i>◫</i><span>怠速佔比</span><b>{`${fmt(value('idle'))}%`}</b></div>
-                <div><i>▣</i><span>高引擎負載</span><b>{`${fmt(value('load'))} 筆`}</b></div>
+                <div><i>◷</i><span>計算安全分</span><b>{metricLabel(value('safety'), ' 分', fmt)}</b></div>
+                <div><i>◫</i><span>怠速佔比</span><b>{metricLabel(value('idle'), '%', fmt)}</b></div>
+                <div><i>▣</i><span>高引擎負載</span><b>{metricLabel(value('load'), ' 筆', fmt)}</b></div>
               </div>
               <Chart html={barInner(metrics.safety, '#61bfc2', ' 分', '每月計算安全分', month, data.months, fmt)} />
             </article>
             <article className="mr-panel mr-drive">
               <h3>車輛行駛數據</h3>
               <div className="mr-summary mr-summary-four">
-                <div><i>⌁</i><span>超速紀錄</span><b>{`${fmt(value('speed'))} 筆`}</b></div>
-                <div><i>◌</i><span>高引擎負載</span><b>{`${fmt(value('load'))} 筆`}</b></div>
-                <div><i>△</i><span>百公里油耗</span><b>{`${fmt(value('fuel'))} L`}</b></div>
-                <div><i>▧</i><span>DTC</span><b>{`${fmt(value('dtc'))} 筆`}</b></div>
+                <div><i>⌁</i><span>超速紀錄</span><b>{metricLabel(value('speed'), ' 筆', fmt)}</b></div>
+                <div><i>◌</i><span>高引擎負載</span><b>{metricLabel(value('load'), ' 筆', fmt)}</b></div>
+                <div><i>△</i><span>百公里油耗</span><b>{metricLabel(value('fuel'), ' L', fmt)}</b></div>
+                <div><i>▧</i><span>DTC</span><b>{metricLabel(value('dtc'), ' 筆', fmt)}</b></div>
               </div>
               <Chart html={comboInner(metrics, month, data.months, fmt, value)} />
             </article>
@@ -753,7 +772,7 @@ export default function ItraqWorkspace({ pageNo }) {
                 <div className="mr-signal-ring"><b>{`${fmt(dtcVehicles)} 台`}</b><span>有 DTC 車號</span></div>
                 <div>
                   <div className="mr-maint-stat"><i>▣</i><span>當月 DTC 紀錄</span><b>{`${fmt(dtcRecords)} 筆`}</b></div>
-                  <div className="mr-maint-stat"><i>◫</i><span>高引擎負載訊號</span><b>{`${fmt(value('load'))} 筆`}</b></div>
+                  <div className="mr-maint-stat"><i>◫</i><span>高引擎負載訊號</span><b>{metricLabel(value('load'), ' 筆', fmt)}</b></div>
                   <div className="mr-maint-stat"><i>◎</i><span>可用維護資料</span><b>CAN／DTC</b></div>
                 </div>
               </div>
