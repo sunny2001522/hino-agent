@@ -21,9 +21,9 @@ function rankOf(cat, car) {
 }
 
 const WATCH = {
-  first: {id: 'first', label: '第一次出現異常', how: '留意'},
-  rare: {id: 'rare', label: '偶發異常', how: '跟進'},
-  habit: {id: 'habit', label: '常態性異常', how: '優先'},
+  first: {id: 'first', label: '低量訊號待覆核', how: '留意'},
+  rare: {id: 'rare', label: '中量訊號待覆核', how: '跟進'},
+  habit: {id: 'habit', label: '高量訊號待覆核', how: '優先'},
 };
 
 function watch(cat, d) {
@@ -176,7 +176,7 @@ function render(id) {
   document.getElementById('scoreVal').style.color = tint(avg);
   document.getElementById('scoreLabel').textContent = cat.name + ' · ' + myRegion.drivers.length + ' 台平均';
   const deltaEl = document.getElementById('scoreDelta');
-  deltaEl.textContent = `較上月 ${signed(mom)}`;
+  deltaEl.textContent = `較前次有資料月份 ${signed(mom)}`;
   deltaEl.className = 's ' + (mom > 0 ? 'up' : mom < 0 ? 'down' : '');
   document.getElementById('rankVal').textContent = n.mid;
   document.getElementById('rankOf').textContent = `差 ${n.bad} · 好 ${n.ok}`;
