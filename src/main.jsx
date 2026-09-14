@@ -140,6 +140,7 @@ function hookReactNav(setNav, setLoginRole) {
 
   const origLogout = window.logout;
   window.logout = () => {
+    window.closeOv?.();
     origLogout();
     applyChrome(null);
   };
@@ -205,23 +206,22 @@ const Fabs = memo(function Fabs() {
 });
 
 let toastSeq = 0;
+let toastSink = () => {};
+window.__toastPush = (t, m, k) => toastSink(t, m, k);
 
 function Toasts() {
   const [toasts, setToasts] = useState([]);
-
-  useEffect(() => {
-    window.__toastPush = (t, m, k) => {
-      const id = ++toastSeq;
-      setToasts((prev) => [...prev, { id, t, m, k, exiting: false }]);
+  // ponytail: render-assign sink — effect cleanup on remount dropped the live setter
+  toastSink = (t, m, k) => {
+    const id = ++toastSeq;
+    setToasts((prev) => [...prev, { id, t, m, k, exiting: false }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.map((x) => (x.id === id ? { ...x, exiting: true } : x)));
       setTimeout(() => {
-        setToasts((prev) => prev.map((x) => (x.id === id ? { ...x, exiting: true } : x)));
-        setTimeout(() => {
-          setToasts((prev) => prev.filter((x) => x.id !== id));
-        }, 300);
-      }, 4200);
-    };
-    return () => { window.__toastPush = undefined; };
-  }, []);
+        setToasts((prev) => prev.filter((x) => x.id !== id));
+      }, 300);
+    }, 4200);
+  };
 
   return (
     <div id="toasts">
@@ -257,19 +257,18 @@ function ChatBody({ headHtml, greetingHtml, sugHtml, placeholder }) {
   );
 }
 
+let modalSink = { show() {}, close() {}, chat() {} };
+window.__modalShow = (h) => modalSink.show(h);
+window.__modalClose = () => modalSink.close();
+window.__chatOpen = (chat) => modalSink.chat(chat);
+
 function Modal() {
   const [state, setState] = useState({ open: false, html: '', chat: null });
-
-  useEffect(() => {
-    window.__modalShow = (h) => setState({ open: true, html: h, chat: null });
-    window.__modalClose = () => setState((prev) => ({ ...prev, open: false }));
-    window.__chatOpen = (chat) => setState({ open: true, html: '', chat });
-    return () => {
-      window.__modalShow = undefined;
-      window.__modalClose = undefined;
-      window.__chatOpen = undefined;
-    };
-  }, []);
+  modalSink = {
+    show: (h) => setState({ open: true, html: h, chat: null }),
+    close: () => setState((prev) => ({ ...prev, open: false })),
+    chat: (chat) => setState({ open: true, html: '', chat }),
+  };
 
   return (
     <div className={`ov${state.open ? ' on' : ''}`} id="ov">
