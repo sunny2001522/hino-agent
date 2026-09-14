@@ -14,12 +14,13 @@ function rankOf(cat, car) {
 }
 
 function moodOf(d) {
-  if(d.overspeed_pct>=15)return {tag:'待覆核',line:'歷史超速紀錄偏高，請先確認限速資料與派車條件。車號訊號不能推定個人情緒或責任。'};
-  if(d.idle_pct>=15)return {tag:'等待情境待確認',line:'怠速紀錄偏高，請在停妥後回報裝卸、等待與必要作業原因，由調度協助確認。'};
-  return {tag:'歷史資料摘要',line:'目前沒有超過這組展示門檻，仍需留意路況。這是規則摘要，不是即時風險預測。'};
+  if (d.overspeed_pct >= 15) return {tag: '待覆核', line: '歷史超速紀錄偏高，請先確認限速資料與派車條件。車號訊號不能推定個人情緒或責任。'};
+  if (d.idle_pct >= 15) return {tag: '等待情境待確認', line: '怠速紀錄偏高，請在停妥後回報裝卸、等待與必要作業原因，由調度協助確認。'};
+  return {tag: '歷史資料摘要', line: '目前沒有超過這組展示門檻，仍需留意路況。這是規則摘要，不是即時風險預測。'};
 }
+
 function aiReply(q) {
-  if(/累|疲|睡|休息/.test(q)) return '請在安全地點停妥後再操作或回報，並由調度協助安排。此介面無法判斷疲勞程度。';
+  if (/累|疲|睡|休息/.test(q)) return '請在安全地點停妥後再操作或回報，並由調度協助安排。此介面無法判斷疲勞程度。';
   return moodOf(me).line;
 }
 
@@ -117,7 +118,7 @@ boot();
   if (me) {
     const h = history(CATS[0], myRegion);
     console.assert(h.length >= 2, 'history should have months');
-    console.assert(h.at(-1).v === myRegion.series.safety.filter((_, i) => myRegion.series.speed[i] || myRegion.series.idle[i]).at(-1), 'last point is region month');
-    console.assert(['激進', '疲憊', '抑鬱', '緊繃', '穩定'].includes(moodOf(me).tag), 'mood tag');
+    console.assert(h.at(-1).v === myRegion.series.safety.filter((_, i) => myRegion.recordsByMonth ? myRegion.recordsByMonth[i] > 0 : myRegion.series.safety[i] !== null).at(-1), 'last point is region month');
+    console.assert(['待覆核', '等待情境待確認', '歷史資料摘要'].includes(moodOf(me).tag), 'mood tag');
   }
 })();

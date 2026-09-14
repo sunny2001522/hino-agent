@@ -108,10 +108,6 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
 .modal-alert { margin: 0 0 10px; color: #d47670; font-size: 11px; font-weight: 700; }
 .native-modal-fields select { width: 100%; border: 1px solid #d8e1e2; border-radius: 7px; padding: 9px 10px; color: #30464b; font: inherit; font-size: 13px; outline: 0; background: #fff; }
 .native-modal-fields small { color: #879294; font-size: 10px; font-weight: 500; }
-.demo-mode-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 14px; border-bottom: 1px solid #d8b85f; background: #fff7df; color: #654d10; font-size: 11px; line-height: 1.45; }
-.demo-mode-banner > div:first-child { min-width: 0; }.demo-mode-banner b { display: block; font-size: 11.5px; }.demo-mode-banner span { display: block; color: #786329; }
-.demo-mode-actions { display: flex; flex: 0 0 auto; gap: 6px; }.demo-mode-actions button { border: 1px solid #d8b85f; border-radius: 6px; padding: 5px 8px; background: #fffdf6; color: #654d10; font: inherit; font-size: 10.5px; font-weight: 800; cursor: pointer; }
-.demo-sim-tag { display: inline-block; border-radius: 20px; padding: 2px 7px; background: #7a5ad8; color: #fff; font-size: 10px; font-weight: 800; vertical-align: middle; }
 .maintenance-schedule-table { margin-top: 13px; }
 .native-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 3px 1px; color: #7f8b8d; font-size: 11.5px; }
 .native-page-size { color: #7f8b8d; }.native-pager span { display: inline-flex; align-items: center; gap: 3px; }.native-pager span button { display: inline-grid; width: 22px; height: 22px; border-radius: 50%; place-items: center; }.native-pager span button.on { background: #165264; color: #fff; }.native-pager span button:hover, .native-pager span button:focus-visible, .native-page-size:focus-visible { background: #edf5e1; color: #466f1c; outline: 0; }
@@ -156,6 +152,7 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
   html body, html body.office { padding: 0; background: #f4f7f7; }
   body .app, body.office .app { max-width: none; width: 100vw; height: 100vh; margin: 0; border-radius: 0; border: 0; box-shadow: none; }
   body .appbar, body.office .appbar { padding: 0 24px; }
+  body .demo-banner, body.office .demo-banner { padding-inline: 24px; }
   body .screen, body.office .screen { padding: 26px 30px 28px; }
   body .tabbar, body.office .tabbar { justify-content: flex-start; gap: 4px; padding: 0; }
   body .tabbar button, body.office .tabbar button { flex: 0 0 auto; }
@@ -190,8 +187,6 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
 
 @media (max-width: 469px) {
   body .app { box-shadow: none; }
-  .demo-mode-banner { align-items: flex-start; flex-direction: column; gap: 6px; padding: 8px 12px; }
-  .demo-mode-actions { width: 100%; }.demo-mode-actions button { flex: 1; }
   .native-breadcrumb { padding: 13px 14px 9px; }
   .native-workspace { margin: 0 10px 12px; padding: 10px; }
   .native-filter { gap: 6px; }
@@ -326,19 +321,3 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
   .identity-grid { grid-template-columns: 1fr; }
   .idcard.idcard-simple { min-height: 82px; }
 }
-
-/* Keep simulation controls in document flow; reports live in the assistant. */
-#sim-controls{flex:0 0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 14px;background:#f3f7f4;border-bottom:1px solid #dce5df;font-size:12px;}
-#sim-controls label{font-weight:700;}#sim-controls small{font-weight:400;color:#64756b;margin-left:4px;}
-#sim-controls select{min-width:0;max-width:210px;border:1px solid #c9d6ce;border-radius:6px;padding:7px;background:white;color:#244236;}
-.sim-status{color:#607269;font-size:12px;}.sim-report-link{border:0;background:none;color:#246747;text-decoration:underline;cursor:pointer;padding:0;font:inherit;}
-.assistant-tools{display:flex;gap:6px;padding:6px 0;}.assistant-tools button:last-child{margin-left:auto;}
-#chatlog details{margin-top:8px;}#chatlog details ol{padding-left:20px;white-space:normal;}
-.demo-mode-banner{flex-direction:row;align-items:center;padding:5px 14px;gap:8px;flex:0 0 auto;}
-.demo-mode-banner b{font-size:11px;}.demo-mode-actions{flex-wrap:nowrap;}
-@media(max-width:599px){#sim-controls{gap:6px;padding:8px 10px;}#sim-controls label{width:100%;}#sim-controls select{flex:1;max-width:none;}.sim-status{width:100%;}.demo-mode-banner{flex-direction:row;align-items:center;padding:5px 10px;}.chatwrap{height:65dvh;}.chips2{max-height:76px;overflow:auto;}}
-.demo-mode-banner > div:first-child{flex:0 0 auto;white-space:nowrap;}.demo-mode-banner .demo-mode-actions{width:auto;margin-left:auto;}
-/* Product screens show controls and data, not presentation commentary. */
-#demo-mode-banner,.source-note,.guardrail,.foot,.panel-note,.private-note,.modal-alert,.native-source-note,.driver-season-status>small,.driver-drive-card small,.driver-task-strip>div:last-child small{display:none!important;}
-#simulation-toggle{white-space:nowrap;}
-@media(max-width:599px){#simulation-toggle{font-size:11px;padding:6px;}.whoami{min-width:0;}.demo-mode-banner{display:none!important;}}

@@ -4,8 +4,8 @@
 GitHub Pages cannot read a workstation Excel file at runtime. This script streams
 the workbook twice and publishes a compact JavaScript payload containing only
 facts that can be calculated from its telemetry columns. It never creates driver,
-HR, customer, order or punctuality data. Event-code labels describe telemetry
-signals and must not be treated as confirmed driver diagnoses.
+HR, customer, order, fatigue, seatbelt, or punctuality data because those fields
+do not exist in the source workbook.
 """
 
 from __future__ import annotations
@@ -23,6 +23,7 @@ from openpyxl import load_workbook
 
 
 ROOT = Path(__file__).resolve().parents[1]
+# ponytail: 本機無 xlsx，excel-derived-data.js 是就地轉而非重跑；有活頁簿後改跑本腳本
 DEFAULT_SOURCE = Path(
     "/Users/chenyixuan/Dev/比賽/hino/"
     "HINO x GenAI：運用商用車車聯網大數據，發展商用車頭家的智慧夥伴/"
@@ -371,13 +372,13 @@ def weekly_driver_scores(stat: Stats) -> dict:
     categories = [
         {"id": "safety", "label": "安全", "score": safety_score, "tone": score_tone(safety_score),
          "attention": [item for _, item in sorted(safety_attention, reverse=True)[:3]] or ["本週未偵測到需優先處理的安全訊號"],
-         "facts": [f"超速 {overspeed:,} 筆", f"急加／減速 {hard_events:,} 筆", f"駕駛／警示事件 {behaviour_events + warning_events:,} 筆"]},
+         "facts": [f"超速 {overspeed:,} 筆"]},
         {"id": "efficiency", "label": "效率", "score": efficiency_score, "tone": score_tone(efficiency_score),
          "attention": [item for _, item in sorted(efficiency_attention, reverse=True)[:3]] or ["本週沒有足夠效率訊號可列為優先項目"],
-         "facts": [f"怠速 {stat.idle_pct()}%", f"高負載 {high_load:,} 筆", f"油耗 {fuel['fuel_per_100km']} L/100km" if fuel_available else "油耗資料不足"]},
+         "facts": [f"怠速 {stat.idle_pct()}%", f"油耗 {fuel['fuel_per_100km']} L/100km" if fuel_available else "油耗資料不足"]},
         {"id": "maintenance", "label": "保養", "score": maintenance_score, "tone": score_tone(maintenance_score),
          "attention": [item for _, item in sorted(maintenance_attention, reverse=True)[:3]] or ["本週未偵測到需優先處理的保養訊號"],
-         "facts": [f"DTC {dtc:,} 筆", f"CAN 異常 {stat.can_abnormal:,} 筆", f"冷卻高溫 {heat_count:,} 筆"]},
+         "facts": [f"DTC {dtc:,} 筆"]},
     ]
     categories.sort(key=lambda item: (item["score"], item["id"]))
     return {"records": stat.rows, "categories": categories}

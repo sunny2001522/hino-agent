@@ -1,17 +1,19 @@
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import '../excel-derived-data.js';
+import DriverHome from './pages/DriverHome.jsx';
+import FleetOverview from './pages/FleetOverview.jsx';
+import ItraqWorkspace from './pages/ItraqWorkspace.jsx';
+import LeadCompetition from './pages/LeadCompetition.jsx';
+import LeadDrivers from './pages/LeadDrivers.jsx';
+import LeadFocus from './pages/LeadFocus.jsx';
+import LeadKpi from './pages/LeadKpi.jsx';
+import PartnerWorkbench from './pages/PartnerWorkbench.jsx';
+import ShipperShipments from './pages/ShipperShipments.jsx';
+import { ROLE_TABS, tabSpec } from './legacy/tabs.js';
 import './legacy/legacy.css';
 import '../enhancements.css';
-import { installPartner } from './partner/workbench.js';
 import './partner/workbench.css';
-
-function runClassicScript(source) {
-  const script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.textContent = source;
-  document.body.appendChild(script);
-  script.remove();
-}
 
 function bindLegacyControl(id, handler) {
   const element = document.getElementById(id);
@@ -19,63 +21,347 @@ function bindLegacyControl(id, handler) {
   element.onclick = () => window[handler]?.();
 }
 
+function applyChrome(role) {
+  document.body.classList.toggle('office', role === 'fleet' || role === 'lead');
+  const aifab = document.getElementById('aifab');
+  const simfab = document.getElementById('simfab');
+  if (aifab) aifab.style.display = role ? 'grid' : 'none';
+  if (simfab) simfab.style.display = 'none';
+}
+
+const REACT_PAGES = {
+  'driver:home': DriverHome,
+  'fleet:decision': PartnerWorkbench,
+  'fleet:overview': FleetOverview,
+  'lead:partner': PartnerWorkbench,
+  'driver:partner': PartnerWorkbench,
+  'fleet:settings': ItraqWorkspace,
+  'lead:settings': ItraqWorkspace,
+  'fleet:data': ItraqWorkspace,
+  'lead:data': ItraqWorkspace,
+  'fleet:task': ItraqWorkspace,
+  'lead:task': ItraqWorkspace,
+  'fleet:maintenance': ItraqWorkspace,
+  'lead:maintenance': ItraqWorkspace,
+  'fleet:fleet': ItraqWorkspace,
+  'lead:fleet': ItraqWorkspace,
+  'fleet:history': ItraqWorkspace,
+  'lead:history': ItraqWorkspace,
+  'fleet:monitor': ItraqWorkspace,
+  'lead:monitor': ItraqWorkspace,
+  'shipper:track': ShipperShipments,
+  'shipper:orders': ShipperShipments,
+  'lead:kpi': LeadKpi,
+  'lead:focus': LeadFocus,
+  'lead:drivers': LeadDrivers,
+  'lead:competition': LeadCompetition,
+};
+
+const IDENTITIES = [
+  { key: 'fleet', label: '車隊管理', color: '#2e9e4f' },
+  { key: 'lead', label: '總負責人', color: '#0d9488' },
+  { key: 'driver', label: '車輛使用者', color: '#4a6cf0' },
+  { key: 'shipper', label: '貨主', color: '#2e9e4f' },
+  { key: 'competition', label: '競賽', color: '#c45c12', href: 'pages/competition/driver/index.html' },
+];
+
+function accountPhone(role) {
+  return window.ACCOUNTS?.[role]?.phone ?? '';
+}
+
+function Welcome({ onPick }) {
+  return (
+    <div className="screen" data-react>
+      <div className="welcome welcome-simple">
+        <div className="wpick">
+          <div className="lbl">選擇身份</div>
+          <div className="identity-grid">
+            {IDENTITIES.map((role) => (
+              <button
+                key={role.key}
+                type="button"
+                className="idcard idcard-simple"
+                style={{ '--role-color': role.color }}
+                onClick={() => {
+                  if (role.href) {
+                    location.href = role.href;
+                    return;
+                  }
+                  if (!window.ACCOUNTS) return;
+                  onPick(role.key);
+                }}
+              >
+                <span>{role.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LoginPage({ role, onBack }) {
+  const inputRef = useRef(null);
+  const meta = IDENTITIES.find((item) => item.key === role);
+
+  useEffect(() => {
+    const timer = setTimeout(() => inputRef.current?.focus(), 120);
+    return () => clearTimeout(timer);
+  }, [role]);
+
+  function submit() {
+    const value = (inputRef.current?.value || '').trim();
+    if (!value) {
+      window.toast?.('請先輸入手機號碼', '請確認手機號碼後再登入。', 'wn');
+      return;
+    }
+    window.login?.(role);
+  }
+
+  return (
+    <div className="screen" data-react>
+      <div className="loginpg">
+        <button type="button" className="back" onClick={onBack}>← 返回選擇身份</button>
+        <h2 style={{ color: meta.color }}>{meta.label} 登入</h2>
+        <div className="field">
+          <label>手機號碼</label>
+          <input ref={inputRef} id="loginInput" type="text" inputMode="tel" defaultValue={accountPhone(role)} aria-label="手機號碼" autoComplete="tel" />
+        </div>
+        <button type="button" className="btn pri block" onClick={submit}>登入</button>
+      </div>
+    </div>
+  );
+}
+
+function hookReactNav(setNav, setLoginRole) {
+  const origLogin = window.login;
+  window.login = (role) => {
+    origLogin(role);
+    applyChrome(role);
+    const first = ROLE_TABS[role][0];
+    setNav({ role, tab: first.id, itraqPage: first.page ?? null });
+  };
+
+  const origLogout = window.logout;
+  window.logout = () => {
+    window.closeOv?.();
+    origLogout();
+    applyChrome(null);
+  };
+
+  window.renderWelcome = () => {
+    const appbar = document.getElementById('appbar');
+    const tabbar = document.getElementById('tabbar');
+    if (appbar) {
+      appbar.style.display = 'none';
+      appbar.classList.remove('mobile-nav-open');
+    }
+    if (tabbar) tabbar.style.display = 'none';
+    const menuToggle = document.getElementById('menuToggle');
+    if (menuToggle) menuToggle.hidden = true;
+    applyChrome(null);
+    setLoginRole(null);
+    setNav({ role: null, tab: null, itraqPage: null });
+  };
+
+  const origGoto = window.gotoTab;
+  window.gotoTab = (id) => {
+    origGoto(id);
+    setNav((prev) => ({
+      role: prev.role,
+      tab: id,
+      itraqPage: tabSpec(prev.role, id)?.page ?? null,
+    }));
+  };
+
+  document.getElementById('tabbar')?.addEventListener('click', (event) => {
+    const sub = event.target.closest('[data-header-page]');
+    if (!sub) return;
+    setNav((prev) => ({
+      ...prev,
+      tab: sub.dataset.headerTab || prev.tab,
+      itraqPage: Number(sub.dataset.headerPage),
+    }));
+  });
+
+  window.__itraqSetPage = (n) => setNav((prev) => ({ ...prev, itraqPage: Number(n) }));
+}
+
+function openDemoDataNote() {
+  const meta = window.HINO_EXCEL_DATA?.meta || {};
+  window.showModal?.(`<h3>資料說明</h3><p>本畫面為展示用歷史資料，期間 <b>${meta.period || '—'}</b>，最後一筆 ${meta.lastRecord || '—'}。<b>非即時</b>車隊連線，也不會寫入營運系統。</p><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
+}
+
+function openDemoLabNote() {
+  window.showModal?.(`<h3>情境模擬實驗室</h3><p>本 Demo 不開放事件實驗室，也不會模擬推播、暫停派工或預約進廠。畫面上的數字來自歷史匯出，不是現場派工結果。</p><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
+}
+
+const AppBar = memo(function AppBar() {
+  return (
+    <div className="appbar" id="appbar" data-react style={{ display: 'none' }}>
+      <div className="logo">iTRAQ</div>
+      <button className="menuToggle" id="menuToggle" type="button" aria-label="開啟導覽選單" aria-expanded="false" hidden>☰</button>
+      <nav className="tabbar" id="tabbar" style={{ display: 'none' }} />
+      <button className="noticebtn" id="noticeButton" type="button" aria-label="通知中心">♧<span /></button>
+      <div className="whoami"><div className="nm" id="waName">—</div><div className="rl" id="waRole">—</div></div>
+      <button className="barbtn" id="logoutButton" type="button" onClick={() => window.logout?.()}>登出</button>
+    </div>
+  );
+});
+
+function DemoBanner() {
+  const period = window.HINO_EXCEL_DATA?.meta?.period || '—';
+  return (
+    <div className="demo-banner" id="demoBanner">
+      <b>DEMO</b>
+      <span>歷史資料 {period} · 非即時</span>
+      <button type="button" className="demo-banner-btn" onClick={openDemoDataNote}>資料說明</button>
+      <button type="button" className="demo-banner-btn" onClick={openDemoLabNote}>情境模擬</button>
+    </div>
+  );
+}
+
+const Fabs = memo(function Fabs() {
+  return (
+    <>
+      <button className="aifab" id="aifab" data-react style={{ display: 'none' }} type="button" onClick={() => window.openAIChat?.()}>AI<br />助理<span className="dt2" /></button>
+      <button className="simfab" id="simfab" data-react style={{ display: 'none' }} type="button">模擬<br />事件</button>
+    </>
+  );
+});
+
+let toastSeq = 0;
+let toastSink = () => {};
+window.__toastPush = (t, m, k) => toastSink(t, m, k);
+
+function Toasts() {
+  const [toasts, setToasts] = useState([]);
+  // ponytail: render-assign sink — effect cleanup on remount dropped the live setter
+  toastSink = (t, m, k) => {
+    const id = ++toastSeq;
+    setToasts((prev) => [...prev, { id, t, m, k, exiting: false }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.map((x) => (x.id === id ? { ...x, exiting: true } : x)));
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((x) => x.id !== id));
+      }, 300);
+    }, 4200);
+  };
+
+  return (
+    <div id="toasts">
+      {toasts.map(({ id, t, m, k, exiting }) => (
+        <div
+          key={id}
+          className={`toast ${k || ''}`}
+          style={{
+            pointerEvents: 'auto',
+            ...(exiting ? { opacity: 0, transform: 'translateY(12px)' } : {}),
+          }}
+          dangerouslySetInnerHTML={{ __html: `<b>${t}</b>${m || ''}` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ChatBody({ headHtml, greetingHtml, sugHtml, placeholder }) {
+  return (
+    <div className="chatwrap">
+      <div className="chathd">
+        <div className="ci">AI</div>
+        <div dangerouslySetInnerHTML={{ __html: headHtml }} />
+      </div>
+      <div className="chatlog" id="chatlog" dangerouslySetInnerHTML={{ __html: greetingHtml }} />
+      <div className="chips2" id="chatChips" dangerouslySetInnerHTML={{ __html: sugHtml }} />
+      <div className="chatin">
+        <input id="chatInput" type="text" placeholder={placeholder} onKeyDown={(e) => { if (e.key === 'Enter') window.aiAskInput?.(); }} />
+        <button className="send" id="chatSend" type="button" onClick={() => window.aiAskInput?.()}>↑</button>
+      </div>
+    </div>
+  );
+}
+
+let modalSink = { show() {}, close() {}, chat() {} };
+window.__modalShow = (h) => modalSink.show(h);
+window.__modalClose = () => modalSink.close();
+window.__chatOpen = (chat) => modalSink.chat(chat);
+
+function Modal() {
+  const [state, setState] = useState({ open: false, html: '', chat: null });
+  modalSink = {
+    show: (h) => setState({ open: true, html: h, chat: null }),
+    close: () => setState((prev) => ({ ...prev, open: false })),
+    chat: (chat) => setState({ open: true, html: '', chat }),
+  };
+
+  return (
+    <div className={`ov${state.open ? ' on' : ''}`} id="ov">
+      {state.chat ? (
+        <div className="modal" id="modal"><div className="grip" /><ChatBody {...state.chat} /></div>
+      ) : (
+        <div
+          className="modal"
+          id="modal"
+          dangerouslySetInnerHTML={{ __html: state.html ? `<div class="grip"></div>${state.html}` : '' }}
+        />
+      )}
+    </div>
+  );
+}
+
+const Overlays = memo(function Overlays() {
+  return (
+    <>
+      <div id="tourMask"><div id="tourHole" /><div id="tourTip" /></div>
+      <Toasts />
+      <Modal />
+    </>
+  );
+});
+
 function ItraqApplication() {
+  const [nav, setNav] = useState({ role: null, tab: null, itraqPage: null });
+  const [loginRole, setLoginRole] = useState(null);
   const booted = useRef(false);
 
   useEffect(() => {
     if (booted.current) return;
     booted.current = true;
 
-    void (async () => {
-    try {
-      const [{default:telemetryData}, {default:legacyApp}, {default:enhancements}] = await Promise.all([
-        import('../excel-derived-data.js?raw'),
-        import('./legacy/legacy-app.js?raw'),
-        import('../enhancements.js?raw'),
-      ]);
-      // Keep the existing renderer in a classic-script boundary: it preserves every
-      // existing iTRAQ layout, inline action, hover menu and responsive behavior.
-      runClassicScript(telemetryData);
-      runClassicScript(legacyApp);
-      runClassicScript(enhancements);
-      window.installHinoPartner = installPartner;
-      runClassicScript(`window.installHinoPartner({getSession:()=>SESSION, tabs:TABS, getDriver:()=>myDriver().d,
-        openAI:()=>openAIChat(), askAI:q=>aiAsk(q), getContext:backendContext,
-        getAnswer:aiGenerate, setAnswer:fn=>{aiGenerate=fn;},
-        setContext:fn=>{backendContext=fn;}});`);
-      delete window.installHinoPartner;
-
-      bindLegacyControl('menuToggle', 'toggleMobileNav');
-      bindLegacyControl('noticeButton', 'openItraqNotifications');
-      bindLegacyControl('logoutButton', 'logout');
-      bindLegacyControl('aifab', 'openAIChat');
-      bindLegacyControl('simfab', 'openSimPanel');
-    } catch (error) {
-      console.error('Unable to start iTRAQ application', error);
-      document.getElementById('screen').innerHTML = '<div class="empty"><b>頁面載入失敗</b><p>請重新整理後再試。</p></div>';
-    }
+    (async () => {
+      try {
+        await import('./legacy/legacy-app.js');
+        await import('../enhancements.js');
+        bindLegacyControl('menuToggle', 'toggleMobileNav');
+        bindLegacyControl('noticeButton', 'openItraqNotifications');
+        hookReactNav(setNav, setLoginRole);
+      } catch (error) {
+        console.error('Unable to start iTRAQ application', error);
+      }
     })();
   }, []);
 
+  useEffect(() => {
+    applyChrome(nav.role);
+  }, [nav.role]);
+
+  const islandKey = nav.role ? `${nav.role}-${nav.tab}-${nav.itraqPage ?? ''}` : 'welcome';
+  const currentTab = nav.role && nav.tab ? tabSpec(nav.role, nav.tab) : null;
+  const converted = currentTab?.converted ?? false;
+  const ReactPage = converted ? REACT_PAGES[`${nav.role}:${nav.tab}`] : null;
+
   return (
     <div className="app" id="app" data-runtime="react">
-      <div className="appbar" id="appbar" style={{ display: 'none' }}>
-        <div className="logo">iTRAQ</div>
-        <button className="menuToggle" id="menuToggle" type="button" aria-label="開啟導覽選單" aria-expanded="false" hidden>☰</button>
-        <nav className="tabbar" id="tabbar" style={{ display: 'none' }} />
-        <button className="noticebtn" id="noticeButton" type="button" aria-label="通知中心">♧<span /></button>
-        <div className="whoami"><div className="nm" id="waName">—</div><div className="rl" id="waRole">—</div></div>
-        <button className="barbtn" id="logoutButton" type="button">登出</button>
-      </div>
-
-      <div className="screen" id="screen"><p role="status">正在載入歷史資料與工作台…</p></div>
-
-      <button className="aifab" id="aifab" style={{ display: 'none' }} type="button">AI<br />助理<span className="dt2" /></button>
-      <button className="simfab" id="simfab" style={{ display: 'none' }} type="button">模擬<br />事件</button>
-
-      <div id="tourMask"><div id="tourHole" /><div id="tourTip" /></div>
-      <div id="toasts" />
-      <div className="ov" id="ov"><div className="modal" id="modal" /></div>
+      <AppBar />
+      {nav.role ? <DemoBanner /> : null}
+      {!nav.role && (loginRole
+        ? <LoginPage key={loginRole} role={loginRole} onBack={() => setLoginRole(null)} />
+        : <Welcome onPick={setLoginRole} />)}
+      {nav.role && ReactPage && <ReactPage key={islandKey} pageNo={nav.itraqPage} />}
+      <Fabs />
+      <Overlays />
     </div>
   );
 }

@@ -63,7 +63,7 @@ function linesChart(series, simple) {
   const narrow = window.innerWidth < 520;
   const W = 560, H = 160, pl = simple || narrow ? 26 : 36, pr = simple || narrow ? 12 : 18, pt = 10, pb = 22;
   const labels = window.HINO_EXCEL_DATA.months;
-  const n = labels.length, x = label => pl + (W - pl - pr) * (labels.indexOf(label) / Math.max(1,n-1));
+  const n = labels.length, x = label => pl + (W - pl - pr) * (labels.indexOf(label) / Math.max(1, n - 1));
   const y = v => pt + (H - pt - pb) * (1 - v / 100);
   const mid = Math.floor((n - 1) / 2);
   const grid = simple ? '' : [0, 50, 100].map(gv =>
@@ -76,9 +76,14 @@ function linesChart(series, simple) {
   }).join('');
   const lines = series.map(s => {
     const col = s.color || '#7bb42e';
-    let last=-2;
-    const commands=s.pts.map(p=>{const index=labels.indexOf(p.label);const command=index===last+1?'L':'M';last=index;return `${command}${x(p.label)},${y(p.v)}`;}).join(' ');
-    return `<path d="${commands}" fill="none" stroke="${col}" stroke-width="2.6"/>`+s.pts.map(p=>`<circle cx="${x(p.label)}" cy="${y(p.v)}" r="2.4" fill="${col}"/>`).join('');
+    let last = -2;
+    const commands = s.pts.map(p => {
+      const index = labels.indexOf(p.label);
+      const command = index === last + 1 ? 'L' : 'M';
+      last = index;
+      return `${command}${x(p.label)},${y(p.v)}`;
+    }).join(' ');
+    return `<path d="${commands}" fill="none" stroke="${col}" stroke-width="2.6"/>` + s.pts.map(p => `<circle cx="${x(p.label)}" cy="${y(p.v)}" r="2.4" fill="${col}"/>`).join('');
   }).join('');
   const col = series[0].color || '#7bb42e';
   const dots = simple || series.length > 1 ? '' : pts.map((p, i) => `<circle cx="${x(p.label)}" cy="${y(p.v)}" r="${i === n - 1 ? 4 : 2.4}" fill="${col}"/>`).join('');
@@ -107,7 +112,7 @@ function statusHtml(cat, d) {
   if (!data) return;
   const south = data.regions.find(r => r.id === 'KP');
   if (!south) return;
-  const lastDtc = south.series.dtc.filter((_, i) => south.series.speed[i] || south.series.idle[i]).at(-1);
+  const lastDtc = south.series.dtc.filter((_, i) => south.recordsByMonth ? south.recordsByMonth[i] > 0 : south.series.safety[i] !== null).at(-1);
   console.assert(
     history(CATS[2], south).at(-1).v === clamp(100 - (lastDtc / south.drivers.length) * 4),
     'maintenance history is per-car dtc not region sum'

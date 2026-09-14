@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && npm run copy:assets",
-    "copy:assets": "mkdir -p dist/assets && cp -R assets/simulated-dvr dist/assets/simulated-dvr && cp -R pages dist/pages && cp excel-derived-data.js dist/excel-derived-data.js",
+    "copy:assets": "node -e \"import { cpSync, mkdirSync } from 'fs'; mkdirSync('dist/assets',{recursive:true}); cpSync('assets/simulated-dvr','dist/assets/simulated-dvr',{recursive:true}); cpSync('pages','dist/pages',{recursive:true}); cpSync('excel-derived-data.js','dist/excel-derived-data.js');\"",
     "start": "npm run build && STATIC_DIR=dist node server.js",
     "test": "node --test tests/*.test.js"
   },
