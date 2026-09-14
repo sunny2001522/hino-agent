@@ -1508,32 +1508,28 @@ const SIMS=[
  log:'點檢逾時：自動提醒＋自動停派（模擬）',
  pend:{sev:'warn',cat:'點檢異常（模擬）',tt:'劉怡君 點檢逾時 — 停派待您核准',dt:'「點檢逾時自動停派」授權關閉，停派轉為需您核准。',acts:[{l:'查看駕駛',c:'gho',fn:"drillDrivers(['D0'],'點檢逾時（模擬）')"},{l:'核准暫停派工',c:'pri',fn:"act('已核准暫停劉怡君派工，完成點檢後恢復。','ok')"}]}},
 ];
+const simReports=[];
+function closeSimPanel(){document.getElementById('sim-controls')?.remove();}
 function openSimPanel(){
- const rows=SIMS.map(s=>{const on=!s.sw||aiAuto[s.sw];
- return `<div class="simrow"><div class="si2"><div class="st2">${s.t} <span class="demo-sim-tag">模擬</span></div><div class="sd2">${s.d} · ${on?'<b style="color:#4e7d1f">展示授權開啟時的處置流程</b>':'<b style="color:var(--bad)">展示改由人工核准的流程</b>'}</div></div>
- <button class="btn pri sm" onclick="runSim('${s.k}')">播放情境</button></div>`;}).join('');
- showModal(`<h3>情境模擬實驗室 <span class="demo-sim-tag">全部虛構</span></h3>
- <p>主辦方只提供歷史遙測資料，因此下列疲勞、繞行、超載、預約與點檢事件皆為展示情境。播放後只會在此瀏覽器呈現推演步驟與本機 Demo 待辦：不會發送通知、安排替班、停派車輛或預約保修廠，也不會寫回歷史資料。</p>
- ${rows}
- <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="closeOv();gotoTab('settings')">查看展示授權設定</button></div>`);
+ if(document.getElementById('sim-controls')){closeSimPanel();return;}
+ const panel=document.createElement('section');panel.id='sim-controls';panel.setAttribute('aria-label','情境模擬');
+ panel.innerHTML=`<label for="sim-choice">情境模擬 <small>虛構演示</small></label><select id="sim-choice">${SIMS.map(s=>`<option value="${s.k}">${s.t}</option>`).join('')}</select><button class="btn pri sm" onclick="runSim(document.getElementById('sim-choice').value)">播放</button><button class="btn gho sm" aria-label="關閉情境模擬" onclick="closeSimPanel()">✕</button><div class="sim-status" role="status">結果收進 AI 助理，不執行實際派工。</div>`;
+ document.getElementById('app').insertBefore(panel,document.getElementById('screen'));
 }
 function runSim(k){
- const s=SIMS.find(x=>x.k===k);if(!s)return;
- closeOv();
+ const s=SIMS.find(x=>x.k===k);if(!s||!SESSION)return;
  const on=!s.sw||aiAuto[s.sw];
- toast('情境模擬已開始',`【模擬】${s.steps[0]}`,'wn');
- window.playDemoSafetyAudio?.(s.t);
- if(on){
- s.steps.slice(1).forEach((st,i)=>{const last=i===s.steps.length-2;
- setTimeout(()=>toast(last?'模擬處置流程完成':'模擬處置流程中…',`【模擬】${st}`,last?'ok':''),(i+1)*1300);});
- setTimeout(()=>{simLog.push({t:`【模擬】${s.log}`,by:'Demo'});
- if(SESSION&&SESSION.role==='fleet'&&curTab==='todo')renderFleetTodo();},s.steps.length*1300);
- }else{
- setTimeout(()=>{
- toast('模擬改走人工核准',`【模擬】「${aiAutoMeta[s.sw].t}」未授權，因此只展示待辦與人工核准流程。`,'dn');
- if(!s.pendAdded){s.pendAdded=true;todos.push(Object.assign({decide:true},s.pend));todoData.push('');}
- if(SESSION&&SESSION.role==='fleet'&&curTab==='todo')renderFleetTodo();},1300);
- }
+ simReports.unshift({title:s.t,steps:on?s.steps:[s.steps[0],'交由管理者覆核後決定處置。'],time:new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}),owner:SESSION.role+':'+SESSION.acc.name});
+ simReports.splice(20);
+ const status=document.querySelector('#sim-controls .sim-status');
+ if(status)status.innerHTML='演示完成 · <button class="sim-report-link" onclick="openAIChat();showSimReports()">查看 AI 彙報</button>';
+ document.getElementById('aifab').setAttribute('aria-label','AI 助理，有新的情境彙報');
+}
+function showSimReports(){
+ const log=document.getElementById('chatlog');if(!log||!SESSION)return;
+ document.getElementById('chatChips')?.setAttribute('style','display:none');
+ const reports=simReports.filter(r=>r.owner===SESSION.role+':'+SESSION.acc.name);
+ log.innerHTML=`<div class="bub ai"><b>AI 彙報</b><div class="lbl">情境演示 · 未執行實際操作</div></div>`+ (reports.length?reports.map(r=>`<article class="bub ai"><b>${escapeHtml(r.title)} · ${r.time}</b><details><summary>查看推演步驟</summary><ol>${r.steps.map(st=>`<li>${escapeHtml(st)}</li>`).join('')}</ol></details></article>`).join(''):'<div class="bub ai">尚無彙報，播放情境後會顯示於此。</div>');
 }
 
 /* boot */

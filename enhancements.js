@@ -24,7 +24,7 @@
     const banner = document.createElement('aside');
     banner.id = 'demo-mode-banner';
     banner.className = 'demo-mode-banner';
-    banner.innerHTML = `<div><b>DEMO 模式｜歷史遙測資料</b><span>${demoSourceSummary()}。目前畫面不是即時監控；車況以車號彙整，不能直接歸因於個人。</span></div><div class="demo-mode-actions"><button type="button" onclick="openDemoDisclosure()">資料說明</button><button type="button" onclick="openSimPanel()">情境模擬</button></div>`;
+    banner.innerHTML = `<div><b>歷史資料 Demo</b></div><div class="demo-mode-actions"><button type="button" onclick="openDemoDisclosure()">資料說明</button><button type="button" onclick="openSimPanel()">情境模擬</button></div>`;
     app.insertBefore(banner, screenElement);
   }
 
@@ -856,8 +856,8 @@
     toast('已標記為已閱讀', '這是本機 Demo 標記；不會傳送給車隊，也不代表真實事件已回報。', 'ok');
   };
 
-  window.login = function (role) { baseLogin(role); document.body.classList.toggle('office', role === 'fleet' || role === 'lead'); document.getElementById('simfab').style.display = role === 'fleet' ? 'grid' : 'none'; document.getElementById('simfab').innerHTML = '情境<br>模擬'; mountDemoModeBanner(); if (role === 'shipper') document.getElementById('aifab').style.display = 'grid'; };
-  window.logout = function () { document.getElementById('demo-mode-banner')?.remove(); document.body.classList.remove('office'); baseLogout(); };
+  window.login = function (role) { baseLogin(role); document.body.classList.toggle('office', role === 'fleet' || role === 'lead'); document.getElementById('simfab').style.display = 'none'; document.getElementById('simfab').innerHTML = '情境<br>模擬'; mountDemoModeBanner(); if (role === 'shipper') document.getElementById('aifab').style.display = 'grid'; };
+  window.logout = function () { closeSimPanel(); simReports.length=0; document.getElementById('demo-mode-banner')?.remove(); document.body.classList.remove('office'); baseLogout(); };
   window.selectOrder = function (id) { openShipmentDetail(id); };
   window.renderDriverHome = renderDriverHomeEnhanced;
   window.renderDriverTask = renderDriverTaskEnhanced;
@@ -919,17 +919,17 @@
   };
   window.openAIChat = function () {
     if (!SESSION || SESSION.role !== 'shipper') {
-      const suggestions = aiSuggestions().map(item => `<span class="chip2" onclick="aiAsk('${item.replace(/'/g, '')}')">${item}</span>`).join('');
-      showModal(`<div class="chatwrap"><div class="chathd"><div class="ci">AI</div><div><div class="cn">歷史資料解讀助理 <span id="partner-ai-mode">檢查模型連線中</span></div><div class="cs">${demoSourceSummary()} · 不使用即時資料或自動化執行</div></div></div><div class="chatlog" id="chatlog"></div><div class="chips2" id="chatChips">${suggestions}</div><div class="chatin"><input id="chatInput" type="text" placeholder="例如：這份歷史資料的油耗要怎麼覆核？" onkeydown="if(event.key==='Enter')aiAskInput()"><button class="send" id="chatSend" onclick="aiAskInput()">↑</button></div></div>`);
-      document.getElementById('chatlog').innerHTML = `<div class="bub ai"><div class="lbl">資料說明</div>我只解讀主辦方提供的歷史車聯網資料。尚未核對的事件欄位與未提供的訂單、ETA、人資或即時事件，不能作為結論依據。請從工作台選一項證據，確認原因與分工後再追蹤成效。</div>`;
+      const suggestions = aiSuggestions().slice(0,3).map(item => `<span class="chip2" onclick="aiAsk('${item.replace(/'/g, '')}')">${item}</span>`).join('');
+      showModal(`<div class="chatwrap"><div class="chathd"><div class="ci">AI</div><div><div class="cn">AI 助理 <span id="partner-ai-mode">檢查模型連線中</span></div><div class="cs">歷史資料 · 僅提供建議</div></div></div><div class="assistant-tools"><button class="btn gho sm" onclick="showSimReports()">AI 彙報</button><button class="btn gho sm" onclick="openAIChat()">問答</button><button class="btn gho sm" onclick="closeOv()">關閉助理</button></div><div class="chatlog" id="chatlog"></div><div class="chips2" id="chatChips">${suggestions}</div><div class="chatin"><input id="chatInput" type="text" placeholder="例如：這份歷史資料的油耗要怎麼覆核？" onkeydown="if(event.key==='Enter')aiAskInput()"><button class="send" id="chatSend" onclick="aiAskInput()">↑</button></div></div>`);
+      document.getElementById('chatlog').innerHTML = `<div class="bub ai"><div class="lbl">資料說明</div>選一項證據，或直接問我省油與安全問題。情境結果請看「AI 彙報」。</div>`;
       const modeLabel = document.getElementById('partner-ai-mode');
       if (SESSION && ['fleet','lead'].includes(SESSION.role)) {
         checkBackend().then(on => { if (modeLabel?.isConnected) modeLabel.textContent = on ? 'Gemini · 歷史證據解讀' : '規則摘要 · 生成模型尚未就緒'; });
       } else if (modeLabel) modeLabel.textContent = '規則摘要 · 車號資料';
       return;
     }
-    const suggestions = aiSuggestions().map(item => `<span class="chip2" onclick="aiAsk('${item}')">${item}</span>`).join('');
-    showModal(`<div class="chatwrap"><div class="chathd"><div class="ci">AI</div><div><div class="cn">AI 貨況助理 ${AI_TAG}</div><div class="cs">貨況、車輛與推播說明</div></div></div><div class="chatlog" id="chatlog"></div><div class="chips2" id="chatChips">${suggestions}</div><div class="chatin"><input id="chatInput" type="text" placeholder="例如：目前貨件狀態？" onkeydown="if(event.key==='Enter')aiAskInput()"><button class="send" id="chatSend" onclick="aiAskInput()">↑</button></div></div>`);
+    const suggestions = aiSuggestions().slice(0,3).map(item => `<span class="chip2" onclick="aiAsk('${item}')">${item}</span>`).join('');
+    showModal(`<div class="chatwrap"><div class="chathd"><div class="ci">AI</div><div><div class="cn">AI 貨況助理 ${AI_TAG}</div><div class="cs">貨況、車輛與推播說明</div></div></div><div class="assistant-tools"><button class="btn gho sm" onclick="showSimReports()">AI 彙報</button><button class="btn gho sm" onclick="openAIChat()">問答</button><button class="btn gho sm" onclick="closeOv()">關閉助理</button></div><div class="chatlog" id="chatlog"></div><div class="chips2" id="chatChips">${suggestions}</div><div class="chatin"><input id="chatInput" type="text" placeholder="例如：目前貨件狀態？" onkeydown="if(event.key==='Enter')aiAskInput()"><button class="send" id="chatSend" onclick="aiAskInput()">↑</button></div></div>`);
     document.getElementById('chatlog').innerHTML = `<div class="bub ai"><div class="lbl">${AI_TAG}</div>${SESSION.acc.name} 您好，我可以說明貨件狀態、車輛編號與最後更新時間；不顯示地圖或駕駛個資。</div>`;
   };
   window.addChatActions = function (bubble, question) { if (SESSION && SESSION.role === 'shipper') { const order = myOrders()[0]; bubble.appendChild(el(`<div style="margin-top:9px"><button class="btn pri sm" onclick="toggleShipperPush('${order.id}')">開啟貨況推播</button></div>`)); document.getElementById('chatlog').scrollTop = 99999; return; } baseAddChatActions(bubble, question); };

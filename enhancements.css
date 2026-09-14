@@ -326,3 +326,15 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
   .identity-grid { grid-template-columns: 1fr; }
   .idcard.idcard-simple { min-height: 82px; }
 }
+
+/* Keep simulation controls in document flow; reports live in the assistant. */
+#sim-controls{flex:0 0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 14px;background:#f3f7f4;border-bottom:1px solid #dce5df;font-size:12px;}
+#sim-controls label{font-weight:700;}#sim-controls small{font-weight:400;color:#64756b;margin-left:4px;}
+#sim-controls select{min-width:0;max-width:210px;border:1px solid #c9d6ce;border-radius:6px;padding:7px;background:white;color:#244236;}
+.sim-status{color:#607269;font-size:12px;}.sim-report-link{border:0;background:none;color:#246747;text-decoration:underline;cursor:pointer;padding:0;font:inherit;}
+.assistant-tools{display:flex;gap:6px;padding:6px 0;}.assistant-tools button:last-child{margin-left:auto;}
+#chatlog details{margin-top:8px;}#chatlog details ol{padding-left:20px;white-space:normal;}
+.demo-mode-banner{flex-direction:row;align-items:center;padding:5px 14px;gap:8px;flex:0 0 auto;}
+.demo-mode-banner b{font-size:11px;}.demo-mode-actions{flex-wrap:nowrap;}
+@media(max-width:599px){#sim-controls{gap:6px;padding:8px 10px;}#sim-controls label{width:100%;}#sim-controls select{flex:1;max-width:none;}.sim-status{width:100%;}.demo-mode-banner{flex-direction:row;align-items:center;padding:5px 10px;}.chatwrap{height:65dvh;}.chips2{max-height:76px;overflow:auto;}}
+.demo-mode-banner > div:first-child{flex:0 0 auto;white-space:nowrap;}.demo-mode-banner .demo-mode-actions{width:auto;margin-left:auto;}
