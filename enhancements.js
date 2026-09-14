@@ -24,7 +24,7 @@
     return seasonDriverLeaderboard().map(item => `<article class="driver-leader ${compact ? 'compact' : ''}">
       <div class="driver-leader-avatar" style="--avatar-position:${item.avatar * 50}%" aria-label="${item.displayName} 的帳號頭像"></div>
       <div class="driver-leader-rank">${item.rank}</div>
-      <div class="driver-leader-info"><b>${item.displayName}</b><span>${item.region} · ${item.c}</span></div>
+      <div class="driver-leader-info"><b>${item.displayName}</b><span>合成員工 · ${item.region} · ${item.c}</span></div>
       <div class="driver-leader-score">${item.score}<small>季分</small></div>
     </article>`).join('');
   }
@@ -543,7 +543,7 @@
   }
   function workforceReviewBadge(kind) {
     const state = workforceReviewState[kind];
-    return state ? `<span class="executive-status done">已送人資 · ${state.createdAt}</span>` : '<span class="executive-status open">待建立覆核</span>';
+    return state ? `<span class="executive-status done">Demo 草案 · ${state.createdAt}</span>` : '<span class="executive-status open">待建立 Demo 草案</span>';
   }
   function executiveManagementFocus() {
     const speed = topTelemetry('overspeed_count')[0];
@@ -570,13 +570,13 @@
     const candidates = workforceCandidates(kind);
     const title = isRecognition ? '獎勵／留任覆核' : '改善與人資審查';
     const state = workforceReviewState[kind];
-    showModal(`<h3>${title}</h3><p>${isRecognition ? '以下車號具有較佳安全遙測表現，請先與人資比對人員，再合併出勤、績效、職能、年資與同工同酬資料覆核。' : '以下車號有較多安全／車況訊號，請先確認車況、路況、派車、訓練與工時；必要時建立改善支持與人資個案審查。'}</p><div class="workforce-modal-list">${candidates.map(item => `<div><b>${item.car}</b><span>${item.reason}</span></div>`).join('')}</div><div class="guardrail">系統未取得駕駛姓名、薪資、出勤或勞動資料。這是覆核名單，不是自動加薪、汰換或裁員決定。</div><div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button>${state ? `<button class="btn pri" onclick="closeOv()">已送人資覆核</button>` : `<button class="btn pri" onclick="recordWorkforceReview('${kind}')">建立覆核案件</button>`}</div>`);
+    showModal(`<h3>${title}（Demo 草案）</h3><p>${isRecognition ? '以下車號具有較佳安全遙測表現，僅供展示比對。' : '以下車號有較多安全／車況訊號，僅供展示覆核。'}這是 Demo 草案，不會送進真人資系統。</p><div class="workforce-modal-list">${candidates.map(item => `<div><b>${item.car}</b><span>${item.reason}</span></div>`).join('')}</div><div class="guardrail">系統未取得駕駛姓名、薪資、出勤或勞動資料。這是展示名單，不是自動加薪、汰換或裁員決定。</div><div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button>${state ? `<button class="btn pri" onclick="closeOv()">已建立 Demo 草案</button>` : `<button class="btn pri" onclick="recordWorkforceReview('${kind}')">建立 Demo 草案</button>`}</div>`);
   };
   window.recordWorkforceReview = function (kind) {
     workforceReviewState[kind] = { createdAt:new Date().toLocaleString('zh-TW', { hour:'2-digit', minute:'2-digit' }) };
     try { localStorage.setItem(workforceReviewStorageKey, JSON.stringify(workforceReviewState)); } catch (error) { /* Keep the current-session status if persistence is blocked. */ }
     closeOv();
-    toast('已建立人資覆核案件', kind === 'recognition' ? '請人資比對人員主檔，補齊薪酬與績效資料。' : '請總負責人先完成原因覆核與改善支持，再送人資個案審查。', 'ok');
+    toast('已建立 Demo 草案', '僅本機展示記錄，未送人資系統。', 'ok');
     window.onWorkforceReviewChange?.();
   };
   window.openExecutiveCompetition = function () {
@@ -598,23 +598,6 @@
     if (Number(driver.dtc_count || 0) > 0) return { title:'請安排車況確認', detail:`偵測到 ${driver.dtc_count} 筆故障碼紀錄；行車安全優先，請回報車隊安排確認。`, action:'回報車況', tone:'maintenance' };
     if (Number(driver.overspeed_pct || 0) > 0) return { title:'請依路段限速行駛', detail:`近期超速紀錄占 ${driver.overspeed_pct}%，請鬆油門、保持安全車距。`, action:'我已知悉', tone:'safety' };
     return { title:'請維持安全駕駛', detail:'目前沒有需要立刻處理的異常提醒。', action:'查看安全建議', tone:'normal' };
-  }
-  function autoPlayDriverSafetyAudio(driver, event) {
-    if (event.tone === 'normal') return;
-    const key = `hino-driver-auto-audio-v1:${driver.c}:${event.title}`;
-    try { if (sessionStorage.getItem(key)) return; sessionStorage.setItem(key, '1'); } catch (error) { /* Continue for this session if storage is unavailable. */ }
-    const text = event.tone === 'maintenance'
-      ? '偵測到車況提醒。請以行車安全為先，安全停靠後回報車隊安排確認。'
-      : '請依目前路段限速行駛，鬆開油門並保持安全車距。';
-    try {
-      if ('speechSynthesis' in window) {
-        speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'zh-TW';
-        speechSynthesis.speak(utterance);
-      }
-    } catch (error) { /* Device may not expose speech synthesis. The visible alert remains. */ }
-    toast('系統已自動語音提醒', '重要提醒已播報；請專心駕駛，安全停靠後再操作。', 'wn');
   }
   const shipperPushStorageKey = 'hino-shipper-push-v1';
   let shipperPushState = {};
@@ -663,12 +646,11 @@
     const { d } = myDriver();
     driverAcknowledgements[d.c] = new Date().toLocaleString('zh-TW', { hour:'2-digit', minute:'2-digit' });
     try { localStorage.setItem(driverAcknowledgementKey, JSON.stringify(driverAcknowledgements)); } catch (error) { /* Retain acknowledgement for the current session if persistence is blocked. */ }
-    toast('已回報車隊', '回報已記錄；請以行車安全為優先，必要時安全停靠後再聯繫車隊。', 'ok');
+    toast('已記錄已知悉（演示）', '僅本機記錄，未回報車隊系統。', 'ok');
   };
 
   window.selectOrder = function (id) { openShipmentDetail(id); };
   window.primaryDriverEvent = primaryDriverEvent;
-  window.autoPlayDriverSafetyAudio = autoPlayDriverSafetyAudio;
   window.activeDriverWeek = activeDriverWeek;
   window.driverAcknowledgements = driverAcknowledgements;
   window.TABS = TABS;

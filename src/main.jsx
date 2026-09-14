@@ -188,6 +188,15 @@ function hookReactNav(setNav, setLoginRole) {
   window.__itraqSetPage = (n) => setNav((prev) => ({ ...prev, itraqPage: Number(n) }));
 }
 
+function openDemoDataNote() {
+  const meta = window.HINO_EXCEL_DATA?.meta || {};
+  window.showModal?.(`<h3>資料說明</h3><p>本畫面為展示用歷史資料，期間 <b>${meta.period || '—'}</b>，最後一筆 ${meta.lastRecord || '—'}。<b>非即時</b>車隊連線，也不會寫入營運系統。</p><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
+}
+
+function openDemoLabNote() {
+  window.showModal?.(`<h3>情境模擬實驗室</h3><p>本 Demo 不開放事件實驗室，也不會模擬推播、暫停派工或預約進廠。畫面上的數字來自歷史匯出，不是現場派工結果。</p><div class="mb"><button class="btn pri" onclick="closeOv()">了解</button></div>`);
+}
+
 const AppBar = memo(function AppBar() {
   return (
     <div className="appbar" id="appbar" data-react style={{ display: 'none' }}>
@@ -200,6 +209,18 @@ const AppBar = memo(function AppBar() {
     </div>
   );
 });
+
+function DemoBanner() {
+  const period = window.HINO_EXCEL_DATA?.meta?.period || '—';
+  return (
+    <div className="demo-banner" id="demoBanner">
+      <b>DEMO</b>
+      <span>歷史資料 {period} · 非即時</span>
+      <button type="button" className="demo-banner-btn" onClick={openDemoDataNote}>資料說明</button>
+      <button type="button" className="demo-banner-btn" onClick={openDemoLabNote}>情境模擬</button>
+    </div>
+  );
+}
 
 const Fabs = memo(function Fabs() {
   return (
@@ -334,6 +355,7 @@ function ItraqApplication() {
   return (
     <div className="app" id="app" data-runtime="react">
       <AppBar />
+      {nav.role ? <DemoBanner /> : null}
       {!nav.role && (loginRole
         ? <LoginPage key={loginRole} role={loginRole} onBack={() => setLoginRole(null)} />
         : <Welcome onPick={setLoginRole} />)}

@@ -152,6 +152,7 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
   html body, html body.office { padding: 0; background: #f4f7f7; }
   body .app, body.office .app { max-width: none; width: 100vw; height: 100vh; margin: 0; border-radius: 0; border: 0; box-shadow: none; }
   body .appbar, body.office .appbar { padding: 0 24px; }
+  body .demo-banner, body.office .demo-banner { padding-inline: 24px; }
   body .screen, body.office .screen { padding: 26px 30px 28px; }
   body .tabbar, body.office .tabbar { justify-content: flex-start; gap: 4px; padding: 0; }
   body .tabbar button, body.office .tabbar button { flex: 0 0 auto; }

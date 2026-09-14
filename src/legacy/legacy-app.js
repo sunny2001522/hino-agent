@@ -129,8 +129,8 @@ function login(role){
  buildTabs();
  // 生成式 AI 助理：貨主以外都可用
  document.getElementById('aifab').style.display=(role==='shipper')?'none':'grid';
- // 事件測試入口預設隱藏，正式操作不以模擬事件作為資料來源。
- document.getElementById('simfab').style.display=(role==='fleet')?'grid':'none';
+ // 事件測試入口維持隱藏；本 Demo 不開實驗室、不做假推播。
+ document.getElementById('simfab').style.display='none';
  const first=TABS[role][0];
  gotoTab(first.id);
  // Do not auto-launch the guided tour: an overlay must never block first-use actions.
@@ -750,6 +750,8 @@ function toggleBenefitCalc(){const p=document.getElementById("benefitCalc"),a=do
 let chatTyping=null;
 const AI_TAG='<span class="aibadge"><span class="sp"></span>AI 生成</span>';
 const DATA_TAG='<span class="aibadge"><span class="sp"></span>資料分析</span>';
+const RULE_TAG='<span class="aibadge"><span class="sp"></span>規則模式</span>';
+const GEMINI_TAG='<span class="aibadge"><span class="sp"></span>Gemini</span>';
 
 // 依身分取得可注入模型的 iTRAQ 情境數據
 function aiContext(){
@@ -863,12 +865,12 @@ function openAIChat(){
  :(c.role==='lead')?`${SESSION.acc.name} 你好，我掌握 ${c.region} 的即時數據，幫你把省油與安全變成可執行的決策。`
  :`${SESSION.acc.name} 你好，我是全隊省油×安全 AI 軍師，已接上 iTRAQ 全隊大數據。`;
  window.__chatOpen?.({
-  headHtml:`<div class="cn">Gemini 智慧夥伴 <span id="chatModeTag">${DATA_TAG}</span></div><div class="cs" id="chatSub">${roleLabel} · 正在確認 Gemini 服務…</div>`,
-  greetingHtml:`<div class="bub ai"><div class="lbl" id="initialAiLabel">${DATA_TAG}</div>${hi}</div>`,
+  headHtml:`<div class="cn">智慧夥伴 <span id="chatModeTag">${RULE_TAG}</span></div><div class="cs" id="chatSub">${roleLabel} · 正在確認 Gemini 服務…</div>`,
+  greetingHtml:`<div class="bub ai"><div class="lbl" id="initialAiLabel">${RULE_TAG}</div>${hi}</div>`,
   sugHtml:sug,
   placeholder:'問我省油或安全，例如：今天怎麼開比較省油又安全？'
  });
- if(c.role==='fleet'||c.role==='lead'){checkBackend().then(on=>{const s=document.getElementById('chatSub');const tag=document.getElementById('chatModeTag');const label=document.getElementById('initialAiLabel');if(s)s.textContent=roleLabel+' · '+(on?'Gemini 已連線，依車聯網資料生成':'資料分析模式（Gemini 尚未連線）');if(tag)tag.innerHTML=on?AI_TAG:DATA_TAG;if(label)label.innerHTML=on?AI_TAG:DATA_TAG;});}
+ if(c.role==='fleet'||c.role==='lead'){checkBackend().then(on=>{const s=document.getElementById('chatSub');const tag=document.getElementById('chatModeTag');const label=document.getElementById('initialAiLabel');if(s)s.textContent=roleLabel+' · '+(on?'Gemini 已連線，依車聯網資料生成':'規則模式（無後端，僅來源摘要）');if(tag)tag.innerHTML=on?GEMINI_TAG:RULE_TAG;if(label)label.innerHTML=on?GEMINI_TAG:RULE_TAG;});}
 }
 function aiAskInput(){const i=document.getElementById('chatInput');const v=(i.value||'').trim();if(!v)return;i.value='';aiAsk(v);}
 
@@ -931,7 +933,7 @@ async function streamBackend(q,log){
 function aiAskLocal(q){
  if(chatTyping)clearInterval(chatTyping);
  const log=document.getElementById('chatlog');if(!log)return;
- const full=aiGenerate(q).replace(AI_TAG,DATA_TAG);
+ const full=aiGenerate(q).replace(AI_TAG,RULE_TAG).replace(DATA_TAG,RULE_TAG);
  const bub=el(`<div class="bub ai"><span id="typing"></span><span class="caret"></span></div>`);
  log.appendChild(bub);log.scrollTop=log.scrollHeight;
  const target=bub.querySelector('#typing');

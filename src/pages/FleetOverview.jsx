@@ -75,15 +75,15 @@ export default function FleetOverview() {
             <div>
               <div className="workforce-row" dangerouslySetInnerHTML={{ __html: `<b>獎勵／留任覆核</b>${window.workforceReviewBadge('recognition')}` }} />
               <p>車號 {recognition.map((item) => item.car).join('、')}</p>
-              <button type="button" className="btn gho sm" onClick={() => window.openWorkforceReview('recognition')}>查看原因與送覆核</button>
+              <button type="button" className="btn gho sm" onClick={() => window.openWorkforceReview('recognition')}>查看原因與 Demo 草案</button>
             </div>
             <div>
               <div className="workforce-row" dangerouslySetInnerHTML={{ __html: `<b>改善與人資審查</b>${window.workforceReviewBadge('support')}` }} />
               <p>車號 {support.map((item) => item.car).join('、')}</p>
-              <button type="button" className="btn gho sm" onClick={() => window.openWorkforceReview('support')}>查看原因與送覆核</button>
+              <button type="button" className="btn gho sm" onClick={() => window.openWorkforceReview('support')}>查看原因與 Demo 草案</button>
             </div>
           </div>
-          <p className="panel-note">來源未提供駕駛姓名、工時與薪資；上述以車號遙測篩出覆核優先序，需先由人資比對人員並補齊資料。</p>
+          <p className="panel-note">來源未提供駕駛姓名、工時與薪資；上述以車號遙測篩出展示優先序。人資流程僅為 Demo 草案，不會送進真人資系統。</p>
         </article>
         <article className="executive-panel ai">
           <div className="panel-title">

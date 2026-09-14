@@ -6,15 +6,7 @@ export default function LeadFocus() {
   });
   r.drivers.forEach((d) => {
     if (d.i.includes('超載')) pts.push(`${d.n} ${d.c} 疑似超載，需處理`);
-    if (d.i.includes('疲勞')) pts.push(`${d.n} 疲勞風險，安排休息/交接`);
     if (d.i.includes('點檢')) pts.push(`${d.n} 未完成出車前點檢`);
-  });
-  const fatigueSet = new Set();
-  fatigueSet.forEach((code) => {
-    if (code[0] === r.id) {
-      const d = r.drivers[+code.slice(1)];
-      if (d && !pts.some((p) => p.includes(d.n + ' 疲勞'))) pts.push(`${d.n} 疲勞風險，安排休息/交接`);
-    }
   });
   if (!pts.length) pts.push('本區狀況良好，無急件');
   const idleP = [1, 2, 3].map((k) => +(r.idlePct - 1.6 * k).toFixed(1)).map((v) => Math.max(6, v));
@@ -22,8 +14,8 @@ export default function LeadFocus() {
   return (
     <div className="screen" data-react>
       <section id="lrisk">
-        <div className="sh"><h2 className="sm">今日高風險預警</h2><span className="aibadge"><span className="sp"></span>AI 事前預測</span></div>
-        <div className="subt">AI 事前預測本區今天誰／何時最可能出事，主動介入</div>
+        <div className="sh"><h2 className="sm">今日覆核優先序</h2><span className="tag">依遙測安全分</span></div>
+        <div className="subt">來源未提供事故、疲勞或即時出事預測；以下依安全分排序，供人工覆核。</div>
         {!list.length ? (
           <div className="card"><div className="dt">沒有可判讀的 車聯網紀錄。</div></div>
         ) : (

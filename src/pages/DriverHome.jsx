@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export default function DriverHome() {
   const { d } = window.myDriver();
@@ -9,13 +9,7 @@ export default function DriverHome() {
   const weekly = window.activeDriverWeek(d.c, weekId);
   const season = window.HINO_EXCEL_DATA.competition;
   const seasonDriver = season.teams.find((item) => item.id === d.region)?.drivers.find((item) => item.c === d.c);
-  const notice = event.tone === 'normal' ? '目前沒有需播報的異常提醒' : '系統已自動語音提醒；請安全停靠後再操作';
-
-  useEffect(() => {
-    if (!window.driverAcknowledgements?.[d.c]) {
-      requestAnimationFrame(() => window.autoPlayDriverSafetyAudio(d, event));
-    }
-  }, []);
+  const notice = event.tone === 'normal' ? '目前沒有需處理的異常提醒' : '請安全停靠後再操作畫面';
 
   function handleMainAction() {
     if (acknowledged) {
@@ -61,7 +55,7 @@ export default function DriverHome() {
               </b>
             </div>
             <p className="weekly-score-attention">
-              {category.attention.map((item) => (
+              {category.attention.filter((item) => !/疲勞|安全帶/.test(item)).map((item) => (
                 <span key={item}>{item}</span>
               ))}
             </p>
@@ -107,8 +101,8 @@ export default function DriverHome() {
       <section className={`driver-drive-card ${event.tone}`}>
         <div>
           <span>現在要注意</span>
-          <h3>{acknowledged ? '已回報，請安全完成當前行程' : event.title}</h3>
-          <p>{acknowledged ? `已於 ${acknowledged} 回報車隊；若狀況改變請再次聯繫。` : event.detail}</p>
+          <h3>{acknowledged ? '已於本機記錄已知悉' : event.title}</h3>
+          <p>{acknowledged ? `已於 ${acknowledged} 在本機記錄已知悉（演示，未回報車隊系統）。` : event.detail}</p>
           <small style={{ display: 'block', marginTop: '7px', color: 'var(--mut)' }}>{notice}</small>
         </div>
         <div className="driver-drive-actions">
@@ -136,7 +130,7 @@ export default function DriverHome() {
         <small>每週分數只用來改善；不以週榜公開比較個人，季末才結算。</small>
       </section>
       <div className="foot">
-        {weekly?.weekly?.cadence || '此頁只保留即時提醒、行程狀態與必要回報。'} 重要安全提醒會由系統直接語音播報。
+        {weekly?.weekly?.cadence || '此頁只保留提醒、行程狀態與本機已知悉。'}
       </div>
     </div>
   );
