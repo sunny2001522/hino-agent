@@ -1,10 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import telemetryData from '../excel-derived-data.js?raw';
-import enhancements from '../enhancements.js?raw';
-import legacyApp from './legacy/legacy-app.js?raw';
 import './legacy/legacy.css';
 import '../enhancements.css';
+import { installPartner } from './partner/workbench.js';
+import './partner/workbench.css';
 
 function runClassicScript(source) {
   const script = document.createElement('script');
@@ -27,12 +26,24 @@ function ItraqApplication() {
     if (booted.current) return;
     booted.current = true;
 
+    void (async () => {
     try {
+      const [{default:telemetryData}, {default:legacyApp}, {default:enhancements}] = await Promise.all([
+        import('../excel-derived-data.js?raw'),
+        import('./legacy/legacy-app.js?raw'),
+        import('../enhancements.js?raw'),
+      ]);
       // Keep the existing renderer in a classic-script boundary: it preserves every
       // existing iTRAQ layout, inline action, hover menu and responsive behavior.
       runClassicScript(telemetryData);
       runClassicScript(legacyApp);
       runClassicScript(enhancements);
+      window.installHinoPartner = installPartner;
+      runClassicScript(`window.installHinoPartner({getSession:()=>SESSION, tabs:TABS, getDriver:()=>myDriver().d,
+        openAI:()=>openAIChat(), askAI:q=>aiAsk(q), getContext:backendContext,
+        getAnswer:aiGenerate, setAnswer:fn=>{aiGenerate=fn;},
+        setContext:fn=>{backendContext=fn;}});`);
+      delete window.installHinoPartner;
 
       bindLegacyControl('menuToggle', 'toggleMobileNav');
       bindLegacyControl('noticeButton', 'openItraqNotifications');
@@ -43,6 +54,7 @@ function ItraqApplication() {
       console.error('Unable to start iTRAQ application', error);
       document.getElementById('screen').innerHTML = '<div class="empty"><b>頁面載入失敗</b><p>請重新整理後再試。</p></div>';
     }
+    })();
   }, []);
 
   return (
@@ -56,7 +68,7 @@ function ItraqApplication() {
         <button className="barbtn" id="logoutButton" type="button">登出</button>
       </div>
 
-      <div className="screen" id="screen" />
+      <div className="screen" id="screen"><p role="status">正在載入歷史資料與工作台…</p></div>
 
       <button className="aifab" id="aifab" style={{ display: 'none' }} type="button">AI<br />助理<span className="dt2" /></button>
       <button className="simfab" id="simfab" style={{ display: 'none' }} type="button">模擬<br />事件</button>

@@ -14,26 +14,13 @@ function rankOf(cat, car) {
 }
 
 function moodOf(d) {
-  const s = CATS[0].score(d), e = CATS[1].score(d), m = CATS[2].score(d);
-  const mom = history(CATS[0], myRegion).at(-1).v - history(CATS[0], myRegion).at(-2).v;
-  if (d.overspeed_pct >= 15 || s < 55)
-    return {tag: '激進', line: '我猜你最近開得比較急，先把節奏放慢，人平安比趕時間重要。'};
-  if (d.idle_pct >= 15 || e < 55)
-    return {tag: '疲憊', line: '怠速偏高，會不會等太久、人有點累？找空檔歇一下，我陪你慢慢調回來。'};
-  if (s < 70 && e < 70 && m < 70)
-    return {tag: '抑鬱', line: '這陣子分數都壓著，辛苦了，不急著一次拉回來，有想說的隨時找我。'};
-  if (mom <= -8)
-    return {tag: '緊繃', line: '最近分數往下掉，壓力大的話先顧好自己，穩穩開就很好了。'};
-  return {tag: '穩定', line: '狀態算穩，繼續這樣開，想聊聊隨時找我。'};
+  if(d.overspeed_pct>=15)return {tag:'待覆核',line:'歷史超速紀錄偏高，請先確認限速資料與派車條件。車號訊號不能推定個人情緒或責任。'};
+  if(d.idle_pct>=15)return {tag:'等待情境待確認',line:'怠速紀錄偏高，請在停妥後回報裝卸、等待與必要作業原因，由調度協助確認。'};
+  return {tag:'歷史資料摘要',line:'目前沒有超過這組展示門檻，仍需留意路況。這是規則摘要，不是即時風險預測。'};
 }
-
 function aiReply(q) {
-  const {tag, line} = moodOf(me);
-  if (/累|疲|睡|休息|加班/.test(q)) return '累了就停一下，車可以等、人要先顧好。我在這裡。';
-  if (/急|氣|超速|趕|煩/.test(q)) return '趕路最容易出事，今天目標就是平安到。你已經在注意了，很好。';
-  if (/難過|心情|鬱|壓力|不想/.test(q)) return '心情低的時候不用硬撐成績，先把今天開完、好好吃飯。我聽得見。';
-  if (/分數|排名|安全|效率|保養/.test(q)) return line;
-  return `我猜你現在偏「${tag}」。想說什麼都行，一句也沒關係。`;
+  if(/累|疲|睡|休息/.test(q)) return '請在安全地點停妥後再操作或回報，並由調度協助安排。此介面無法判斷疲勞程度。';
+  return moodOf(me).line;
 }
 
 function addBub(role, text) {
@@ -64,7 +51,7 @@ function render(id) {
   document.getElementById('scoreVal').style.color = tint(score);
   document.getElementById('scoreLabel').textContent = cat.name + '分數';
   const deltaEl = document.getElementById('scoreDelta');
-  deltaEl.textContent = `本區較上月 ${signed(mom)}`;
+  deltaEl.textContent = `本區較前次有資料月份 ${signed(mom)}`;
   deltaEl.className = 's ' + (mom > 0 ? 'up' : mom < 0 ? 'down' : '');
   document.getElementById('rankVal').textContent = rank;
   document.getElementById('rankOf').textContent = `/ ${total} · 平均 ${avg}`;

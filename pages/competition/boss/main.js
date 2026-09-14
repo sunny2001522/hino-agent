@@ -79,7 +79,7 @@ function render(id) {
   document.getElementById('scoreVal').style.color = tint(avg);
   document.getElementById('scoreLabel').textContent = cat.name + ' · ' + fleet.drivers.length + ' 台平均';
   const deltaEl = document.getElementById('scoreDelta');
-  deltaEl.textContent = `較上月 ${signed(mom)}`;
+  deltaEl.textContent = `較前次有資料月份 ${signed(mom)}`;
   deltaEl.className = 's ' + (mom > 0 ? 'up' : mom < 0 ? 'down' : '');
   document.getElementById('rankVal').textContent = weak.r.name;
   document.getElementById('rankVal').style.color = tint(weak.s);

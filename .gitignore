@@ -7,3 +7,10 @@ npm-debug.log
 developnote/
 .vercel
 dist
+.codebase-memory/
+__pycache__/
+*.pyc
+.codex-build/
+.codex-finalizer/
+
+.chart-data-*/

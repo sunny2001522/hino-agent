@@ -1,3 +1,4 @@
+import { trustedContext } from '../lib/telemetry.js';
 import { buildSystemPrompt, geminiConfig } from '../lib/gemini.js';
 
 function json(res, status, body) {
@@ -31,10 +32,12 @@ export default async function handler(req, res) {
     return json(res, 400, { error: 'bad json' });
   }
   const { context, question } = payload || {};
-  if (!context || !question || !['fleet', 'lead'].includes(context.role)) {
+  if (!context || typeof question !== 'string' || !question.trim() || !['fleet', 'lead'].includes(context.role)) {
     return json(res, 400, { error: 'context(role fleet|lead) and question required' });
   }
 
+  let grounded;
+  try { grounded = trustedContext(context); } catch { return json(res, 400, { error: 'invalid demo scope' }); }
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -43,9 +46,10 @@ export default async function handler(req, res) {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(key)}`;
     const geminiResponse = await fetch(endpoint, {
       method: 'POST',
+      signal: AbortSignal.timeout(25000),
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: buildSystemPrompt(context) }] },
+        systemInstruction: { parts: [{ text: buildSystemPrompt(grounded) }] },
         contents: [{ role: 'user', parts: [{ text: String(question).slice(0, 2000) }] }],
         generationConfig: { maxOutputTokens: 1024, temperature: 0.35, thinkingConfig: { thinkingBudget: 0 } },
       }),

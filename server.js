@@ -1,3 +1,5 @@
+import { aiHealth } from './lib/ai-health.js';
+import { trustedContext } from './lib/telemetry.js';
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -6,7 +8,7 @@ import { buildSystemPrompt, geminiConfig } from './lib/gemini.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 8080;
-const STATIC_DIR = path.resolve(__dirname, process.env.STATIC_DIR || '.');
+const STATIC_DIR = path.resolve(__dirname, process.env.STATIC_DIR || 'dist');
 
 // ---- Google Gemini（AI Studio API key，放環境變數 GEMINI_API_KEY）----
 const { key: GEMINI_KEY, model: GEMINI_MODEL } = geminiConfig();
@@ -38,10 +40,12 @@ async function handleChat(req, res) {
   req.on('end', async () => {
     let payload;
     try { payload = JSON.parse(raw || '{}'); } catch { return send(res, 400, { error: 'bad json' }); }
-    const { context, question } = payload;
-    if (!context || !question || (context.role !== 'fleet' && context.role !== 'lead')) {
+    const { context, question } = payload || {};
+    if (!context || typeof question !== 'string' || !question.trim() || (context.role !== 'fleet' && context.role !== 'lead')) {
       return send(res, 400, { error: 'context(role fleet|lead) and question required' });
     }
+  let grounded;
+  try { grounded = trustedContext(context); } catch { return send(res, 400, { error: 'invalid demo scope' }); }
     res.writeHead(200, {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
@@ -50,12 +54,13 @@ async function handleChat(req, res) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${encodeURIComponent(GEMINI_KEY)}`;
       const body = {
-        systemInstruction: { parts: [{ text: buildSystemPrompt(context) }] },
+        systemInstruction: { parts: [{ text: buildSystemPrompt(grounded) }] },
         contents: [{ role: 'user', parts: [{ text: String(question).slice(0, 2000) }] }],
         generationConfig: { maxOutputTokens: 1024, temperature: 0.35, thinkingConfig: { thinkingBudget: 0 } },
       };
       const gres = await fetch(url, {
         method: 'POST',
+      signal: AbortSignal.timeout(25000),
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
@@ -108,8 +113,10 @@ async function serveStatic(req, res, urlPath) {
   try {
     const clean = urlPath === '/' ? '/index.html' : urlPath.split('?')[0];
     const filePath = path.join(STATIC_DIR, path.normalize(clean).replace(/^(\.\.[/\\])+/, ''));
-    if (!filePath.startsWith(STATIC_DIR)) return send(res, 403, 'forbidden');
+    if (!filePath.startsWith(STATIC_DIR + path.sep)) return send(res, 403, 'forbidden');
     const data = await readFile(filePath);
+  let grounded;
+  try { grounded = trustedContext(context); } catch { return send(res, 400, { error: 'invalid demo scope' }); }
     res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream' });
     res.end(data);
   } catch {
@@ -120,7 +127,7 @@ async function serveStatic(req, res, urlPath) {
 http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (url.pathname === '/api/health') {
-    return send(res, 200, { ok: true, ai: hasKey, provider: hasKey ? 'gemini' : null, model: hasKey ? GEMINI_MODEL : null });
+    return aiHealth().then(status => send(res, 200, status, {'Cache-Control':'no-store'}));
   }
   if (url.pathname === '/api/chat' && req.method === 'POST') {
     return handleChat(req, res);

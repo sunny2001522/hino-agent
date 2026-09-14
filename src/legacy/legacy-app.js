@@ -430,7 +430,7 @@ function lineChart(series,opts){
  const pred=opts.predict||[]; // 未來預測值（接在歷史後面）
  const nFut=pred.length,total=MONTHS.length+nFut;
  const W=560,H=220,pl=40,pr=14,pt=12,pb=24;
- const all=series.flatMap(s=>s.vals).concat(pred);
+ const all=series.flatMap(s=>s.vals).concat(pred).filter(v=>v!==null&&Number.isFinite(v));
  let mn=opts.min!=null?opts.min:Math.min(...all),mx=opts.max!=null?opts.max:Math.max(...all);if(mn===mx){mn-=1;mx+=1;}const pad=(mx-mn)*.12;mn-=pad;mx+=pad;
  const x=i=>pl+(W-pl-pr)*(i/(total-1)),y=v=>pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));
  let g="";for(let k=0;k<=3;k++){const gv=mn+(mx-mn)*k/3,gy=y(gv);g+=`<line x1="${pl}" y1="${gy}" x2="${W-pr}" y2="${gy}" stroke="#e4ebed"/><text x="${pl-6}" y="${gy+4}" text-anchor="end">${Math.round(gv)}</text>`;}
@@ -439,7 +439,13 @@ function lineChart(series,opts){
  pred.forEach((_,k)=>{g+=`<text x="${x(MONTHS.length+k)}" y="${H-7}" text-anchor="middle" fill="#a08bd0">${futLbl[k]||''}</text>`;});
  // 預測區底色 + 分隔線
  if(nFut){const sx=x(MONTHS.length-1);g+=`<rect x="${sx}" y="${pt}" width="${W-pr-sx}" height="${H-pt-pb}" fill="#f2edfb" opacity=".7"/><line x1="${sx}" y1="${pt}" x2="${sx}" y2="${H-pb}" stroke="#c9b8e8" stroke-dasharray="3 3"/><text x="${(sx+W-pr)/2}" y="${pt+12}" text-anchor="middle" fill="#7e57c2" font-size="10">AI 預測（線性趨勢外推）</text>`;}
- let ln="";series.forEach(s=>{const p=s.vals.map((v,i)=>`${x(i)},${y(v)}`).join(" ");ln+=`<polyline points="${p}" fill="none" stroke="${s.color}" stroke-width="${s.bold?3:1.5}" opacity="${s.bold?1:.45}" stroke-linejoin="round"/>`;if(s.bold)s.vals.forEach((v,i)=>ln+=`<circle cx="${x(i)}" cy="${y(v)}" r="${i===s.vals.length-1?4:2.4}" fill="${s.color}"/>`);});
+ let ln="";series.forEach(s=>{
+   const segments=[];let current=[];
+   s.vals.forEach((v,i)=>{if(v===null||!Number.isFinite(v)){if(current.length)segments.push(current);current=[];}else current.push(`${x(i)},${y(v)}`);});
+   if(current.length)segments.push(current);
+   segments.forEach(points=>{ln+=`<polyline points="${points.join(' ')}" fill="none" stroke="${s.color}" stroke-width="${s.bold?3:1.5}"/>`;});
+   s.vals.forEach((v,i)=>{if(v!==null&&Number.isFinite(v))ln+=`<circle cx="${x(i)}" cy="${y(v)}" r="${s.bold?3:2}" fill="${s.color}"/>`;});
+ });
  // 預測虛線（接續主線末端）
  if(nFut){const lastI=MONTHS.length-1,lastV=series.find(s=>s.bold).vals.at(-1);const pts=[[x(lastI),y(lastV)]].concat(pred.map((v,k)=>[x(MONTHS.length+k),y(v)]));
  ln+=`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#7e57c2" stroke-width="2.6" stroke-dasharray="5 4" stroke-linejoin="round"/>`+pred.map((v,k)=>`<circle cx="${x(MONTHS.length+k)}" cy="${y(v)}" r="3.2" fill="#7e57c2"/>`).join('');}
@@ -447,12 +453,10 @@ function lineChart(series,opts){
 }
 // 各面向的未來 3 個月 AI 預測值（線性趨勢外推，非情境模擬）
 function metricPredict(m){
- const d=m.data,last=d.at(-1),slope=(d.at(-1)-d.at(-4))/3;
- if(m.key==='safety')return null; // 安全分改在專屬預測卡呈現
- // 百分比類（怠速/油耗）加上下限夾制，避免單調累積序列給出無意義外推
- const pct=m.key==='idle'||m.key==='fuel';
- return [1,2,3].map(k=>{let v=last+slope*k;if(pct)v=Math.max(0,Math.min(100,v));return +v.toFixed(1);});
+ // Missing months and unvalidated extrapolation must never appear as AI forecasts.
+ return null;
 }
+
 function renderFleetAnalytics(){
  screen.innerHTML=`
  <section id="trend">
@@ -487,7 +491,7 @@ function renderTrend(){const m=metrics.find(x=>x.key===curMetric);
  document.getElementById("m_sub").textContent="各區 + 全隊";
  const now=m.data.at(-1),prev=m.data.at(-2);
  const up=now>prev,betterUp=m.key==="safety",good=up===betterUp,delta=prev?Math.abs((now-prev)/prev*100):0;
- document.getElementById("m_now").innerHTML=`全隊 <span style="color:${m.key==="safety"?scoreColor(now):"var(--bad)"}">${now.toLocaleString()} ${m.unit}</span><span style="font-size:12px;font-weight:700;color:${good?"var(--good)":"var(--bad)"}">${up?"▲":"▼"} ${delta.toFixed(1)}% 較上月</span>`;
+ document.getElementById("m_now").innerHTML=`全隊 <span style="color:${m.key==="safety"?scoreColor(now):"var(--bad)"}">${now.toLocaleString()} ${m.unit}</span><span style="font-size:12px;font-weight:700;color:${good?"var(--good)":"var(--bad)"}">${prev===null?"上月缺測，無法比較":`${up?"▲":"▼"} ${delta.toFixed(1)}% 較上月`}</span>`;
  const c=m.cause;document.getElementById("m_cause").innerHTML=`<div class="h">${c.t}</div>
  <div style="font-size:12px;color:#35505a;margin:2px 0 9px">資料顯示（事實）：${factMap[m.key]}。</div>
  <div style="font-size:11.5px;color:var(--mut2);margin-bottom:2px">AI 推測原因（需與現場驗證）：</div>
@@ -1201,22 +1205,10 @@ function aiContext(){
 
 // 常見問題（依身分）
 function aiSuggestions(){
- const c=aiContext();
- if(c.role==='driver') return [
- '我今天怎麼開比較省油又安全？',
- '我哪裡最耗油？怎麼改？',
- '今天我要注意什麼安全風險？',
- '我的安全獎金怎麼拿到？'];
- if(c.role==='lead') return [
- c.region+'這週油耗為什麼變差？誰是主因？',
- '本區今天誰最可能出事？',
- '怎麼把怠速降到 8%？',
- '幫我擬一段給駕駛的省油提醒'];
- return [
- '這個月哪台車最耗油、怎麼改善？',
- '今天全隊誰的事故風險最高？',
- '怎麼把全隊怠速從 14% 降到 8%？',
- '導入後預期能省多少油、降多少事故？'];
+ return ['這份歷史資料的油耗有哪些需要覆核？',
+ '怠速原因應由駕駛、調度與保修如何分工確認？',
+ '歷史超速紀錄有哪些限制？出車前能做什麼？',
+ '如何設計試點，驗證省油與安全改善？'];
 }
 
 // 生成式回覆引擎：把問題 + iTRAQ 數據 → 生成一段動態文字（HTML）
@@ -1346,13 +1338,13 @@ function backendContext(){
  fuelTop:r.drivers.filter(v=>Number(v.fuel_per_100km)>0&&Number(v.mileage_km)>0).sort((a,b)=>b.fuel_per_100km-a.fuel_per_100km).slice(0,3).map(v=>({car:v.c,month:v.fuel_month,fuelPer100:v.fuel_per_100km,fuelLiters:v.fuel_liters,mileageKm:v.mileage_km,idlePct:v.idle_pct,highLoadCount:v.high_load_count,overspeedPct:v.overspeed_pct,dtcCount:v.dtc_count})),
  drivers:r.drivers.map(d=>({n:d.c,s:d.s,i:d.i}))};
 }
-// 對話入口：老闆/負責人優先走真 LLM 串流；失敗或無後端則退回本地模擬
+// 對話入口：Demo 固定使用編譯後的歷史資料，避免暗示有即時外部資料。
 async function aiAsk(q){
  if(chatTyping)clearInterval(chatTyping);
  const log=document.getElementById('chatlog');if(!log)return;
  log.appendChild(el(`<div class="bub me">${escapeHtml(q)}</div>`));
  log.scrollTop=log.scrollHeight;
- const canBackend=SESSION&&(SESSION.role==='fleet'||SESSION.role==='lead');
+ const canBackend=SESSION && ['fleet','lead'].includes(SESSION.role);
  if(canBackend&&await checkBackend()){streamBackend(q,log);}
  else{aiAskLocal(q);}
 }
@@ -1384,7 +1376,7 @@ async function streamBackend(q,log){
  addChatActions(bub,q);
  }catch(e){
  // 後端失敗 → 移除泡泡並退回本地模擬（不讓評審看到錯誤）
- AI_BACKEND=false;bub.remove();aiAskLocal(q);
+ AI_BACKEND=false;bub.remove();const mode=document.getElementById('partner-ai-mode');if(mode)mode.textContent='模型連線失敗 · 已改用規則摘要';aiAskLocal(q);
  }
 }
 // 資料分析備援：無後端、駕駛端、或後端失敗時只顯示可追溯的來源分析
@@ -1427,21 +1419,10 @@ function revealHtml(html,n){
  return out;
 }
 function addChatActions(bub,q){
- const c=aiContext();let btns='';
- if(c.role==='driver'){
- if(q.includes('省油')||q.includes('油'))btns=`<button class="btn pri sm" onclick="act('已設為今日省油任務，達標可累積競賽積分。','ok')">設為今日省油任務</button>`;
- else if(q.includes('安全')||q.includes('風險'))btns=`<button class="btn pri sm" onclick="act('已開啟時段提醒，AI 會提前 30 分主動提醒你。','ok')">開啟時段提醒</button>`;
- else if(q.includes('獎金')||q.includes('提分'))btns=`<button class="btn pri sm" onclick="act('已為你排定 7 天安全提分計畫。','ok')">排 7 天提分計畫</button>`;
- }else if(c.role==='lead'){
- if(q.includes('油')||q.includes('怠速'))btns=`<button class="btn pri sm" onclick="act('已對本區啟動 AI 省油教練並設怠速目標 ≤8%。','ok');closeOv()">一鍵啟動省油教練</button>`;
- else if(q.includes('風險')||q.includes('事故'))btns=`<button class="btn pri sm" onclick="act('已對高風險駕駛發送事前預警。','wn');closeOv()">發送事前預警</button>`;
- else if(q.includes('提醒')||q.includes('擬'))btns=`<button class="btn pri sm" onclick="act('已群發省油提醒給本區駕駛。','ok');closeOv()">一鍵群發</button>`;
- }else{
- if(q.includes('耗油')||q.includes('油'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('team')">查看高油耗車號</button>`;
- else if(q.includes('風險')||q.includes('事故'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('decision')">查看預警與介入狀態</button>`;
- else if(q.includes('效益')||q.includes('導入'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('settings')">看完整效益</button>`;
- }
- if(btns)bub.appendChild(el(`<div style="margin-top:9px">${btns}</div>`));
+ const role=SESSION?.role;
+ if(!['fleet','lead','driver'].includes(role))return;
+ const target=role==='fleet'?'decision':'partner';
+ bub.appendChild(el(`<div style="margin-top:9px"><button class="btn pri sm" onclick="closeOv();gotoTab('${target}')">回到改善工作台</button><p style="font-size:12px">建案、覆核與回報需在工作台記錄；這段回答未執行任何操作。</p></div>`));
  document.getElementById('chatlog').scrollTop=99999;
 }
 
@@ -1529,26 +1510,27 @@ const SIMS=[
 ];
 function openSimPanel(){
  const rows=SIMS.map(s=>{const on=!s.sw||aiAuto[s.sw];
- return `<div class="simrow"><div class="si2"><div class="st2">${s.t}</div><div class="sd2">${s.d} · ${on?'<b style="color:#4e7d1f">授權開啟 → AI 自動處理</b>':'<b style="color:var(--bad)">授權關閉 → 轉需您拍板</b>'}</div></div>
- <button class="btn pri sm" onclick="runSim('${s.k}')">觸發</button></div>`;}).join('');
- showModal(`<h3>事件測試入口 <span class="aibadge"><span class="sp"></span>預設隱藏</span></h3>
- <p>比賽現場沒有真實車輛事件 — 點「觸發」模擬事件發生，觀察 AI 依您的自動化授權即時處理（調度層動作由 AI 代理執行、負責人監督）。把「我的 → AI 自動化授權」關掉再觸發，同一事件會改走「需您拍板」流程。</p>
+ return `<div class="simrow"><div class="si2"><div class="st2">${s.t} <span class="demo-sim-tag">模擬</span></div><div class="sd2">${s.d} · ${on?'<b style="color:#4e7d1f">展示授權開啟時的處置流程</b>':'<b style="color:var(--bad)">展示改由人工核准的流程</b>'}</div></div>
+ <button class="btn pri sm" onclick="runSim('${s.k}')">播放情境</button></div>`;}).join('');
+ showModal(`<h3>情境模擬實驗室 <span class="demo-sim-tag">全部虛構</span></h3>
+ <p>主辦方只提供歷史遙測資料，因此下列疲勞、繞行、超載、預約與點檢事件皆為展示情境。播放後只會在此瀏覽器呈現推演步驟與本機 Demo 待辦：不會發送通知、安排替班、停派車輛或預約保修廠，也不會寫回歷史資料。</p>
  ${rows}
- <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="closeOv();gotoTab('settings')">調整自動化授權</button></div>`);
+ <div class="mb"><button class="btn gho" onclick="closeOv()">關閉</button><button class="btn pri" onclick="closeOv();gotoTab('settings')">查看展示授權設定</button></div>`);
 }
 function runSim(k){
  const s=SIMS.find(x=>x.k===k);if(!s)return;
  closeOv();
  const on=!s.sw||aiAuto[s.sw];
- toast('模擬事件已觸發',s.steps[0],'wn');
+ toast('情境模擬已開始',`【模擬】${s.steps[0]}`,'wn');
+ window.playDemoSafetyAudio?.(s.t);
  if(on){
  s.steps.slice(1).forEach((st,i)=>{const last=i===s.steps.length-2;
- setTimeout(()=>toast(last?'AI 自動處理完成':'AI 自動處理中…',st,last?'ok':''),(i+1)*1300);});
- setTimeout(()=>{simLog.push({t:s.log,by:'AI'});
+ setTimeout(()=>toast(last?'模擬處置流程完成':'模擬處置流程中…',`【模擬】${st}`,last?'ok':''),(i+1)*1300);});
+ setTimeout(()=>{simLog.push({t:`【模擬】${s.log}`,by:'Demo'});
  if(SESSION&&SESSION.role==='fleet'&&curTab==='todo')renderFleetTodo();},s.steps.length*1300);
  }else{
  setTimeout(()=>{
- toast('授權已關閉 → 轉入需您拍板',`「${aiAutoMeta[s.sw].t}」未授權，AI 不自動執行，已列入待辦等待您核准。`,'dn');
+ toast('模擬改走人工核准',`【模擬】「${aiAutoMeta[s.sw].t}」未授權，因此只展示待辦與人工核准流程。`,'dn');
  if(!s.pendAdded){s.pendAdded=true;todos.push(Object.assign({decide:true},s.pend));todoData.push('');}
  if(SESSION&&SESSION.role==='fleet'&&curTab==='todo')renderFleetTodo();},1300);
  }

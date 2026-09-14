@@ -4,8 +4,8 @@
 GitHub Pages cannot read a workstation Excel file at runtime. This script streams
 the workbook twice and publishes a compact JavaScript payload containing only
 facts that can be calculated from its telemetry columns. It never creates driver,
-HR, customer, order, fatigue, seatbelt, or punctuality data because those fields
-do not exist in the source workbook.
+HR, customer, order or punctuality data. Event-code labels describe telemetry
+signals and must not be treated as confirmed driver diagnoses.
 """
 
 from __future__ import annotations
@@ -396,7 +396,7 @@ def month_values(stats: list[Stats], metric: str) -> list[float | int]:
         "dtc": lambda item: item.dtc,
         "fuel": lambda item: item.fuel_per_100km(),
     }[metric]
-    return [getter(item) for item in stats]
+    return [getter(item) if item.rows and (metric != "fuel" or item.fuel_per_100km() > 0) else None for item in stats]
 
 
 def issue(vehicle: dict) -> str:
@@ -540,6 +540,7 @@ def build(source: Path) -> dict:
             "fuel": stat.fuel_per_100km(), "anomaly": pretty(ratio(stat.overspeed + stat.high_load + stat.dtc, stat.rows) * 100, 1),
             "onTime": None, "journeys": sum(item["journeys"] for item in drivers),
             "safety": series["safety"], "brake": series["speed"], "series": series,
+            "recordsByMonth": [item.rows for item in region_months[region]],
         })
     metrics, facts, solutions = metric_payload(all_months)
     total_series = {key: month_values(all_months, key) for key in METRIC_INFO}
@@ -601,7 +602,7 @@ def build(source: Path) -> dict:
     competition["leaderboard"] = [
         {"rank": rank, "c": driver["c"], "score": driver["score"], "region": driver["region"],
          "displayName": LEADERBOARD_PROFILES[rank - 1]["name"], "avatar": LEADERBOARD_PROFILES[rank - 1]["avatar"],
-         "profileNote": "帳號顯示資料"}
+         "profileNote": "合成人物展示，非來源人員"}
         for rank, driver in enumerate(season_driver_ranking, start=1)
     ]
     by_speed = sorted(vehicles, key=lambda item: item["overspeed_count"], reverse=True)[:3]
@@ -650,7 +651,7 @@ def build(source: Path) -> dict:
         "metrics": metrics, "factMap": facts, "maintenance": maintenance, "competition": competition, "weekly": weekly, "dims": [{"key": key, "name": info[0], "high": info[2], "unit": info[1], "hint": info[3]} for key, info in METRIC_INFO.items()], "dimSolData": solutions,
         "todos": todos, "todoData": todo_data, "advice": advice, "shippers": [{"id": "telemetry", "name": "車聯網紀錄", "orders": orders}],
         "accountBindings": {"lead_region": first_region["id"], "driver_code": f"{first_region['id']}0", "personal_code": f"{last_region['id']}0"}, "vehicleSnapshot": latest_vehicles,
-        "sourceNote": "本頁數據由 output data_Hotai_20260511.xlsx 計算；原始檔未提供駕駛姓名、工時、人資、訂單、準時率與安全帶欄位。",
+        "sourceNote": "本頁數據由 output data_Hotai_20260511.xlsx 計算；原始檔未提供駕駛姓名、工時、人資、訂單與準時率。事件代碼是車機訊號，不直接證明駕駛行為或狀態。",
     }
 
 
