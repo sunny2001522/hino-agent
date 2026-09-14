@@ -338,3 +338,7 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
 .demo-mode-banner b{font-size:11px;}.demo-mode-actions{flex-wrap:nowrap;}
 @media(max-width:599px){#sim-controls{gap:6px;padding:8px 10px;}#sim-controls label{width:100%;}#sim-controls select{flex:1;max-width:none;}.sim-status{width:100%;}.demo-mode-banner{flex-direction:row;align-items:center;padding:5px 10px;}.chatwrap{height:65dvh;}.chips2{max-height:76px;overflow:auto;}}
 .demo-mode-banner > div:first-child{flex:0 0 auto;white-space:nowrap;}.demo-mode-banner .demo-mode-actions{width:auto;margin-left:auto;}
+/* Product screens show controls and data, not presentation commentary. */
+#demo-mode-banner,.source-note,.guardrail,.foot,.panel-note,.private-note,.modal-alert,.native-source-note,.driver-season-status>small,.driver-drive-card small,.driver-task-strip>div:last-child small{display:none!important;}
+#simulation-toggle{white-space:nowrap;}
+@media(max-width:599px){#simulation-toggle{font-size:11px;padding:6px;}.whoami{min-width:0;}.demo-mode-banner{display:none!important;}}

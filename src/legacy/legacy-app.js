@@ -1513,7 +1513,7 @@ function closeSimPanel(){document.getElementById('sim-controls')?.remove();}
 function openSimPanel(){
  if(document.getElementById('sim-controls')){closeSimPanel();return;}
  const panel=document.createElement('section');panel.id='sim-controls';panel.setAttribute('aria-label','情境模擬');
- panel.innerHTML=`<label for="sim-choice">情境模擬 <small>虛構演示</small></label><select id="sim-choice">${SIMS.map(s=>`<option value="${s.k}">${s.t}</option>`).join('')}</select><button class="btn pri sm" onclick="runSim(document.getElementById('sim-choice').value)">播放</button><button class="btn gho sm" aria-label="關閉情境模擬" onclick="closeSimPanel()">✕</button><div class="sim-status" role="status">結果收進 AI 助理，不執行實際派工。</div>`;
+ panel.innerHTML=`<label for="sim-choice">情境模擬</label><select id="sim-choice">${SIMS.map(s=>`<option value="${s.k}">${s.t}</option>`).join('')}</select><button class="btn pri sm" onclick="runSim(document.getElementById('sim-choice').value)">播放</button><button class="btn gho sm" aria-label="關閉情境模擬" onclick="closeSimPanel()">✕</button><div class="sim-status" role="status"></div>`;
  document.getElementById('app').insertBefore(panel,document.getElementById('screen'));
 }
 function runSim(k){
@@ -1529,7 +1529,7 @@ function showSimReports(){
  const log=document.getElementById('chatlog');if(!log||!SESSION)return;
  document.getElementById('chatChips')?.setAttribute('style','display:none');
  const reports=simReports.filter(r=>r.owner===SESSION.role+':'+SESSION.acc.name);
- log.innerHTML=`<div class="bub ai"><b>AI 彙報</b><div class="lbl">情境演示 · 未執行實際操作</div></div>`+ (reports.length?reports.map(r=>`<article class="bub ai"><b>${escapeHtml(r.title)} · ${r.time}</b><details><summary>查看推演步驟</summary><ol>${r.steps.map(st=>`<li>${escapeHtml(st)}</li>`).join('')}</ol></details></article>`).join(''):'<div class="bub ai">尚無彙報，播放情境後會顯示於此。</div>');
+ log.innerHTML=`<div class="bub ai"><b>AI 彙報</b><div class="lbl">模擬紀錄</div></div>`+ (reports.length?reports.map(r=>`<article class="bub ai"><b>${escapeHtml(r.title)} · ${r.time}</b><details><summary>查看推演步驟</summary><ol>${r.steps.map(st=>`<li>${escapeHtml(st)}</li>`).join('')}</ol></details></article>`).join(''):'<div class="bub ai">尚無彙報，播放情境後會顯示於此。</div>');
 }
 
 /* boot */

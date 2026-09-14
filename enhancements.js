@@ -18,14 +18,11 @@
   }
 
   function mountDemoModeBanner() {
-    const app = document.getElementById('app');
-    const screenElement = document.getElementById('screen');
-    if (!app || !screenElement || document.getElementById('demo-mode-banner')) return;
-    const banner = document.createElement('aside');
-    banner.id = 'demo-mode-banner';
-    banner.className = 'demo-mode-banner';
-    banner.innerHTML = `<div><b>歷史資料 Demo</b></div><div class="demo-mode-actions"><button type="button" onclick="openDemoDisclosure()">資料說明</button><button type="button" onclick="openSimPanel()">情境模擬</button></div>`;
-    app.insertBefore(banner, screenElement);
+    if (document.getElementById('simulation-toggle')) return;
+    const button = document.createElement('button');
+    button.id = 'simulation-toggle'; button.className = 'barbtn'; button.type = 'button';
+    button.textContent = '情境模擬'; button.onclick = () => openSimPanel();
+    document.getElementById('appbar').insertBefore(button, document.getElementById('logoutButton'));
   }
 
   window.openDemoDisclosure = function () {
@@ -783,7 +780,7 @@
     const seasonTeam = season.teams.find(item => item.id === d.region);
     const seasonDriver = seasonTeam?.drivers.find(item => item.c === d.c);
     const weeklySection = weekly?.score ? `<section class="driver-weekly-section"><div class="sh"><h2>歷史週期資料</h2><span class="tag">${weekly.week.label}</span></div><div class="weekly-period-tabs">${weekly.weekly.weeks.map(item => `<button class="weekly-period ${item.id === weekly.week.id ? 'on' : ''}" onclick="setDriverScoreWeek('${item.id}')">${item.label}</button>`).join('')}</div><p class="weekly-score-note">依需要注意程度排序；以 ${weekly.score.records.toLocaleString()} 筆歷史行車紀錄計算，僅供資料覆核。</p><div class="weekly-score-list">${weeklyScoreCards(weekly.score)}</div></section>` : `<section><div class="driver-task-detail"><div><span>超速紀錄</span><b>${d.overspeed_count.toLocaleString()} 筆</b></div><div><span>怠速佔比</span><b>${d.idle_pct}%</b></div><div><span>高引擎負載</span><b>${d.high_load_count.toLocaleString()} 筆</b></div><div><span>DTC</span><b>${d.dtc_count.toLocaleString()} 筆</b></div></div></section>`;
-    const seasonSection = `<section class="driver-season-status"><span>歷史資料結算指標</span><b>${season.label} ${seasonDriver ? `${seasonDriver.s} 分` : '季結算'}</b><small>來源沒有駕駛身分與班次；此車號指標不作個人考核或即時提醒。</small></section>`;
+    const seasonSection = `<section class="driver-season-status"><span>歷史資料結算指標</span><b>${season.label} ${seasonDriver ? `${seasonDriver.s} 分` : '季結算'}</b></section>`;
     screen.innerHTML = `<section class="driver-drive-header"><span>歷史車輛資料 Demo</span><h2>${d.c}</h2><p>最後資料快照：${d.last_status} · ${d.last_time}</p></section><section class="driver-drive-card ${event.tone}"><div><span>歷史訊號解讀</span><h3>${event.title}</h3><p>${event.detail}</p><small style="display:block;margin-top:7px;color:var(--mut)">資料期間：${demoSourceSummary()}。此畫面不會播報、推播或送出回報。</small></div><div class="driver-drive-actions"><button class="btn pri" onclick="${event.tone === 'normal' ? 'openDemoDisclosure()' : 'openSafetyCoach()'}">${event.action}</button></div></section><section class="driver-task-strip"><div><span>最後狀態</span><b>${d.last_status}</b><small>最後車速 ${d.last_speed} km/h</small></div><div><span>展示下一步</span><b>資料覆核</b><small>若要看事件處置，請開啟情境模擬</small></div></section>${weeklySection}${seasonSection}<div class="foot">${weekly?.weekly?.cadence || '本頁為歷史資料摘要。'} 情境模擬與來源資料會明確分開，不將模擬結果寫回原始資料。</div>`;
   }
   function renderDriverTaskEnhanced() {
@@ -793,7 +790,7 @@
   function renderDriverAlertsEnhanced() {
     const { d } = myDriver();
     const alerts = [[`超速提醒`, `近期超速紀錄占 ${d.overspeed_pct}%。`], [`怠速提醒`, `怠速佔比 ${d.idle_pct}%。`], [`車況提醒`, `高引擎負載 ${d.high_load_count.toLocaleString()} 筆；DTC ${d.dtc_count} 筆。`]];
-    screen.innerHTML = `<section><div class="sh"><h2>歷史訊號摘要</h2><span class="tag">來源期間 ${window.HINO_EXCEL_DATA.meta.period}</span></div><div class="subt">以下是車號的歷史資料，不是正在發生的提醒；未傳送語音、推播或回報。</div><div class="driver-alert-list">${alerts.map(([title, detail]) => `<div><div><b>${title}</b><span>${detail}</span></div><span class="tag">歷史資料</span></div>`).join('')}</div><div class="driver-task-actions"><button class="btn pri" onclick="openSafetyCoach()">查看改善方式</button><button class="btn gho" onclick="openSimPanel()">啟動情境模擬</button></div></section>`;
+    screen.innerHTML = `<section><div class="sh"><h2>歷史訊號摘要</h2><span class="tag">來源期間 ${window.HINO_EXCEL_DATA.meta.period}</span></div><div class="driver-alert-list">${alerts.map(([title, detail]) => `<div><div><b>${title}</b><span>${detail}</span></div><span class="tag">歷史資料</span></div>`).join('')}</div><div class="driver-task-actions"><button class="btn pri" onclick="openSafetyCoach()">查看改善方式</button><button class="btn gho" onclick="openSimPanel()">啟動情境模擬</button></div></section>`;
   }
   const shipperPushStorageKey = 'hino-shipper-push-v1';
   let shipperPushState = {};
@@ -857,7 +854,7 @@
   };
 
   window.login = function (role) { baseLogin(role); document.body.classList.toggle('office', role === 'fleet' || role === 'lead'); document.getElementById('simfab').style.display = 'none'; document.getElementById('simfab').innerHTML = '情境<br>模擬'; mountDemoModeBanner(); if (role === 'shipper') document.getElementById('aifab').style.display = 'grid'; };
-  window.logout = function () { closeSimPanel(); simReports.length=0; document.getElementById('demo-mode-banner')?.remove(); document.body.classList.remove('office'); baseLogout(); };
+  window.logout = function () { closeSimPanel(); simReports.length=0; document.getElementById('simulation-toggle')?.remove(); document.getElementById('demo-mode-banner')?.remove(); document.body.classList.remove('office'); baseLogout(); };
   window.selectOrder = function (id) { openShipmentDetail(id); };
   window.renderDriverHome = renderDriverHomeEnhanced;
   window.renderDriverTask = renderDriverTaskEnhanced;
@@ -920,12 +917,12 @@
   window.openAIChat = function () {
     if (!SESSION || SESSION.role !== 'shipper') {
       const suggestions = aiSuggestions().slice(0,3).map(item => `<span class="chip2" onclick="aiAsk('${item.replace(/'/g, '')}')">${item}</span>`).join('');
-      showModal(`<div class="chatwrap"><div class="chathd"><div class="ci">AI</div><div><div class="cn">AI 助理 <span id="partner-ai-mode">檢查模型連線中</span></div><div class="cs">歷史資料 · 僅提供建議</div></div></div><div class="assistant-tools"><button class="btn gho sm" onclick="showSimReports()">AI 彙報</button><button class="btn gho sm" onclick="openAIChat()">問答</button><button class="btn gho sm" onclick="closeOv()">關閉助理</button></div><div class="chatlog" id="chatlog"></div><div class="chips2" id="chatChips">${suggestions}</div><div class="chatin"><input id="chatInput" type="text" placeholder="例如：這份歷史資料的油耗要怎麼覆核？" onkeydown="if(event.key==='Enter')aiAskInput()"><button class="send" id="chatSend" onclick="aiAskInput()">↑</button></div></div>`);
-      document.getElementById('chatlog').innerHTML = `<div class="bub ai"><div class="lbl">資料說明</div>選一項證據，或直接問我省油與安全問題。情境結果請看「AI 彙報」。</div>`;
+      showModal(`<div class="chatwrap"><div class="chathd"><div class="ci">AI</div><div><div class="cn">AI 助理 <span id="partner-ai-mode">檢查模型連線中</span></div></div></div><div class="assistant-tools"><button class="btn gho sm" onclick="showSimReports()">AI 彙報</button><button class="btn gho sm" onclick="openAIChat()">問答</button><button class="btn gho sm" onclick="closeOv()">關閉助理</button></div><div class="chatlog" id="chatlog"></div><div class="chips2" id="chatChips">${suggestions}</div><div class="chatin"><input id="chatInput" type="text" placeholder="例如：這份歷史資料的油耗要怎麼覆核？" onkeydown="if(event.key==='Enter')aiAskInput()"><button class="send" id="chatSend" onclick="aiAskInput()">↑</button></div></div>`);
+      document.getElementById('chatlog').innerHTML = '';
       const modeLabel = document.getElementById('partner-ai-mode');
       if (SESSION && ['fleet','lead'].includes(SESSION.role)) {
-        checkBackend().then(on => { if (modeLabel?.isConnected) modeLabel.textContent = on ? 'Gemini · 歷史證據解讀' : '規則摘要 · 生成模型尚未就緒'; });
-      } else if (modeLabel) modeLabel.textContent = '規則摘要 · 車號資料';
+        checkBackend().then(on => { if (modeLabel?.isConnected) modeLabel.textContent = on ? 'Gemini · 歷史證據解讀' : '規則摘要'; });
+      } else if (modeLabel) modeLabel.textContent = '規則摘要';
       return;
     }
     const suggestions = aiSuggestions().slice(0,3).map(item => `<span class="chip2" onclick="aiAsk('${item}')">${item}</span>`).join('');
