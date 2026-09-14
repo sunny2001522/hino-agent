@@ -1422,7 +1422,7 @@ function addChatActions(bub,q){
  const role=SESSION?.role;
  if(!['fleet','lead','driver'].includes(role))return;
  const target=role==='fleet'?'decision':'partner';
- bub.appendChild(el(`<div style="margin-top:9px"><button class="btn pri sm" onclick="closeOv();gotoTab('${target}')">回到改善工作台</button><p style="font-size:12px">建案、覆核與回報需在工作台記錄；這段回答未執行任何操作。</p></div>`));
+ bub.appendChild(el(`<div style="margin-top:9px"><button class="btn pri sm" onclick="closeOv();gotoTab('${target}')">回到車輛列表</button></div>`));
  document.getElementById('chatlog').scrollTop=99999;
 }
 
