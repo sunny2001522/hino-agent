@@ -109,8 +109,16 @@ export default function PartnerWorkbench() {
 
   function askAi() {
     if (!selectedCard) return;
+    window.__selectedEvidenceId = selectedCard.id;
+    const q = `請依 ${selectedCard.car} 的「${selectedCard.title}」證據，分別列出已知事實、待確認原因、駕駛／調度／保修分工，以及驗證指標。請勿把假設當事實或宣稱已執行。`;
     window.openAIChat?.();
-    window.aiAsk?.(`請依 ${selectedCard.car} 的「${selectedCard.title}」證據，分別列出已知事實、待確認原因、駕駛／調度／保修分工，以及驗證指標。請勿把假設當事實或宣稱已執行。`);
+    // ponytail: rAF until overlay commit (React setState); cap 60 frames
+    let n = 0;
+    const tick = () => {
+      if (document.querySelector('#ov.on #chatlog')) window.aiAsk?.(q);
+      else if (++n < 60) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 
   return (

@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { trustedContext } from './lib/telemetry.js';
 import { buildSystemPrompt, geminiConfig } from './lib/gemini.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -38,10 +39,12 @@ async function handleChat(req, res) {
   req.on('end', async () => {
     let payload;
     try { payload = JSON.parse(raw || '{}'); } catch { return send(res, 400, { error: 'bad json' }); }
-    const { context, question } = payload;
-    if (!context || !question || (context.role !== 'fleet' && context.role !== 'lead')) {
+    const { context, question } = payload || {};
+    if (!context || typeof question !== 'string' || !question.trim() || (context.role !== 'fleet' && context.role !== 'lead')) {
       return send(res, 400, { error: 'context(role fleet|lead) and question required' });
     }
+    let grounded;
+    try { grounded = trustedContext(context); } catch { return send(res, 400, { error: 'invalid demo scope' }); }
     res.writeHead(200, {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
@@ -50,12 +53,13 @@ async function handleChat(req, res) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse&key=${encodeURIComponent(GEMINI_KEY)}`;
       const body = {
-        systemInstruction: { parts: [{ text: buildSystemPrompt(context) }] },
+        systemInstruction: { parts: [{ text: buildSystemPrompt(grounded) }] },
         contents: [{ role: 'user', parts: [{ text: String(question).slice(0, 2000) }] }],
         generationConfig: { maxOutputTokens: 1024, temperature: 0.35, thinkingConfig: { thinkingBudget: 0 } },
       };
       const gres = await fetch(url, {
         method: 'POST',
+        signal: AbortSignal.timeout(25000),
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });

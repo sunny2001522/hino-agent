@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {scopedVehicles,fuelBaseline,opportunities,estimateSavings,compareFuel,advanceCase} from '../src/partner/engine.js';
+import {buildSystemPrompt} from '../lib/gemini.js';
 global.window={};
 await import('../excel-derived-data.js');
 const data=window.HINO_EXCEL_DATA;
@@ -40,4 +41,19 @@ test('case requires notes, preserves audit history and cannot become verified',(
  const observe=advanceCase(doing,'已調整到場時段，待追蹤','駕駛','2026-09-15');
  assert.equal(observe.status,'observe');assert.equal(observe.history.length,2);
  assert.throws(()=>advanceCase(observe,'直接結案','主管'));
+});
+test('model receives evidence and missingness restrictions',()=>{
+ const prompt=buildSystemPrompt({role:'fleet',evidencePack:{period:data.meta.period,opportunities:opportunities(rows,data.meta.period).slice(0,1)}});
+ assert.ok(prompt.includes(data.meta.period));assert.ok(prompt.includes('缺測不是零事件'));assert.ok(prompt.includes('驗證指標'));
+});
+
+test('server ignores forged client telemetry and rejects invalid demo regions', async()=>{
+ const {trustedContext}=await import('../lib/telemetry.js');
+ const actual=trustedContext({role:'fleet',fuel:99999,name:'forged',evidencePack:{period:'today',opportunities:[{value:99999}]}});
+ assert.equal(actual.fuel,fuelBaseline(rows).per100);assert.notEqual(actual.name,'forged');assert.equal(actual.evidencePack.period,data.meta.period);
+ const scoped=trustedContext({role:'lead',regionId:'N',selectedEvidenceId:'ABC-6776:speed'});
+ assert.ok(scoped.drivers.every(d=>data.regions.find(r=>r.id==='N').drivers.some(v=>v.c===d.n)));
+ assert.ok(scoped.evidencePack.opportunities.every(c=>c.car!=='ABC-6776'));
+ assert.throws(()=>trustedContext({role:'lead',regionId:'no-such-region'}));
+ assert.throws(()=>trustedContext({role:'driver'}));
 });

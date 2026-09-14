@@ -790,22 +790,11 @@ function aiContext(){
 
 // 常見問題（依身分）
 function aiSuggestions(){
- const c=aiContext();
- if(c.role==='driver') return [
- '我今天怎麼開比較省油又安全？',
- '我哪裡最耗油？怎麼改？',
- '今天我要注意什麼安全風險？',
- '我的安全獎金怎麼拿到？'];
- if(c.role==='lead') return [
- c.region+'這週油耗為什麼變差？誰是主因？',
- '本區今天誰最可能出事？',
- '怎麼把怠速降到 8%？',
- '幫我擬一段給駕駛的省油提醒'];
  return [
- '這個月哪台車最耗油、怎麼改善？',
- '今天全隊誰的事故風險最高？',
- '怎麼把全隊怠速從 14% 降到 8%？',
- '導入後預期能省多少油、降多少事故？'];
+ '這份歷史資料的油耗與怠速要怎麼覆核？',
+ '怠速或超速時駕駛、調度與保修如何分工確認原因？',
+ '歷史超速紀錄能做什麼限制、出車前要注意什麼？',
+ '如何設計試點驗證省油與安全，而不是直接宣稱已改善？'];
 }
 
 // 生成式回覆引擎：把問題 + iTRAQ 數據 → 生成一段動態文字（HTML）
@@ -911,24 +900,7 @@ function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'
 function mdLite(s){return escapeHtml(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');}
 // 送給後端的即時 iTRAQ 數據（老闆看全隊、負責人只看自己那一區）
 function backendContext(){
- const role=SESSION.role;
- if(role==='fleet'){
- const worstIdle=regions.slice().sort((a,b)=>b.idlePct-a.idlePct)[0];
- const worstSafe=regions.slice().sort((a,b)=>a.safety.at(-1)-b.safety.at(-1))[0];
- return {role,name:SESSION.acc.name,aggSafe:aggSafety.at(-1),
- idle:window.HINO_EXCEL_DATA.aggregate.idlePct,fuel:window.HINO_EXCEL_DATA.aggregate.fuel,
- worstIdle:{name:worstIdle.name,idlePct:worstIdle.idlePct,fuel:worstIdle.fuel,anomaly:worstIdle.anomaly},
- worstSafe:{name:worstSafe.name,safe:worstSafe.safety.at(-1),anomaly:worstSafe.anomaly},
- regions:regions.map(r=>({name:r.name,safe:r.safety.at(-1),idlePct:r.idlePct,anomaly:r.anomaly,onTime:r.onTime})),
- fuelTop:regions.flatMap(r=>r.drivers).filter(v=>Number(v.fuel_per_100km)>0&&Number(v.mileage_km)>0).sort((a,b)=>b.fuel_per_100km-a.fuel_per_100km).slice(0,3).map(v=>({car:v.c,month:v.fuel_month,fuelPer100:v.fuel_per_100km,fuelLiters:v.fuel_liters,mileageKm:v.mileage_km,idlePct:v.idle_pct,highLoadCount:v.high_load_count,overspeedPct:v.overspeed_pct,dtcCount:v.dtc_count})),
- riskTop:riskForecast.map(f=>({n:f.n,region:f.r,pc:riskScore(f),win:f.win})),
- autoOn:Object.keys(aiAuto).filter(k=>aiAuto[k]).map(k=>aiAutoMeta[k].t).join('、')||'（全部關閉）'};
- }
- const r=myRegion();
- return {role,name:SESSION.acc.name,region:r.name,aggSafe:aggSafety.at(-1),
- safe:r.safety.at(-1),idle:r.idlePct,fuel:r.fuel,anomaly:r.anomaly,overload:r.overload,
- fuelTop:r.drivers.filter(v=>Number(v.fuel_per_100km)>0&&Number(v.mileage_km)>0).sort((a,b)=>b.fuel_per_100km-a.fuel_per_100km).slice(0,3).map(v=>({car:v.c,month:v.fuel_month,fuelPer100:v.fuel_per_100km,fuelLiters:v.fuel_liters,mileageKm:v.mileage_km,idlePct:v.idle_pct,highLoadCount:v.high_load_count,overspeedPct:v.overspeed_pct,dtcCount:v.dtc_count})),
- drivers:r.drivers.map(d=>({n:d.c,s:d.s,i:d.i}))};
+ return {role:SESSION.role,regionId:SESSION.acc?.region,selectedEvidenceId:window.__selectedEvidenceId};
 }
 // 對話入口：老闆/負責人優先走真 LLM 串流；失敗或無後端則退回本地模擬
 async function aiAsk(q){
@@ -1010,22 +982,11 @@ function revealHtml(html,n){
  while(i<html.length){if(html[i]==='<'){const j=html.indexOf('>',i);out+=html.slice(i,j+1);i=j+1;}else break;}
  return out;
 }
-function addChatActions(bub,q){
- const c=aiContext();let btns='';
- if(c.role==='driver'){
- if(q.includes('省油')||q.includes('油'))btns=`<button class="btn pri sm" onclick="act('已設為今日省油任務，達標可累積競賽積分。','ok')">設為今日省油任務</button>`;
- else if(q.includes('安全')||q.includes('風險'))btns=`<button class="btn pri sm" onclick="act('已開啟時段提醒，AI 會提前 30 分主動提醒你。','ok')">開啟時段提醒</button>`;
- else if(q.includes('獎金')||q.includes('提分'))btns=`<button class="btn pri sm" onclick="act('已為你排定 7 天安全提分計畫。','ok')">排 7 天提分計畫</button>`;
- }else if(c.role==='lead'){
- if(q.includes('油')||q.includes('怠速'))btns=`<button class="btn pri sm" onclick="act('已對本區啟動 AI 省油教練並設怠速目標 ≤8%。','ok');closeOv()">一鍵啟動省油教練</button>`;
- else if(q.includes('風險')||q.includes('事故'))btns=`<button class="btn pri sm" onclick="act('已對高風險駕駛發送事前預警。','wn');closeOv()">發送事前預警</button>`;
- else if(q.includes('提醒')||q.includes('擬'))btns=`<button class="btn pri sm" onclick="act('已群發省油提醒給本區駕駛。','ok');closeOv()">一鍵群發</button>`;
- }else{
- if(q.includes('耗油')||q.includes('油'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('team')">查看高油耗車號</button>`;
- else if(q.includes('風險')||q.includes('事故'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('decision')">查看預警與介入狀態</button>`;
- else if(q.includes('效益')||q.includes('導入'))btns=`<button class="btn pri sm" onclick="closeOv();gotoTab('settings')">看完整效益</button>`;
- }
- if(btns)bub.appendChild(el(`<div style="margin-top:9px">${btns}</div>`));
+function addChatActions(bub){
+ const role=SESSION?.role;
+ if(!['fleet','lead','driver'].includes(role))return;
+ const target=role==='fleet'?'decision':'partner';
+ bub.appendChild(el(`<div style="margin-top:9px"><button class="btn pri sm" onclick="closeOv();gotoTab('${target}')">回到改善工作台</button><p style="font-size:12px">建案、覆核與回報需在工作台記錄；這段回答未執行任何操作。</p></div>`));
  document.getElementById('chatlog').scrollTop=99999;
 }
 
