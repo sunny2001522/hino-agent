@@ -1,6 +1,7 @@
-import { geminiConfig } from '../lib/gemini.js';
+import { aiHealth } from '../lib/ai-health.js';
 
-export default function handler(_req, res) {
-  const { key, model } = geminiConfig();
-  res.status(200).json({ ok: true, ai: Boolean(key), provider: key ? 'gemini' : null, model: key ? model : null });
+export default async function handler(req, res) {
+  if (req.method !== 'GET') return res.status(405).json({ error: 'method not allowed' });
+  res.setHeader('Cache-Control', 'no-store');
+  return res.status(200).json(await aiHealth());
 }

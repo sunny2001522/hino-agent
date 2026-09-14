@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { aiHealth } from './lib/ai-health.js';
 import { trustedContext } from './lib/telemetry.js';
 import { buildSystemPrompt, geminiConfig } from './lib/gemini.js';
 
@@ -124,7 +125,7 @@ async function serveStatic(req, res, urlPath) {
 http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (url.pathname === '/api/health') {
-    return send(res, 200, { ok: true, ai: hasKey, provider: hasKey ? 'gemini' : null, model: hasKey ? GEMINI_MODEL : null });
+    return aiHealth().then(status => send(res, 200, status, { 'Cache-Control': 'no-store' }));
   }
   if (url.pathname === '/api/chat' && req.method === 'POST') {
     return handleChat(req, res);
