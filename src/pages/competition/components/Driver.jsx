@@ -13,9 +13,22 @@ const me = (() => {
 })();
 const myRegion = me && data.regions.find(r => r.id === me.region);
 
+function cmpByCat(cat, a, b) {
+  const d = cat.score(b) - cat.score(a);
+  return d !== 0 ? d : (a.c < b.c ? -1 : a.c > b.c ? 1 : 0);
+}
+
+function fleetByCat(cat) {
+  return [...fleet].sort((a, b) => cmpByCat(cat, a, b));
+}
+
 function rankOf(cat, car) {
-  const list = [...fleet].sort((a, b) => cat.score(b) - cat.score(a));
+  const list = fleetByCat(cat);
   return { rank: list.findIndex(d => d.c === car) + 1, total: list.length };
+}
+
+function top10Of(cat) {
+  return fleetByCat(cat).slice(0, 10);
 }
 
 function moodOf(d) {
@@ -175,5 +188,35 @@ export default function Driver() {
     console.assert(h.length >= 2, 'history should have months');
     console.assert(h.at(-1).v === myRegion.series.safety.filter((_, i) => myRegion.recordsByMonth ? myRegion.recordsByMonth[i] > 0 : myRegion.series.safety[i] !== null).at(-1), 'last point is region month');
     console.assert(['待覆核', '等待情境待確認', '歷史資料摘要'].includes(moodOf(me).tag), 'mood tag');
+
+    const cat = CATS[0];
+    // C1: 人造兩台同分時，車號較小的在前
+    const twinA = { ...me, c: 'ZZZ-9999' };
+    const twinB = { ...me, c: 'AAA-0001' };
+    const tied = [twinA, twinB].sort((a, b) => cmpByCat(cat, a, b));
+    console.assert(tied[0].c === 'AAA-0001' && tied[1].c === 'ZZZ-9999', 'tied score: smaller car first');
+
+    const sorted = fleetByCat(cat);
+    // C2: 全隊分數不會越排越高
+    console.assert(
+      sorted.every((d, i) => i === 0 || cat.score(sorted[i - 1]) >= cat.score(d)),
+      'fleet scores never rise down the list'
+    );
+    // C3: 同分的車號不會越排越小
+    console.assert(
+      sorted.every((d, i) => {
+        if (i === 0) return true;
+        const prev = sorted[i - 1];
+        if (cat.score(prev) !== cat.score(d)) return true;
+        return prev.c <= d.c;
+      }),
+      'tied cars never decrease by plate'
+    );
+    // C4: 自己排名卡的名次等於自己在這份排序裡的位置
+    const { rank } = rankOf(cat, me.c);
+    console.assert(rank === sorted.findIndex(d => d.c === me.c) + 1, 'own rank matches sorted position');
+
+    const top = top10Of(cat);
+    console.assert(top.length <= 10 && top.length === Math.min(10, sorted.length), 'top10 at most 10');
   }
 })();
