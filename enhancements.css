@@ -292,6 +292,16 @@ button.native-input, .native-action { padding: 0 11px; cursor: pointer; }
 .welcome-simple .wpick { width: min(100%, 620px); }
 .welcome-simple .wpick .lbl { margin-bottom: 18px; color: #234b56; font-size: clamp(30px, 6vw, 42px); line-height: 1.1; text-align: center; }
 .identity-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.login-accounts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.login-accounts-driver { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.login-accounts .idcard.idcard-simple { min-height: 0; padding-block: 1rem; }
+.login-accounts .idcard.is-bound { border: 2px solid var(--accent); }
+@media (max-width: 819px) {
+  .login-accounts-driver { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 559px) {
+  .login-accounts-driver { grid-template-columns: 1fr; }
+}
 .idcard.idcard-simple { display: grid; width: 100%; min-height: 108px; place-items: center; margin: 0; border: 1px solid #dce7e2; border-top: 4px solid var(--role-color); background: #fff; color: var(--role-color); font: inherit; text-align: center; }
 .idcard.idcard-simple span { font-size: clamp(18px, 3vw, 25px); font-weight: 850; }
 

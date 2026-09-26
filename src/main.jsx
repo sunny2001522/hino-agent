@@ -103,6 +103,10 @@ function Welcome({ onPick }) {
 function LoginPage({ role, onBack }) {
   const inputRef = useRef(null);
   const meta = IDENTITIES.find((item) => item.key === role);
+  const data = window.HINO_EXCEL_DATA;
+  const regions = data?.regions || [];
+  const boundRegion = data?.accountBindings?.lead_region;
+  const boundDriver = data?.accountBindings?.driver_code;
 
   useEffect(() => {
     const timer = setTimeout(() => inputRef.current?.focus(), 120);
@@ -128,6 +132,20 @@ function LoginPage({ role, onBack }) {
           <input ref={inputRef} id="loginInput" type="text" inputMode="tel" defaultValue={accountPhone(role)} aria-label="手機號碼" autoComplete="tel" />
         </div>
         <button type="button" className="btn pri block" onClick={submit}>登入</button>
+        {(role === 'fleet' || role === 'driver') && (
+          <div className={`login-accounts${role === 'driver' ? ' login-accounts-driver' : ''}`}>
+            {role === 'fleet' && regions.map((r) => (
+              <div key={r.id} className={`idcard idcard-simple${r.id === boundRegion ? ' is-bound' : ''}`}>{r.name}</div>
+            ))}
+            {role === 'driver' && regions.flatMap((r) =>
+              (r.drivers || []).map((d, i) => (
+                <div key={`${r.id}${i}`} className={`idcard idcard-simple${`${r.id}${i}` === boundDriver ? ' is-bound' : ''}`}>
+                  {d.n || d.c} {r.name}
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
