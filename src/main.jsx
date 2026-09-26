@@ -62,7 +62,6 @@ const IDENTITIES = [
   { key: 'lead', label: '總負責人', color: '#0d9488' },
   { key: 'driver', label: '車輛使用者', color: '#4a6cf0' },
   { key: 'shipper', label: '貨主', color: '#2e9e4f' },
-  { key: 'competition', label: '競賽', color: '#c45c12', href: 'pages/competition/driver/index.html' },
 ];
 
 function accountPhone(role) {
@@ -83,10 +82,6 @@ function Welcome({ onPick }) {
                 className="idcard idcard-simple"
                 style={{ '--role-color': role.color }}
                 onClick={() => {
-                  if (role.href) {
-                    location.href = role.href;
-                    return;
-                  }
                   if (!window.ACCOUNTS) return;
                   onPick(role.key);
                 }}

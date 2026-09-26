@@ -59,8 +59,6 @@ const ROLES={
  desc:"註冊：由車隊管理者建立帳號<br>登入：一律採用手機號碼登入 APP · 查看個人車況、必要提醒與任務狀態"},
  shipper:{label:"貨主", color:"#2e9e4f", sub:"貨件追蹤（B2B2B）",
  desc:"登入：手機號碼登入 APP · 查看貨件狀態與車輛編號<br><b style=\"color:var(--good)\">本團隊 B2B2B 新增身份</b>（iTRAQ 原本沒有）", isNew:true},
- competition:{label:"競賽", color:"#c45c12", sub:"獨立頁面",
- desc:"開啟獨立競賽頁面", href:"pages/competition/driver/index.html", isNew:true},
 };
 // each demo account maps to EXACTLY one person / region / company
 const EXCEL_ACCOUNT_BINDING=window.HINO_EXCEL_DATA.accountBindings;

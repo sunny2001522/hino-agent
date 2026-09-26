@@ -196,8 +196,6 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
 @supports (top: anchor(bottom)){
  #regionFab{anchor-name:--region-fab}
  #regionPop{position-anchor:--region-fab}
- .role-fab[popovertarget="rolePop"]{anchor-name:--role-fab}
- #rolePop{position-anchor:--role-fab}
  .role-pop{inset:auto;top:anchor(bottom);right:anchor(right);margin-top:4px}
 }
 .role-pop a, .role-pop button{
