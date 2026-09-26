@@ -93,6 +93,8 @@ export default function Driver() {
   const mom = pts.at(-1).v - pts.at(-2).v;
   const avg = regionAvg(cat, fleet);
   const asOf = (me.last_time || data.meta.lastRecord).slice(0, 10);
+  const top10 = top10Of(cat);
+  const regionName = d => data.regions.find(r => r.id === d.region)?.name ?? '';
   const tabItems = CATS.map(c => {
     const s = c.score(me);
     const rk = rankOf(c, me.c);
@@ -107,11 +109,56 @@ export default function Driver() {
     setMessages(m => [...m, { role: 'me', text: q }, { role: 'ai', text: aiReply(q) }]);
   }
 
+  function topRow(d, n) {
+    return (
+      <>
+        <span className="top10-rank">第 {n} 名</span>
+        <span className="top10-car">
+          {d.c}
+          {d.c === me.c ? <span className="top10-you">你</span> : null}
+        </span>
+        <span className="top10-reg">{regionName(d)}</span>
+        <span className="top10-score">{cat.score(d)}</span>
+      </>
+    );
+  }
+
   return (
     <>
-      <section className="dash-top">
+      <section className="dash-top drv-dash">
         <p className="period">{data.meta.period} · 資料截至 {asOf}</p>
         <p className="period">歷史車號指標 Demo，非官方駕駛成績；區域為 GPS 展示分組，缺測月份不參與比較。</p>
+        <div className="top10">
+          <div className="top10-ttl">全隊前 10 · {cat.name}</div>
+          {top10.length > 0 && (
+            <div className="podium">
+              {[2, 1, 3].map(n => {
+                const d = top10[n - 1];
+                if (!d) return null;
+                return (
+                  <div
+                    key={d.c}
+                    className={`podium-card rank-${n}${d.c === me.c ? ' top10-me' : ''}`}
+                  >
+                    {topRow(d, n)}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {top10.length > 3 && (
+            <ul className="top10-list">
+              {top10.slice(3).map((d, i) => (
+                <li
+                  key={d.c}
+                  className={`top10-row${d.c === me.c ? ' top10-me' : ''}`}
+                >
+                  {topRow(d, i + 4)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <div className="score-row">
           <div className="score-card">
             <div className="k">總分</div>
