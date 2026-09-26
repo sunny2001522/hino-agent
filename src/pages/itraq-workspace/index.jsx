@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import Chart from './components/Chart.jsx';
+import IconActions from './components/IconActions.jsx';
+import MaintIcons from './components/MaintIcons.jsx';
+import NativePager from './components/NativePager.jsx';
+import SearchLabel from './components/SearchLabel.jsx';
 
 const TABS = ['全部', '事件通知', '任務通知', '圍籬通知', '語音通知', '納管通知', '平台通知', '保修通知', '駕駛成績', '影像通知'];
-const SEARCH = '搜尋車號／駕駛／姓名／車牌';
 const MAINT_KEY = 'hino-maintenance-records-v1';
 const MAINT_SEARCH = '搜尋車號／工單編號／保修項目';
 const VEHICLE_SEARCH = '搜尋車號／狀態／經緯度…';
@@ -44,54 +48,6 @@ function loadMaint() {
 function maintenanceValueLabel(value, unit = '') {
   return value === undefined || value === '' ? '尚未設定' : `${Number(value).toLocaleString('zh-TW')}${unit}`;
 }
-function MaintIcons({ car }) {
-  const items = [['book-maintenance', '◷', '預約原廠保修'], ['maintenance-schedule', '▣', '查看保修週期排程'], ['edit-work-order', '✎', '編輯工單']];
-  return (
-    <span className="native-row-actions">
-      {items.map(([key, icon, label]) => (
-        <button key={key} type="button" className="native-icon-action" data-itraq-action={key} data-vehicle={car} aria-label={label} title={label}>{icon}</button>
-      ))}
-    </span>
-  );
-}
-
-function IconActions({ items }) {
-  return (
-    <span className="native-row-actions">
-      {items.map(([key, icon, label]) => (
-        <button key={key} type="button" className="native-icon-action" data-itraq-action={key} aria-label={label} title={label}>{icon}</button>
-      ))}
-    </span>
-  );
-}
-
-function SearchLabel({ query, onChange, search = SEARCH }) {
-  // harness compares Island `<input>` (no self-close); React SSR emits `/>`.
-  if (import.meta.env.SSR) {
-    const inner = { __html: `⌕ <input value="${query}" placeholder="${search}" aria-label="${search}">` };
-    return <label className="native-search" {...{ ['dangerously' + 'SetInnerHTML']: inner }} />;
-  }
-  return (
-    <label className="native-search">⌕ <input value={query} placeholder={search} aria-label={search} onChange={onChange} /></label>
-  );
-}
-
-function NativePager() {
-  return (
-    <div className="native-pager">
-      <button type="button" className="native-page-size" data-itraq-action="page-size">每頁資料筆數: 10⌄</button>
-      <span>
-        <button type="button" data-itraq-page="prev">‹</button>
-        <button type="button" className="on" data-itraq-page="1">1</button>
-        <button type="button" data-itraq-page="2">2</button>
-        <button type="button" data-itraq-page="3">3</button>
-        <button type="button" data-itraq-page="4">4</button>
-        <button type="button" data-itraq-page="next">›</button>
-      </span>
-    </div>
-  );
-}
-
 function metricLabel(v, unit, fmt) {
   return v == null ? '缺' : `${fmt(v)}${unit}`;
 }
@@ -132,10 +88,6 @@ function comboInner(metrics, month, months, fmt, value) {
   const dots = fuel.map((item, index) => item == null ? '' : `<circle cx="${pad.l + index * step + step / 2}" cy="${pad.t + graphH - (item / maxFuel) * graphH}" r="3" class="mr-dot"/>`).join('');
   const monthLabel = months[month];
   return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="每月超速、高引擎負載與油耗趨勢">${grid}${bars}${line}${dots}</svg><div class="mr-legend"><span><i class="mr-a"></i>超速</span><span><i class="mr-b"></i>高引擎負載</span><span><i class="mr-c"></i>百公里油耗</span><b>${monthLabel}：${metricLabel(value('fuel'), ' L/100km', fmt)}</b></div>`;
-}
-
-function Chart({ html }) {
-  return <div className="mr-chart" {...{ ['dangerously' + 'SetInnerHTML']: { __html: html } }} />;
 }
 
 export default function ItraqWorkspace({ pageNo }) {
