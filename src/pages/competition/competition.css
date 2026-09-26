@@ -191,8 +191,9 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
 .comp.boss .chart-leg{display:flex;gap:8px 14px;flex-wrap:wrap;width:100%;flex:0 0 auto;font-size:11px;color:var(--mut);padding:2px 2px 6px}
 .comp.boss .chart-leg i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:4px;vertical-align:middle}
 .comp.boss .pie{flex:1;min-height:0;display:flex;width:100%}
-.comp.boss .pie-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;flex:1;width:100%}
-.comp.boss .pie-wrap svg{width:100%;height:auto;flex:1;min-height:0;max-width:none;aspect-ratio:1}
+.comp.boss .pie-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;min-height:0;flex:1;width:100%;overflow:hidden}
+.comp.boss .pie-fit{flex:1 1 auto;min-height:0;min-width:0;width:100%;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.comp.boss .pie-fit svg{display:block;height:100%;width:auto;max-width:100%;aspect-ratio:1;flex:none}
 .comp.boss .pie-leg{font-size:11px;color:var(--mut);line-height:1.45;width:100%;flex:0 0 auto}
 .comp.boss .pie-leg div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .comp.boss .pie-leg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
