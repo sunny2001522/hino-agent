@@ -80,7 +80,7 @@ const appbar=document.getElementById('appbar');
 
 const TABS={
  fleet:[
- {id:"decision", l:"智慧夥伴", render:()=>{}},
+ {id:"comp", l:"競賽", render:()=>{}},
  {id:"overview", l:"管理總覽", render:()=>{}},
  {id:"monitor", l:"即時監控", render:()=>{}},
  {id:"history", l:"歷史車輛", render:()=>{}},
@@ -89,10 +89,10 @@ const TABS={
  {id:"data", l:"數據中心", render:()=>{}},
  {id:"fleet", l:"車隊管理", render:()=>{}},
  {id:"settings", l:"系統設定", render:()=>{}},
- {id:"comp", l:"競賽", render:()=>{}},
+ {id:"decision", l:"智慧夥伴", render:()=>{}},
  ],
  lead:[
- {id:"partner", l:"智慧夥伴", render:()=>{}},
+ {id:"comp", l:"競賽", render:()=>{}},
  {id:"monitor", l:"即時監控", render:()=>{}},
  {id:"history", l:"歷史車輛", render:()=>{}},
  {id:"task", l:"任務派遣", render:()=>{}},
@@ -104,12 +104,12 @@ const TABS={
  {id:"focus", l:"管理重點", render:()=>{}},
  {id:"drivers", l:"駕駛", render:()=>{}},
  {id:"competition", l:"安全競賽", render:()=>{}},
- {id:"comp", l:"競賽", render:()=>{}},
+ {id:"partner", l:"智慧夥伴", render:()=>{}},
  ],
  driver:[
- {id:"partner", l:"改善與回報", render:()=>{}},
- {id:"home", l:"我的車況", render:()=>{}},
  {id:"comp", l:"競賽", render:()=>{}},
+ {id:"home", l:"我的車況", render:()=>{}},
+ {id:"partner", l:"改善與回報", render:()=>{}},
  ],
  shipper:[
  {id:"track", l:"追蹤", render:()=>{}},
