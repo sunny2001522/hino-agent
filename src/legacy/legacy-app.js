@@ -89,6 +89,7 @@ const TABS={
  {id:"data", l:"數據中心", render:()=>{}},
  {id:"fleet", l:"車隊管理", render:()=>{}},
  {id:"settings", l:"系統設定", render:()=>{}},
+ {id:"comp", l:"競賽", render:()=>{}},
  ],
  lead:[
  {id:"partner", l:"智慧夥伴", render:()=>{}},
@@ -103,10 +104,12 @@ const TABS={
  {id:"focus", l:"管理重點", render:()=>{}},
  {id:"drivers", l:"駕駛", render:()=>{}},
  {id:"competition", l:"安全競賽", render:()=>{}},
+ {id:"comp", l:"競賽", render:()=>{}},
  ],
  driver:[
  {id:"partner", l:"改善與回報", render:()=>{}},
  {id:"home", l:"我的車況", render:()=>{}},
+ {id:"comp", l:"競賽", render:()=>{}},
  ],
  shipper:[
  {id:"track", l:"追蹤", render:()=>{}},
@@ -152,9 +155,7 @@ function buildTabs(){
  menuToggle.hidden=!hasNavigation;
  menuToggle.setAttribute('aria-expanded','false');
  const subs=window.HEADER_SUBPAGES||{};
- const competitionHref={fleet:'pages/competition/boss/index.html',lead:'pages/competition/leader/index.html',driver:'pages/competition/driver/index.html'}[SESSION.role];
- const competition=competitionHref?`<div class="topnav-group"><button type="button" class="topnav-main" onclick="location.href='${competitionHref}'"><span class="l">競賽</span></button></div>`:'';
- tabbar.innerHTML=competition+list.map(t=>{
+ tabbar.innerHTML=list.map(t=>{
   const pages=subs[t.id]||[];
   return `<div class="topnav-group${pages.length?' has-subnav':''}"><button class="topnav-main" data-tab="${t.id}" onclick="gotoTab('${t.id}')"><span class="l">${t.l}</span>${pages.length?'<span class="subchev">⌄</span>':''}</button>${pages.length?`<div class="header-submenu" role="menu">${pages.map(p=>`<button type="button" class="header-subtab" data-header-tab="${t.id}" data-header-page="${p.p}" role="menuitem">${p.l}</button>`).join('')}</div>`:''}</div>`;
  }).join("");

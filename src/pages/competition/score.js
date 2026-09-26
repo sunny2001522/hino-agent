@@ -1,20 +1,20 @@
-const clamp = n => Math.max(0, Math.min(100, Math.round(n)));
-const tint = s => s < 55 ? 'var(--bad)' : s < 70 ? 'var(--warn)' : 'var(--good)';
-const signed = n => n > 0 ? `+${n}` : String(n);
+export const clamp = n => Math.max(0, Math.min(100, Math.round(n)));
+export const tint = s => s < 55 ? 'var(--bad)' : s < 70 ? 'var(--warn)' : 'var(--good)';
+export const signed = n => n > 0 ? `+${n}` : String(n);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const regionAvg = (cat, drivers) => Math.round(drivers.reduce((a, d) => a + cat.score(d), 0) / drivers.length);
-function tier(s) {
+export const regionAvg = (cat, drivers) => Math.round(drivers.reduce((a, d) => a + cat.score(d), 0) / drivers.length);
+export function tier(s) {
   if (s < 55) return {id: 'bad', label: '表現差'};
   if (s < 70) return {id: 'mid', label: '表現一般'};
   return {id: 'ok', label: '表現好'};
 }
-function mix(cat, drivers) {
+export function mix(cat, drivers) {
   const n = {bad: 0, mid: 0, ok: 0};
   for (const d of drivers) n[tier(cat.score(d)).id]++;
   return n;
 }
 
-const CATS = [
+export const CATS = [
   {id: 'safety', name: '安全',
    score: d => clamp(100 - d.overspeed_pct * 2),
    facts: d => [{
@@ -43,7 +43,7 @@ const CATS = [
    }]},
 ];
 
-function history(cat, region) {
+export function history(cat, region) {
   const months = window.HINO_EXCEL_DATA.months;
   const s = region.series;
   const cars = Math.max(1, (region.drivers || []).length);
@@ -58,7 +58,7 @@ function history(cat, region) {
     .filter((_, i) => region.recordsByMonth ? region.recordsByMonth[i] > 0 : s.safety[i] !== null);
 }
 
-function linesChart(series, simple) {
+export function linesChart(series, simple) {
   const pts = series[0].pts;
   const narrow = window.innerWidth < 520;
   const W = 560, H = 160, pl = simple || narrow ? 26 : 36, pr = simple || narrow ? 12 : 18, pt = 10, pb = 22;
@@ -90,7 +90,7 @@ function linesChart(series, simple) {
   return `<svg class="lc" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${grid}${goal}${axis}${lines}${dots}</svg>`;
 }
 
-function lineChart(pts, simple, color) {
+export function lineChart(pts, simple, color) {
   return linesChart([{pts, color: color || '#7bb42e'}], simple);
 }
 

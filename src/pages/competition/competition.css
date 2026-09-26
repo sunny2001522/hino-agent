@@ -5,41 +5,14 @@
  --sh:0 3px 14px rgba(20,65,79,.09);
  --wrap:1180px;--r:14px;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;max-width:100%}
-html{-webkit-text-size-adjust:100%}
-body{
+.comp{
  font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,sans-serif;
  background:var(--bg);color:var(--txt);line-height:1.55;
  -webkit-font-smoothing:antialiased;
- height:100vh;height:100dvh;display:flex;flex-direction:column;
-}
-.appbar{
- flex:0 0 auto;
- background:var(--teal);border-bottom:3px solid var(--accent);
-}
-.bar-inner{
- max-width:var(--wrap);margin:0 auto;
- padding:0 16px;min-height:56px;
- display:flex;align-items:center;gap:12px;
-}
-.logo{
- color:#fff;font-size:17px;font-weight:900;letter-spacing:.5px;flex:0 0 auto;
-}
-.ttl{
- flex:1;min-width:0;color:#fff;font-size:15px;font-weight:850;
-}
-.back{
- font:inherit;font-size:12px;font-weight:700;color:#dcecc9;
- background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
- padding:6px 11px;border-radius:6px;text-decoration:none;flex:0 0 auto;
-}
-.back:hover{background:rgba(255,255,255,.16)}
-.screen{
+ flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;
  max-width:var(--wrap);margin:0 auto;width:100%;
  padding:12px 16px 16px;
- flex:1;min-width:0;min-height:0;overflow:hidden;
- display:flex;flex-direction:column;gap:10px;
+ min-width:0;gap:10px;
 }
 .dash-top{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0;overflow:hidden}
 .period{font-size:12px;color:var(--mut);flex:0 0 auto;overflow-wrap:anywhere}
@@ -61,7 +34,7 @@ body{
 .chartcard .ch-h{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;flex:0 0 auto;flex-wrap:wrap}
 .chartcard .ttl{font-weight:800;font-size:14px}
 .chartcard .sub{font-size:11px;color:var(--mut);margin-left:auto}
-#chart{flex:1;min-height:0;display:flex;align-items:center}
+.chart{flex:1;min-height:0;display:flex;align-items:center}
 svg.lc{width:100%;height:auto;max-height:100%;display:block}
 svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
 .status{
@@ -138,10 +111,7 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
 .dash-tabs .tr{font-size:12px;color:var(--mut);overflow-wrap:anywhere}
 
 @media (max-width: 640px){
- .bar-inner{padding:0 12px;gap:8px;min-height:48px}
- .logo{font-size:15px}
- .ttl{font-size:14px}
- .screen{padding:8px 10px 10px;gap:8px}
+ .comp{padding:8px 10px 10px;gap:8px}
  .dash-top{gap:8px}
  .period{font-size:11px}
  .score-row{grid-template-columns:1fr}
@@ -151,7 +121,7 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
  .score-card .s{font-size:11px}
  .chartcard{flex:0 0 auto;padding:8px 8px 4px;min-height:0}
  .chartcard .ttl{font-size:13px}
- #chart{flex:none;height:auto;display:block}
+ .chart{flex:none;height:auto;display:block}
  svg.lc{width:100%;height:auto;max-height:none}
  svg.lc text{font-size:9px}
  .status{padding:0 10px}
@@ -176,11 +146,7 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
 }
 
 @media (min-width: 820px){
- body{background:#f4f7f7}
- .bar-inner{padding:0 24px;min-height:68px;gap:22px}
- .logo{font-size:19px}
- .ttl{font-size:16px}
- .screen{padding:16px 24px 16px}
+ .comp{background:#f4f7f7;padding:16px 24px 16px}
 }
 .role-fab{
  font:inherit;font-size:12px;font-weight:700;color:#dcecc9;
@@ -205,31 +171,32 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
 }
 .role-pop a:hover, .role-pop button:hover{background:var(--bg2)}
 .role-pop a.on, .role-pop button.on{background:#f0f6ea;color:#3c5b1c}
-body.lead .score-row{grid-template-columns:minmax(0,1fr) minmax(0,.7fr) minmax(0,1.4fr);align-items:stretch}
-body.lead .chartcard{flex:none;min-height:0;padding:8px 10px 4px}
-body.lead #chart{flex:1;min-height:0;max-height:88px}
-body.lead #chart svg.lc{max-height:88px}
-body.lead .drv-grid{
+.comp.lead .score-row{grid-template-columns:minmax(0,1fr) minmax(0,.7fr) minmax(0,1.4fr);align-items:stretch}
+.comp.lead .chartcard{flex:none;min-height:0;padding:8px 10px 4px}
+.comp.lead .chart{flex:1;min-height:0;max-height:88px}
+.comp.lead .chart svg.lc{max-height:88px}
+.comp.lead .drv-grid{
  flex:1;min-height:0;overflow:auto;
  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
  gap:10px;align-content:start;
 }
-body.boss .score-row{grid-template-columns:1fr 1fr}
-body.boss .mid-row{
+.comp.boss .score-row{grid-template-columns:1fr 1fr}
+.comp.boss .mid-row{
  flex:1;min-height:0;display:grid;gap:10px;
  grid-template-columns:minmax(200px,.9fr) minmax(0,1.6fr);
 }
-body.boss .mid-row .chartcard{min-height:0;flex:1}
-body.boss #regions{flex:1;min-height:0;display:flex;align-items:center}
-body.boss #regions svg.lc{max-height:none;height:100%}
-body.boss .chart-leg{display:flex;gap:8px 14px;flex-wrap:wrap;width:100%;flex:0 0 auto;font-size:11px;color:var(--mut);padding:2px 2px 6px}
-body.boss .chart-leg i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:4px;vertical-align:middle}
-body.boss #pie{flex:1;min-height:0;display:flex;width:100%}
-body.boss .pie-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;flex:1;width:100%}
-body.boss .pie-wrap svg{width:100%;height:auto;flex:1;min-height:0;max-width:none;aspect-ratio:1}
-body.boss .pie-leg{font-size:11px;color:var(--mut);line-height:1.45;width:100%;flex:0 0 auto}
-body.boss .pie-leg div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-body.boss .pie-leg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.comp.boss .mid-row .chartcard{min-height:0;flex:1}
+.comp.boss .regions{flex:1;min-height:0;display:flex;align-items:center}
+.comp.boss .regions svg.lc{max-height:none;height:100%}
+.comp.boss .chart-leg{display:flex;gap:8px 14px;flex-wrap:wrap;width:100%;flex:0 0 auto;font-size:11px;color:var(--mut);padding:2px 2px 6px}
+.comp.boss .chart-leg i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.comp.boss .pie{flex:1;min-height:0;display:flex;width:100%}
+.comp.boss .pie-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;min-height:0;flex:1;width:100%;overflow:hidden}
+.comp.boss .pie-fit{flex:1 1 auto;min-height:0;min-width:0;width:100%;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.comp.boss .pie-fit svg{display:block;height:100%;width:auto;max-width:100%;aspect-ratio:1;flex:none}
+.comp.boss .pie-leg{font-size:11px;color:var(--mut);line-height:1.45;width:100%;flex:0 0 auto}
+.comp.boss .pie-leg div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.comp.boss .pie-leg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
 .ai-brief{
  flex:0 0 auto;background:#f4f9ec;border:1px solid #d8e7c0;border-radius:var(--r);
  padding:8px 12px;font-size:13px;line-height:1.5;max-height:28%;overflow:auto;
@@ -282,17 +249,17 @@ dialog.drawer::backdrop{background:rgba(20,65,79,.35)}
  flex:1;min-height:0;overflow:auto;padding:12px 14px 14px;
  display:flex;flex-direction:column;gap:10px;
 }
-body.lead .drawer .score-row{grid-template-columns:1fr 1fr}
-body.lead .drawer .chartcard{flex:0 0 auto;padding:10px 12px 6px}
-body.lead .drawer .chartcard svg.lc{max-height:140px}
+.comp.lead .drawer .score-row{grid-template-columns:1fr 1fr}
+.comp.lead .drawer .chartcard{flex:0 0 auto;padding:10px 12px 6px}
+.comp.lead .drawer .chartcard svg.lc{max-height:140px}
 .drawer .status{flex:0 1 auto;max-height:none;padding:10px 16px 12px}
 .drawer .dash-tabs{padding:0 12px 12px}
 @media (max-width: 640px){
- body.lead .score-row{grid-template-columns:1fr 1fr}
- body.lead .chartcard{grid-column:1/-1}
- body.lead #chart,body.lead #chart svg.lc{max-height:72px}
- body.lead .drawer .score-row{grid-template-columns:1fr 1fr}
- body.lead .drawer .chartcard{grid-column:auto}
- body.boss .mid-row{grid-template-columns:1fr}
- body.boss .mid-row .chartcard{grid-column:auto}
+ .comp.lead .score-row{grid-template-columns:1fr 1fr}
+ .comp.lead .chartcard{grid-column:1/-1}
+ .comp.lead .chart,.comp.lead .chart svg.lc{max-height:72px}
+ .comp.lead .drawer .score-row{grid-template-columns:1fr 1fr}
+ .comp.lead .drawer .chartcard{grid-column:auto}
+ .comp.boss .mid-row{grid-template-columns:1fr}
+ .comp.boss .mid-row .chartcard{grid-column:auto}
 }
