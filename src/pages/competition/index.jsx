@@ -12,7 +12,7 @@ export default function Competition({ role }) {
   return (
     <div className={className}>
       {Page ? <Page /> : null}
-      <HistoryDialog />
+      <HistoryDialog role={role} />
     </div>
   );
 }
