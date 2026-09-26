@@ -154,7 +154,9 @@ function buildTabs(){
  menuToggle.hidden=!hasNavigation;
  menuToggle.setAttribute('aria-expanded','false');
  const subs=window.HEADER_SUBPAGES||{};
- tabbar.innerHTML=list.map(t=>{
+ const competitionHref={fleet:'pages/competition/boss/index.html',lead:'pages/competition/leader/index.html',driver:'pages/competition/driver/index.html'}[SESSION.role];
+ const competition=competitionHref?`<div class="topnav-group"><button type="button" class="topnav-main" onclick="location.href='${competitionHref}'"><span class="l">競賽</span></button></div>`:'';
+ tabbar.innerHTML=competition+list.map(t=>{
   const pages=subs[t.id]||[];
   return `<div class="topnav-group${pages.length?' has-subnav':''}"><button class="topnav-main" data-tab="${t.id}" onclick="gotoTab('${t.id}')"><span class="l">${t.l}</span>${pages.length?'<span class="subchev">⌄</span>':''}</button>${pages.length?`<div class="header-submenu" role="menu">${pages.map(p=>`<button type="button" class="header-subtab" data-header-tab="${t.id}" data-header-page="${p.p}" role="menuitem">${p.l}</button>`).join('')}</div>`:''}</div>`;
  }).join("");
