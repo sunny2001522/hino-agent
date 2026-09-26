@@ -131,32 +131,34 @@ export default function Driver() {
         <div className="top10">
           <div className="top10-ttl">全隊前 10 · {cat.name}</div>
           {top10.length > 0 && (
-            <div className="podium">
-              {[2, 1, 3].map(n => {
-                const d = top10[n - 1];
-                if (!d) return null;
-                return (
-                  <div
-                    key={d.c}
-                    className={`podium-card rank-${n}${d.c === me.c ? ' top10-me' : ''}`}
-                  >
-                    {topRow(d, n)}
-                  </div>
-                );
-              })}
+            <div className="top10-board">
+              <div className="podium">
+                {[1, 2, 3].map(n => {
+                  const d = top10[n - 1];
+                  if (!d) return null;
+                  return (
+                    <div
+                      key={d.c}
+                      className={`podium-card rank-${n}${d.c === me.c ? ' top10-me' : ''}`}
+                    >
+                      {topRow(d, n)}
+                    </div>
+                  );
+                })}
+              </div>
+              {top10.length > 3 && (
+                <ul className="top10-list">
+                  {top10.slice(3).map((d, i) => (
+                    <li
+                      key={d.c}
+                      className={`top10-row${d.c === me.c ? ' top10-me' : ''}`}
+                    >
+                      {topRow(d, i + 4)}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          )}
-          {top10.length > 3 && (
-            <ul className="top10-list">
-              {top10.slice(3).map((d, i) => (
-                <li
-                  key={d.c}
-                  className={`top10-row${d.c === me.c ? ' top10-me' : ''}`}
-                >
-                  {topRow(d, i + 4)}
-                </li>
-              ))}
-            </ul>
           )}
         </div>
         <div className="score-row">
