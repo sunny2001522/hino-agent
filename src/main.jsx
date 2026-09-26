@@ -8,6 +8,7 @@ import LeadCompetition from './pages/LeadCompetition.jsx';
 import LeadDrivers from './pages/LeadDrivers.jsx';
 import LeadFocus from './pages/LeadFocus.jsx';
 import LeadKpi from './pages/LeadKpi.jsx';
+import Competition from './pages/competition/index.jsx';
 import PartnerWorkbench from './pages/PartnerWorkbench.jsx';
 import ShipperShipments from './pages/ShipperShipments.jsx';
 import { ROLE_TABS, tabSpec } from './legacy/tabs.js';
@@ -55,6 +56,9 @@ const REACT_PAGES = {
   'lead:focus': LeadFocus,
   'lead:drivers': LeadDrivers,
   'lead:competition': LeadCompetition,
+  'fleet:comp': Competition,
+  'lead:comp': Competition,
+  'driver:comp': Competition,
 };
 
 const IDENTITIES = [
@@ -354,7 +358,7 @@ function ItraqApplication() {
       {!nav.role && (loginRole
         ? <LoginPage key={loginRole} role={loginRole} onBack={() => setLoginRole(null)} />
         : <Welcome onPick={setLoginRole} />)}
-      {nav.role && ReactPage && <ReactPage key={islandKey} pageNo={nav.itraqPage} />}
+      {nav.role && ReactPage && <ReactPage key={islandKey} pageNo={nav.itraqPage} role={nav.role} />}
       <Fabs />
       <Overlays />
     </div>
