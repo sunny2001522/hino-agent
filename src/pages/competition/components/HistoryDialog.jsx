@@ -23,7 +23,10 @@ const LEAD_TABS = [
   { id: 'mvp', label: 'MVP' },
 ];
 
-const FLEET_TABS = [{ id: 'team', label: '全隊歷史紀錄' }];
+const FLEET_TABS = [
+  { id: 'team', label: '全隊歷史紀錄' },
+  { id: 'car', label: '個別歷史紀錄' },
+];
 
 function HistTabs({ tabs, tab, onPick }) {
   return (
@@ -89,14 +92,34 @@ function FleetHistory() {
   const data = typeof window !== 'undefined' ? window.HINO_EXCEL_DATA : null;
   const rid = data?.accountBindings?.lead_region;
   const region = data?.regions?.find(r => r.id === rid);
+  const [tab, setTab] = useState('team');
+  const [pick, setPick] = useState(null);
   if (!region) return <p className="hist-empty">無法載入</p>;
   const cars = [...region.drivers].sort((a, b) => (a.c < b.c ? -1 : a.c > b.c ? 1 : 0));
+  const car = cars.find(d => d.c === pick) ?? cars[0];
   const months = CATS.map(cat => quarterRanks(cat));
   const labels = (months[0] || []).filter(m => m.ranks.some(row => row.id === rid)).map(m => m.label);
+  const quarterList = labels.length ? (
+    <ul className="hist-rows">
+      {labels.map(label => (
+        <li key={label} className="hist-car">
+          <strong>{label}</strong>
+          <span>
+            {CATS.map((cat, i) => {
+              const month = months[i].find(m => m.label === label);
+              const row = month?.ranks.find(r => r.id === rid);
+              return row ? `${cat.name} 第 ${row.rank} / ${month.ranks.length} · ${row.v}` : null;
+            }).filter(Boolean).join(' · ')}
+          </span>
+        </li>
+      ))}
+    </ul>
+  ) : null;
 
   return (
     <>
-      <HistTabs tabs={FLEET_TABS} tab="team" onPick={() => {}} />
+      <HistTabs tabs={FLEET_TABS} tab={tab} onPick={setTab} />
+      {tab === 'team' ? (
       <div role="tabpanel">
       {cars.length ? (
         <ul className="hist-rows">
@@ -113,23 +136,26 @@ function FleetHistory() {
           ))}
         </ul>
       ) : null}
-      {labels.length ? (
-        <ul className="hist-rows">
-          {labels.map(label => (
-            <li key={label} className="hist-car">
-              <strong>{label}</strong>
-              <span>
-                {CATS.map((cat, i) => {
-                  const month = months[i].find(m => m.label === label);
-                  const row = month?.ranks.find(r => r.id === rid);
-                  return row ? `${cat.name} 第 ${row.rank} / ${month.ranks.length} · ${row.v}` : null;
-                }).filter(Boolean).join(' · ')}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      {quarterList}
       </div>
+      ) : (
+      <div role="tabpanel">
+        {car ? (
+          <>
+            <label>
+              車號{' '}
+              <select value={car.c} onChange={e => setPick(e.target.value)}>
+                {cars.map(d => <option key={d.c}>{d.c}</option>)}
+              </select>
+            </label>
+            <p className="hist-period">{car.c}・所屬{region.name}季分數與區排名（區級，非單車）</p>
+            {quarterList ?? <p className="hist-empty">{region.name}沒有季紀錄</p>}
+          </>
+        ) : (
+          <p className="hist-empty">該區沒有車</p>
+        )}
+      </div>
+      )}
     </>
   );
 }
@@ -189,7 +215,7 @@ export default function HistoryDialog({ role }) {
           {title ? <h3 className="hist-shell-title">{title}</h3> : null}
           {period ? <p className="hist-period">資料期間：{period}</p> : null}
           {role === 'driver' ? <DriverRanks /> : null}
-          {role === 'fleet' ? <FleetHistory /> : null}
+          {open && role === 'fleet' ? <FleetHistory /> : null}
           {open && role === 'lead' ? <LeadHistory /> : null}
         </div>
       </dialog>
