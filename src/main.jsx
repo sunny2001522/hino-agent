@@ -1,15 +1,16 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../excel-derived-data.js';
-import DriverHome from './pages/DriverHome.jsx';
-import FleetOverview from './pages/FleetOverview.jsx';
-import ItraqWorkspace from './pages/ItraqWorkspace.jsx';
-import LeadCompetition from './pages/LeadCompetition.jsx';
-import LeadDrivers from './pages/LeadDrivers.jsx';
-import LeadFocus from './pages/LeadFocus.jsx';
-import LeadKpi from './pages/LeadKpi.jsx';
-import PartnerWorkbench from './pages/PartnerWorkbench.jsx';
-import ShipperShipments from './pages/ShipperShipments.jsx';
+import DriverHome from './pages/driver-home/index.jsx';
+import FleetOverview from './pages/fleet-overview/index.jsx';
+import ItraqWorkspace from './pages/itraq-workspace/index.jsx';
+import LeadCompetition from './pages/lead-competition/index.jsx';
+import LeadDrivers from './pages/lead-drivers/index.jsx';
+import LeadFocus from './pages/lead-focus/index.jsx';
+import LeadKpi from './pages/lead-kpi/index.jsx';
+import Competition from './pages/competition/index.jsx';
+import PartnerWorkbench from './pages/partner-workbench/index.jsx';
+import ShipperShipments from './pages/shipper-shipments/index.jsx';
 import { ROLE_TABS, tabSpec } from './legacy/tabs.js';
 import './legacy/legacy.css';
 import '../enhancements.css';
@@ -55,6 +56,9 @@ const REACT_PAGES = {
   'lead:focus': LeadFocus,
   'lead:drivers': LeadDrivers,
   'lead:competition': LeadCompetition,
+  'fleet:comp': Competition,
+  'lead:comp': Competition,
+  'driver:comp': Competition,
 };
 
 const IDENTITIES = [
@@ -62,7 +66,6 @@ const IDENTITIES = [
   { key: 'lead', label: '總負責人', color: '#0d9488' },
   { key: 'driver', label: '車輛使用者', color: '#4a6cf0' },
   { key: 'shipper', label: '貨主', color: '#2e9e4f' },
-  { key: 'competition', label: '競賽', color: '#c45c12', href: 'pages/competition/driver/index.html' },
 ];
 
 function accountPhone(role) {
@@ -83,10 +86,6 @@ function Welcome({ onPick }) {
                 className="idcard idcard-simple"
                 style={{ '--role-color': role.color }}
                 onClick={() => {
-                  if (role.href) {
-                    location.href = role.href;
-                    return;
-                  }
                   if (!window.ACCOUNTS) return;
                   onPick(role.key);
                 }}
@@ -104,6 +103,10 @@ function Welcome({ onPick }) {
 function LoginPage({ role, onBack }) {
   const inputRef = useRef(null);
   const meta = IDENTITIES.find((item) => item.key === role);
+  const data = window.HINO_EXCEL_DATA;
+  const regions = data?.regions || [];
+  const boundRegion = data?.accountBindings?.lead_region;
+  const boundDriver = data?.accountBindings?.driver_code;
 
   useEffect(() => {
     const timer = setTimeout(() => inputRef.current?.focus(), 120);
@@ -129,6 +132,20 @@ function LoginPage({ role, onBack }) {
           <input ref={inputRef} id="loginInput" type="text" inputMode="tel" defaultValue={accountPhone(role)} aria-label="手機號碼" autoComplete="tel" />
         </div>
         <button type="button" className="btn pri block" onClick={submit}>登入</button>
+        {(role === 'fleet' || role === 'driver') && (
+          <div className={`login-accounts${role === 'driver' ? ' login-accounts-driver' : ''}`}>
+            {role === 'fleet' && regions.map((r) => (
+              <div key={r.id} className={`idcard idcard-simple${r.id === boundRegion ? ' is-bound' : ''}`}>{r.name}</div>
+            ))}
+            {role === 'driver' && regions.flatMap((r) =>
+              (r.drivers || []).map((d, i) => (
+                <div key={`${r.id}${i}`} className={`idcard idcard-simple${`${r.id}${i}` === boundDriver ? ' is-bound' : ''}`}>
+                  {d.n || d.c} {r.name}
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -359,7 +376,7 @@ function ItraqApplication() {
       {!nav.role && (loginRole
         ? <LoginPage key={loginRole} role={loginRole} onBack={() => setLoginRole(null)} />
         : <Welcome onPick={setLoginRole} />)}
-      {nav.role && ReactPage && <ReactPage key={islandKey} pageNo={nav.itraqPage} />}
+      {nav.role && ReactPage && <ReactPage key={islandKey} pageNo={nav.itraqPage} role={nav.role} />}
       <Fabs />
       <Overlays />
     </div>

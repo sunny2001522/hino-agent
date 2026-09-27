@@ -59,8 +59,6 @@ const ROLES={
  desc:"註冊：由車隊管理者建立帳號<br>登入：一律採用手機號碼登入 APP · 查看個人車況、必要提醒與任務狀態"},
  shipper:{label:"貨主", color:"#2e9e4f", sub:"貨件追蹤（B2B2B）",
  desc:"登入：手機號碼登入 APP · 查看貨件狀態與車輛編號<br><b style=\"color:var(--good)\">本團隊 B2B2B 新增身份</b>（iTRAQ 原本沒有）", isNew:true},
- competition:{label:"競賽", color:"#c45c12", sub:"獨立頁面",
- desc:"開啟獨立競賽頁面", href:"pages/competition/driver/index.html", isNew:true},
 };
 // each demo account maps to EXACTLY one person / region / company
 const EXCEL_ACCOUNT_BINDING=window.HINO_EXCEL_DATA.accountBindings;
@@ -82,7 +80,7 @@ const appbar=document.getElementById('appbar');
 
 const TABS={
  fleet:[
- {id:"decision", l:"智慧夥伴", render:()=>{}},
+ {id:"comp", l:"競賽", render:()=>{}},
  {id:"overview", l:"管理總覽", render:()=>{}},
  {id:"monitor", l:"即時監控", render:()=>{}},
  {id:"history", l:"歷史車輛", render:()=>{}},
@@ -91,9 +89,10 @@ const TABS={
  {id:"data", l:"數據中心", render:()=>{}},
  {id:"fleet", l:"車隊管理", render:()=>{}},
  {id:"settings", l:"系統設定", render:()=>{}},
+ {id:"decision", l:"智慧夥伴", render:()=>{}},
  ],
  lead:[
- {id:"partner", l:"智慧夥伴", render:()=>{}},
+ {id:"comp", l:"競賽", render:()=>{}},
  {id:"monitor", l:"即時監控", render:()=>{}},
  {id:"history", l:"歷史車輛", render:()=>{}},
  {id:"task", l:"任務派遣", render:()=>{}},
@@ -105,10 +104,12 @@ const TABS={
  {id:"focus", l:"管理重點", render:()=>{}},
  {id:"drivers", l:"駕駛", render:()=>{}},
  {id:"competition", l:"安全競賽", render:()=>{}},
+ {id:"partner", l:"智慧夥伴", render:()=>{}},
  ],
  driver:[
- {id:"partner", l:"改善與回報", render:()=>{}},
+ {id:"comp", l:"競賽", render:()=>{}},
  {id:"home", l:"我的車況", render:()=>{}},
+ {id:"partner", l:"改善與回報", render:()=>{}},
  ],
  shipper:[
  {id:"track", l:"追蹤", render:()=>{}},

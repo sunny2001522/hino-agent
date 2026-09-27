@@ -11,7 +11,6 @@ WORKDIR /app
 COPY server.js ./
 COPY --chown=0:0 lib lib
 COPY --from=build /app/dist ./dist
-COPY --chown=0:0 pages dist/pages
 ENV STATIC_DIR=dist
 ENV NODE_ENV=production
 ENV PORT=8080
