@@ -54,3 +54,18 @@ test('MVP is first of each cat and scores stay 100 when clean', () => {
   const lastDtc = kp.series.dtc.filter((_, i) => kp.recordsByMonth[i] > 0).at(-1);
   assert.equal(history(CATS[2], kp).at(-1).v, clamp(100 - (lastDtc / kp.drivers.length) * 4));
 });
+
+test('fleet history locks to lead_region cars and months', () => {
+  const rid = data.accountBindings.lead_region;
+  assert.equal(rid, data.accountBindings.lead_region);
+  assert.notEqual(rid, 'MI');
+  const region = data.regions.find(r => r.id === rid);
+  const cars = [...region.drivers].sort((a, b) => (a.c < b.c ? -1 : a.c > b.c ? 1 : 0)).map(d => d.c);
+  assert.deepEqual(cars, region.drivers.map(d => d.c).sort());
+  assert.ok(!cars.includes('ABC-6776'));
+  assert.ok(!cars.includes('ABC-7160'));
+  const months = CATS.map(cat => monthRanks(cat));
+  const labels = (months[0] || []).filter(m => m.ranks.some(row => row.id === rid)).map(m => m.label);
+  assert.ok(!labels.includes('8月'));
+  assert.ok(!labels.includes('2月'));
+});

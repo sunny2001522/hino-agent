@@ -55,22 +55,16 @@ function LeadHistory() {
 }
 
 function FleetHistory() {
-  const regions = typeof window !== 'undefined' ? window.HINO_EXCEL_DATA?.regions ?? [] : [];
-  const [rid, setRid] = useState(regions[0]?.id ?? '');
-  const region = regions.find(r => r.id === rid);
-  const cars = region ? [...region.drivers].sort((a, b) => (a.c < b.c ? -1 : a.c > b.c ? 1 : 0)) : [];
+  const data = typeof window !== 'undefined' ? window.HINO_EXCEL_DATA : null;
+  const rid = data?.accountBindings?.lead_region;
+  const region = data?.regions?.find(r => r.id === rid);
+  if (!region) return <p className="hist-empty">無法載入</p>;
+  const cars = [...region.drivers].sort((a, b) => (a.c < b.c ? -1 : a.c > b.c ? 1 : 0));
   const months = CATS.map(cat => monthRanks(cat));
   const labels = (months[0] || []).filter(m => m.ranks.some(row => row.id === rid)).map(m => m.label);
 
   return (
     <>
-      <div className="hist-tabs">
-        {regions.map(r => (
-          <button key={r.id} type="button" className={r.id === rid ? 'on' : ''} onClick={() => setRid(r.id)}>
-            {r.name}
-          </button>
-        ))}
-      </div>
       {cars.length ? (
         <ul className="hist-rows">
           {cars.map(d => (
