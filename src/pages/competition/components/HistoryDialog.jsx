@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CATS, mvps, quarterRanks, rankOf } from '../score.js';
 
 const SHELL = {
-  driver: '自己的本期名次',
+  driver: '個人歷史紀錄',
   fleet: '一區',
   lead: '全台',
 };
@@ -51,6 +51,7 @@ function LeadHistory() {
   const [tab, setTab] = useState('quarter');
   const quarters = CATS.map(cat => quarterRanks(cat));
   const champs = mvps();
+  const comp = typeof window !== 'undefined' ? window.HINO_EXCEL_DATA?.competition : null;
   return (
     <>
       <HistTabs tabs={LEAD_TABS} tab={tab} onPick={setTab} />
@@ -74,32 +75,36 @@ function LeadHistory() {
         ))}
       </ul>
       ) : (
-      <ul className="hist-rows" role="tabpanel">
-        {champs.map(m => (
-          <li key={m.id} className="hist-row">
-            <span>{CATS.find(c => c.id === m.id)?.name}</span>
-            <span>{m.c}</span>
-            <span>{m.score}</span>
-          </li>
+      <div role="tabpanel">
+        {[
+          { label: '本期 MVP（單車）', list: champs },
+          // ponytail: 每季單車只有編譯器輸出的 competition 一季；等編譯器輸出所有季的 season_vehicles 再逐季列。
+          comp && { label: comp.label, list: mvps({ regions: comp.teams }) },
+        ].filter(Boolean).map(sec => (
+          <div key={sec.label}>
+            <p className="hist-period">{sec.label}</p>
+            <ul className="hist-rows">
+              {sec.list.map(m => (
+                <li key={m.id} className="hist-row">
+                  <span>{CATS.find(c => c.id === m.id)?.name}</span>
+                  <span>{m.c}</span>
+                  <span>{m.score}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </ul>
+      </div>
       )}
     </>
   );
 }
 
-function FleetHistory() {
-  const data = typeof window !== 'undefined' ? window.HINO_EXCEL_DATA : null;
-  const rid = data?.accountBindings?.lead_region;
-  const region = data?.regions?.find(r => r.id === rid);
-  const [tab, setTab] = useState('team');
-  const [pick, setPick] = useState(null);
-  if (!region) return <p className="hist-empty">無法載入</p>;
-  const cars = [...region.drivers].sort((a, b) => (a.c < b.c ? -1 : a.c > b.c ? 1 : 0));
-  const car = cars.find(d => d.c === pick) ?? cars[0];
+// ponytail: fleet／driver 的每季是區域資料，活頁簿沒有單車季分數；等編譯器輸出每季單車（season_vehicles）再改單車。
+function regionQuarters(rid) {
   const months = CATS.map(cat => quarterRanks(cat));
   const labels = (months[0] || []).filter(m => m.ranks.some(row => row.id === rid)).map(m => m.label);
-  const quarterList = labels.length ? (
+  return labels.length ? (
     <ul className="hist-rows">
       {labels.map(label => (
         <li key={label} className="hist-car">
@@ -115,45 +120,46 @@ function FleetHistory() {
       ))}
     </ul>
   ) : null;
+}
+
+function FleetHistory() {
+  const data = typeof window !== 'undefined' ? window.HINO_EXCEL_DATA : null;
+  const rid = data?.accountBindings?.lead_region;
+  const region = data?.regions?.find(r => r.id === rid);
+  const [tab, setTab] = useState('team');
+  if (!region) return <p className="hist-empty">無法載入</p>;
+  // ponytail: 單車季只有編譯器輸出的 competition 一季，且季別未比對年份；等編譯器輸出所有季的 season_vehicles 再逐季列。
+  const comp = data.competition;
+  const compQ = comp ? +comp.id.split('Q')[1] : 0;
+  const compCars = comp ? comp.teams.flatMap(t => t.drivers) : [];
+  const cars = [...(comp?.teams.find(t => t.id === rid)?.drivers ?? [])].sort((a, b) => (a.c < b.c ? -1 : a.c > b.c ? 1 : 0));
+  const quarterList = regionQuarters(rid);
 
   return (
     <>
       <HistTabs tabs={FLEET_TABS} tab={tab} onPick={setTab} />
       {tab === 'team' ? (
       <div role="tabpanel">
-      {cars.length ? (
-        <ul className="hist-rows">
-          {cars.map(d => (
-            <li key={d.c} className="hist-car">
-              <strong>{d.c}</strong>
-              <span>
-                {CATS.map(cat => {
-                  const { rank, total } = rankOf(cat, d.c);
-                  return `${cat.name} ${cat.score(d)} 第 ${rank} / ${total}`;
-                }).join(' · ')}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {quarterList}
+        {quarterList ?? <p className="hist-empty">{region.name}沒有季紀錄</p>}
       </div>
       ) : (
       <div role="tabpanel">
-        {car ? (
-          <>
-            <label>
-              車號{' '}
-              <select value={car.c} onChange={e => setPick(e.target.value)}>
-                {cars.map(d => <option key={d.c}>{d.c}</option>)}
-              </select>
-            </label>
-            <p className="hist-period">{car.c}・所屬{region.name}季分數與區排名（區級，非單車）</p>
-            {quarterList ?? <p className="hist-empty">{region.name}沒有季紀錄</p>}
-          </>
-        ) : (
-          <p className="hist-empty">該區沒有車</p>
-        )}
+      <ul className="hist-rows">
+        {[1, 2, 3, 4].map(q => (
+          <li key={q} className="hist-car">
+            <strong>第{q}季</strong>
+            {q === compQ && cars.length ? cars.map(d => (
+              <span key={d.c}>
+                {d.c}{' '}
+                {CATS.map(cat => {
+                  const { rank, total } = rankOf(cat, d.c, compCars);
+                  return `${cat.name} ${cat.score(d)} 第 ${rank} / ${total}`;
+                }).join(' · ')}
+              </span>
+            )) : <span>沒資料</span>}
+          </li>
+        ))}
+      </ul>
       </div>
       )}
     </>
@@ -163,19 +169,25 @@ function FleetHistory() {
 function DriverRanks() {
   const me = ownCar();
   if (!me) return <p className="hist-empty">無法載入</p>;
+  const name = window.HINO_EXCEL_DATA.regions.find(r => r.id === me.region)?.name ?? me.region;
   return (
-    <ul className="hist-rows">
-      {CATS.map(cat => {
-        const { rank, total } = rankOf(cat, me.c);
-        return (
-          <li key={cat.id} className="hist-row">
-            <span>{cat.name}</span>
-            <span>{cat.score(me)}</span>
-            <span>第 {rank} / {total}</span>
-          </li>
-        );
-      })}
-    </ul>
+    <>
+      <p className="hist-period">本期</p>
+      <ul className="hist-rows">
+        {CATS.map(cat => {
+          const { rank, total } = rankOf(cat, me.c);
+          return (
+            <li key={cat.id} className="hist-row">
+              <span>{cat.name}</span>
+              <span>{cat.score(me)}</span>
+              <span>第 {rank} / {total}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="hist-period">每季（所屬{name}，非單車）</p>
+      {regionQuarters(me.region) ?? <p className="hist-empty">{name}沒有季紀錄</p>}
+    </>
   );
 }
 
@@ -214,7 +226,7 @@ export default function HistoryDialog({ role }) {
         <div className="hist-body">
           {title ? <h3 className="hist-shell-title">{title}</h3> : null}
           {period ? <p className="hist-period">資料期間：{period}</p> : null}
-          {role === 'driver' ? <DriverRanks /> : null}
+          {open && role === 'driver' ? <DriverRanks /> : null}
           {open && role === 'fleet' ? <FleetHistory /> : null}
           {open && role === 'lead' ? <LeadHistory /> : null}
         </div>

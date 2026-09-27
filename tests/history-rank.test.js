@@ -89,3 +89,28 @@ test('quarter ranks average recorded months, skip empty quarters, tie by region 
   assert.equal(mi.v, 52);
   assert.deepEqual(quarterRanks(CATS[2]), quarterRanks(CATS[2]));
 });
+
+test('quarter MVP is the top competition car per cat, ties by plate', () => {
+  const cars = data.competition.teams.flatMap(t => t.drivers);
+  const got = mvps({ regions: data.competition.teams });
+  CATS.forEach((cat, i) => {
+    const top = [...cars].sort((a, b) => (cat.score(b) - cat.score(a)) || a.c.localeCompare(b.c))[0];
+    assert.deepEqual([got[i].c, got[i].score], [top.c, cat.score(top)]);
+    assert.ok(cars.some(d => d.c === got[i].c));
+  });
+  assert.deepEqual(got.map(m => [m.c, m.score]), [['ABC-2037', 87], ['ABC-2713', 94], ['ABC-1655', 100]]);
+});
+
+test('fleet car tab: competition quarter cars ranked among all competition cars', () => {
+  const comp = data.competition;
+  assert.equal(+comp.id.split('Q')[1], 3);
+  const all = comp.teams.flatMap(t => t.drivers);
+  const n = comp.teams.find(t => t.id === data.accountBindings.lead_region).drivers.map(d => d.c).sort();
+  assert.deepEqual(n.map(c => CATS.map(cat => {
+    const d = all.find(x => x.c === c);
+    return [cat.score(d), rankOf(cat, c, all).rank, rankOf(cat, c, all).total];
+  })), [
+    [[64, 14, 20], [81, 9, 20], [88, 16, 20]],
+    [[53, 16, 20], [68, 12, 20], [100, 7, 20]],
+  ]);
+});
