@@ -23,26 +23,34 @@ const LEAD_TABS = [
   { id: 'mvp', label: 'MVP' },
 ];
 
+const FLEET_TABS = [{ id: 'team', label: '全隊歷史紀錄' }];
+
+function HistTabs({ tabs, tab, onPick }) {
+  return (
+    <div className="hist-tabs" role="tablist">
+      {tabs.map(t => (
+        <button
+          key={t.id}
+          type="button"
+          role="tab"
+          aria-selected={tab === t.id}
+          className={tab === t.id ? 'on' : undefined}
+          onClick={() => onPick(t.id)}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function LeadHistory() {
   const [tab, setTab] = useState('quarter');
   const quarters = CATS.map(cat => quarterRanks(cat));
   const champs = mvps();
   return (
     <>
-      <div className="hist-tabs" role="tablist">
-        {LEAD_TABS.map(t => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
-            className={tab === t.id ? 'on' : undefined}
-            onClick={() => setTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <HistTabs tabs={LEAD_TABS} tab={tab} onPick={setTab} />
       {tab === 'quarter' ? (
       <ul className="hist-rows" role="tabpanel">
         {(quarters[0] || []).map(m0 => (
@@ -88,6 +96,8 @@ function FleetHistory() {
 
   return (
     <>
+      <HistTabs tabs={FLEET_TABS} tab="team" onPick={() => {}} />
+      <div role="tabpanel">
       {cars.length ? (
         <ul className="hist-rows">
           {cars.map(d => (
@@ -119,6 +129,7 @@ function FleetHistory() {
           ))}
         </ul>
       ) : null}
+      </div>
     </>
   );
 }
