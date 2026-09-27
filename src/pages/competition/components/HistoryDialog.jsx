@@ -78,11 +78,15 @@ function LeadHistory() {
       <div role="tabpanel">
         {[
           { label: '本期 MVP（單車）', list: champs },
-          // ponytail: 每季單車只有編譯器輸出的 competition 一季；等編譯器輸出所有季的 season_vehicles 再逐季列。
-          comp && { label: comp.label, list: mvps({ regions: comp.teams }) },
-        ].filter(Boolean).map(sec => (
+          // ponytail: 單車季只有編譯器輸出的 competition 一季，且季別未比對年份；等編譯器輸出所有季的 season_vehicles 再逐季列。
+          ...[1, 2, 3, 4].map(q => ({
+            label: `第${q}季`,
+            list: comp && q === +comp.id.split('Q')[1] ? mvps({ regions: comp.teams }) : null,
+          })),
+        ].map(sec => (
           <div key={sec.label}>
             <p className="hist-period">{sec.label}</p>
+            {sec.list ? (
             <ul className="hist-rows">
               {sec.list.map(m => (
                 <li key={m.id} className="hist-row">
@@ -92,6 +96,7 @@ function LeadHistory() {
                 </li>
               ))}
             </ul>
+            ) : <p className="hist-empty">沒資料</p>}
           </div>
         ))}
       </div>
