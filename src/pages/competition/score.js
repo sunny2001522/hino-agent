@@ -58,6 +58,48 @@ export function history(cat, region) {
     .filter((_, i) => region.recordsByMonth ? region.recordsByMonth[i] > 0 : s.safety[i] !== null);
 }
 
+export function allDrivers(data = window.HINO_EXCEL_DATA) {
+  return data?.regions.flatMap(r => r.drivers) ?? [];
+}
+
+export function cmpByCat(cat, a, b) {
+  const d = cat.score(b) - cat.score(a);
+  return d !== 0 ? d : (a.c < b.c ? -1 : a.c > b.c ? 1 : 0);
+}
+
+export function fleetByCat(cat, drivers = allDrivers()) {
+  return [...drivers].sort((a, b) => cmpByCat(cat, a, b));
+}
+
+export function rankOf(cat, car, drivers = allDrivers()) {
+  const list = fleetByCat(cat, drivers);
+  return { rank: list.findIndex(d => d.c === car) + 1, total: list.length };
+}
+
+export function monthRanks(cat, data = window.HINO_EXCEL_DATA) {
+  const { regions, months } = data;
+  const pts = regions.map(r => history(cat, r));
+  return months.flatMap(label => {
+    const rows = regions
+      .map((r, i) => {
+        const pt = pts[i].find(p => p.label === label);
+        return pt ? { i, r, v: pt.v } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => (b.v - a.v) || (a.i - b.i))
+      .map((row, n) => ({ id: row.r.id, name: row.r.name, v: row.v, rank: n + 1 }));
+    return rows.length ? [{ label, ranks: rows }] : [];
+  });
+}
+
+export function mvps(data = window.HINO_EXCEL_DATA) {
+  const drivers = allDrivers(data);
+  return CATS.map(cat => {
+    const d = fleetByCat(cat, drivers)[0];
+    return { id: cat.id, c: d.c, score: cat.score(d) };
+  });
+}
+
 export function linesChart(series, simple) {
   const pts = series[0].pts;
   const narrow = window.innerWidth < 520;

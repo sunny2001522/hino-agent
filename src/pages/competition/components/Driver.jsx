@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { CATS, history, lineChart, regionAvg, tint, signed } from '../score.js';
+import { CATS, cmpByCat, fleetByCat, history, lineChart, rankOf, regionAvg, signed, tint } from '../score.js';
 import CatTabs from './CatTabs.jsx';
 import StatusFacts from './StatusFacts.jsx';
 
@@ -12,20 +12,6 @@ const me = (() => {
   return region?.drivers[+code.slice(1)] ?? null;
 })();
 const myRegion = me && data.regions.find(r => r.id === me.region);
-
-function cmpByCat(cat, a, b) {
-  const d = cat.score(b) - cat.score(a);
-  return d !== 0 ? d : (a.c < b.c ? -1 : a.c > b.c ? 1 : 0);
-}
-
-function fleetByCat(cat) {
-  return [...fleet].sort((a, b) => cmpByCat(cat, a, b));
-}
-
-function rankOf(cat, car) {
-  const list = fleetByCat(cat);
-  return { rank: list.findIndex(d => d.c === car) + 1, total: list.length };
-}
 
 function top10Of(cat) {
   return fleetByCat(cat).slice(0, 10);
