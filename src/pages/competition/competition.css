@@ -43,6 +43,8 @@
 .hist-body .hist-tabs{padding:10px 0 0}
 .hist-shell-title{margin:0 0 6px;font-size:15px;font-weight:700}
 .hist-period{margin:0;font-size:12px;color:var(--mut)}
+.hist-body .hist-period{margin-top:14px}
+.hist-body > .hist-period:first-of-type{margin-top:0}
 .hist-empty{margin:10px 0 0;font-size:13px;color:var(--mut)}
 .hist-rows{margin:10px 0 0;padding:0;list-style:none}
 .hist-row{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
