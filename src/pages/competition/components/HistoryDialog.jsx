@@ -105,7 +105,7 @@ function LeadHistory() {
   );
 }
 
-// ponytail: fleet／driver 的每季是區域資料，活頁簿沒有單車季分數；等編譯器輸出每季單車（season_vehicles）再改單車。
+// ponytail: fleet 的每季是區域資料，活頁簿沒有單車季分數；等編譯器輸出每季單車（season_vehicles）再改單車。
 function regionQuarters(rid) {
   const months = CATS.map(cat => quarterRanks(cat));
   const labels = (months[0] || []).filter(m => m.ranks.some(row => row.id === rid)).map(m => m.label);
@@ -174,7 +174,11 @@ function FleetHistory() {
 function DriverRanks() {
   const me = ownCar();
   if (!me) return <p className="hist-empty">無法載入</p>;
-  const name = window.HINO_EXCEL_DATA.regions.find(r => r.id === me.region)?.name ?? me.region;
+  // ponytail: 單車季只有編譯器輸出的 competition 一季，且季別未比對年份；等編譯器輸出所有季的 season_vehicles 再逐季列。
+  const comp = window.HINO_EXCEL_DATA.competition;
+  const compQ = comp ? +comp.id.split('Q')[1] : 0;
+  const compCars = comp ? comp.teams.flatMap(t => t.drivers) : [];
+  const d = compCars.find(x => x.c === me.c);
   return (
     <>
       <p className="hist-period">本期</p>
@@ -190,8 +194,25 @@ function DriverRanks() {
           );
         })}
       </ul>
-      <p className="hist-period">每季（所屬{name}，非單車）</p>
-      {regionQuarters(me.region) ?? <p className="hist-empty">{name}沒有季紀錄</p>}
+      {[1, 2, 3, 4].map(q => (
+        <div key={q}>
+          <p className="hist-period">第{q}季</p>
+          {q === compQ && d ? (
+          <ul className="hist-rows">
+            {CATS.map(cat => {
+              const { rank, total } = rankOf(cat, me.c, compCars);
+              return (
+                <li key={cat.id} className="hist-row">
+                  <span>{cat.name}</span>
+                  <span>{cat.score(d)}</span>
+                  <span>第 {rank} / {total}</span>
+                </li>
+              );
+            })}
+          </ul>
+          ) : <p className="hist-empty">沒資料</p>}
+        </div>
+      ))}
     </>
   );
 }
