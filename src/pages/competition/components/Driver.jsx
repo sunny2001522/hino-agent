@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { CATS, history, lineChart, regionAvg, tint, signed } from '../score.js';
+import { CATS, cmpByCat, fleetByCat, history, lineChart, rankOf, regionAvg, signed, tint } from '../score.js';
 import CatTabs from './CatTabs.jsx';
 import StatusFacts from './StatusFacts.jsx';
 
@@ -13,9 +13,8 @@ const me = (() => {
 })();
 const myRegion = me && data.regions.find(r => r.id === me.region);
 
-function rankOf(cat, car) {
-  const list = [...fleet].sort((a, b) => cat.score(b) - cat.score(a));
-  return { rank: list.findIndex(d => d.c === car) + 1, total: list.length };
+function top10Of(cat) {
+  return fleetByCat(cat).slice(0, 10);
 }
 
 function moodOf(d) {
@@ -80,6 +79,8 @@ export default function Driver() {
   const mom = pts.at(-1).v - pts.at(-2).v;
   const avg = regionAvg(cat, fleet);
   const asOf = (me.last_time || data.meta.lastRecord).slice(0, 10);
+  const top10 = top10Of(cat);
+  const regionName = d => data.regions.find(r => r.id === d.region)?.name ?? '';
   const tabItems = CATS.map(c => {
     const s = c.score(me);
     const rk = rankOf(c, me.c);
@@ -94,11 +95,58 @@ export default function Driver() {
     setMessages(m => [...m, { role: 'me', text: q }, { role: 'ai', text: aiReply(q) }]);
   }
 
+  function topRow(d, n) {
+    return (
+      <>
+        <span className="top10-rank">第 {n} 名</span>
+        <span className="top10-car">
+          {d.c}
+          {d.c === me.c ? <span className="top10-you">你</span> : null}
+        </span>
+        <span className="top10-reg">{regionName(d)}</span>
+        <span className="top10-score">{cat.score(d)}</span>
+      </>
+    );
+  }
+
   return (
     <>
-      <section className="dash-top">
+      <section className="dash-top drv-dash">
         <p className="period">{data.meta.period} · 資料截至 {asOf}</p>
         <p className="period">歷史車號指標 Demo，非官方駕駛成績；區域為 GPS 展示分組，缺測月份不參與比較。</p>
+        <div className="top10">
+          <div className="top10-ttl">全隊前 10 · {cat.name}</div>
+          {top10.length > 0 && (
+            <div className="top10-board">
+              <div className="podium">
+                {[1, 2, 3].map(n => {
+                  const d = top10[n - 1];
+                  if (!d) return null;
+                  return (
+                    <div
+                      key={d.c}
+                      className={`podium-card rank-${n}${d.c === me.c ? ' top10-me' : ''}`}
+                    >
+                      {topRow(d, n)}
+                    </div>
+                  );
+                })}
+              </div>
+              {top10.length > 3 && (
+                <ul className="top10-list">
+                  {top10.slice(3).map((d, i) => (
+                    <li
+                      key={d.c}
+                      className={`top10-row${d.c === me.c ? ' top10-me' : ''}`}
+                    >
+                      {topRow(d, i + 4)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
         <div className="score-row">
           <div className="score-card">
             <div className="k">總分</div>
@@ -175,5 +223,35 @@ export default function Driver() {
     console.assert(h.length >= 2, 'history should have months');
     console.assert(h.at(-1).v === myRegion.series.safety.filter((_, i) => myRegion.recordsByMonth ? myRegion.recordsByMonth[i] > 0 : myRegion.series.safety[i] !== null).at(-1), 'last point is region month');
     console.assert(['待覆核', '等待情境待確認', '歷史資料摘要'].includes(moodOf(me).tag), 'mood tag');
+
+    const cat = CATS[0];
+    // C1: 人造兩台同分時，車號較小的在前
+    const twinA = { ...me, c: 'ZZZ-9999' };
+    const twinB = { ...me, c: 'AAA-0001' };
+    const tied = [twinA, twinB].sort((a, b) => cmpByCat(cat, a, b));
+    console.assert(tied[0].c === 'AAA-0001' && tied[1].c === 'ZZZ-9999', 'tied score: smaller car first');
+
+    const sorted = fleetByCat(cat);
+    // C2: 全隊分數不會越排越高
+    console.assert(
+      sorted.every((d, i) => i === 0 || cat.score(sorted[i - 1]) >= cat.score(d)),
+      'fleet scores never rise down the list'
+    );
+    // C3: 同分的車號不會越排越小
+    console.assert(
+      sorted.every((d, i) => {
+        if (i === 0) return true;
+        const prev = sorted[i - 1];
+        if (cat.score(prev) !== cat.score(d)) return true;
+        return prev.c <= d.c;
+      }),
+      'tied cars never decrease by plate'
+    );
+    // C4: 自己排名卡的名次等於自己在這份排序裡的位置
+    const { rank } = rankOf(cat, me.c);
+    console.assert(rank === sorted.findIndex(d => d.c === me.c) + 1, 'own rank matches sorted position');
+
+    const top = top10Of(cat);
+    console.assert(top.length <= 10 && top.length === Math.min(10, sorted.length), 'top10 at most 10');
   }
 })();

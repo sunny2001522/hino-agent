@@ -6,6 +6,7 @@
  --wrap:1180px;--r:14px;
 }
 .comp{
+ position:relative;
  font-family:-apple-system,"PingFang TC","Microsoft JhengHei",Segoe UI,Roboto,sans-serif;
  background:var(--bg);color:var(--txt);line-height:1.55;
  -webkit-font-smoothing:antialiased;
@@ -14,6 +15,41 @@
  padding:12px 16px 16px;
  min-width:0;gap:10px;
 }
+.comp .period{padding-right:4.5em}
+.hist-btn{
+ position:absolute;top:12px;right:16px;z-index:2;
+ font:inherit;font-size:12px;font-weight:700;color:var(--mut);
+ background:var(--card);border:1px solid var(--line);border-radius:8px;
+ padding:6px 10px;cursor:pointer;box-shadow:var(--sh);
+}
+.hist-btn:hover{background:var(--bg2)}
+.hist-dialog{height:min(420px,70vh)}
+.hist-tabs{
+ display:flex;gap:6px;padding:10px 14px 0;flex:0 0 auto;flex-wrap:wrap;
+}
+.hist-tabs button{
+ font:inherit;font-size:12px;font-weight:700;color:var(--mut);
+ background:var(--bg2);border:1px solid var(--line);border-radius:8px;
+ padding:6px 10px;cursor:pointer;
+}
+.hist-tabs button.on{
+ color:var(--txt);border-color:var(--accent);
+ box-shadow:0 0 0 2px rgba(123,180,46,.28);background:var(--card);
+}
+.hist-body{
+ flex:1;min-height:0;overflow:auto;padding:14px;
+ font-size:14px;color:var(--txt);line-height:1.55;
+}
+.hist-body .hist-tabs{padding:10px 0 0}
+.hist-shell-title{margin:0 0 6px;font-size:15px;font-weight:700}
+.hist-period{margin:0;font-size:12px;color:var(--mut)}
+.hist-body .hist-period{margin-top:14px}
+.hist-body > .hist-period:first-of-type{margin-top:0}
+.hist-empty{margin:10px 0 0;font-size:13px;color:var(--mut)}
+.hist-rows{margin:10px 0 0;padding:0;list-style:none}
+.hist-row{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.hist-car{display:flex;flex-direction:column;gap:4px;padding:8px 0;border-top:1px solid var(--line)}
+.hist-car span{font-size:13px;color:var(--mut);overflow-wrap:anywhere}
 .dash-top{flex:1;display:flex;flex-direction:column;gap:10px;min-height:0;overflow:hidden}
 .period{font-size:12px;color:var(--mut);flex:0 0 auto;overflow-wrap:anywhere}
 .score-card .s.up{color:var(--good)}
@@ -110,8 +146,59 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
 .dash-tabs .tv{font-size:22px;font-weight:850;margin-top:2px;line-height:1.2}
 .dash-tabs .tr{font-size:12px;color:var(--mut);overflow-wrap:anywhere}
 
+/* Driver 前十名（僅 .top10／.drv-dash；勿掛 .comp.boss／.comp.lead） */
+.drv-dash{overflow:auto}
+.drv-dash .chartcard{flex:0 0 auto;min-height:140px}
+.top10{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;min-width:0}
+.top10-ttl{font-size:14px;font-weight:800;color:var(--txt)}
+.top10-board{
+ display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:stretch;min-width:0;
+ background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+ box-shadow:var(--sh);padding:10px;
+}
+.podium{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0}
+.podium-card{
+ flex:1 1 0;background:transparent;border:2px solid var(--line);border-radius:var(--r);
+ padding:10px 12px;min-width:0;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;
+}
+.podium-card.rank-1{padding:16px 14px 14px;border-color:#c9a227}
+.podium-card.rank-1 .top10-rank{font-size:15px;color:#a68516}
+.podium-card.rank-1 .top10-car{font-size:16px}
+.podium-card.rank-1 .top10-score{font-size:28px}
+.podium-card.rank-2{border-color:#9aa0a6}
+.podium-card.rank-2 .top10-rank{color:#6b7280}
+.podium-card.rank-3{border-color:#cd7f32}
+.podium-card.rank-3 .top10-rank{color:#a35a1f}
+.podium-card .top10-rank{font-size:13px;font-weight:800}
+.podium-card .top10-car{font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.podium-card .top10-reg{font-size:12px;color:var(--mut)}
+.podium-card .top10-score{font-size:22px;font-weight:850;line-height:1.1}
+.top10-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0;min-width:0;min-height:0}
+.top10-row{
+ flex:1 1 0;display:grid;grid-template-columns:4.2em minmax(0,1.2fr) minmax(0,.8fr) 2.6em;
+ align-items:center;gap:6px;
+ background:transparent;border:none;border-bottom:1px solid var(--line);
+ padding:6px 4px;min-width:0;font-size:13px;
+}
+.top10-row:last-child{border-bottom:none}
+.top10-row .top10-rank{font-weight:800;color:var(--mut)}
+.top10-row .top10-car{font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.top10-row .top10-reg{color:var(--mut);min-width:0}
+.top10-row .top10-score{font-weight:850;text-align:right}
+.top10-you{
+ font-size:11px;font-weight:800;padding:1px 6px;border-radius:999px;
+ background:#f4f9ec;border:1px solid #d8e7c0;color:#3c5b1c;flex:0 0 auto;
+}
+.top10-me{
+ border-color:var(--accent);
+ box-shadow:0 0 0 2px rgba(123,180,46,.28);
+ background:#f4f9ec;
+}
+
 @media (max-width: 640px){
  .comp{padding:8px 10px 10px;gap:8px}
+ .hist-btn{top:8px;right:10px}
  .dash-top{gap:8px}
  .period{font-size:11px}
  .score-row{grid-template-columns:1fr}
@@ -136,6 +223,19 @@ svg.lc text{font-size:11px;fill:var(--mut2);font-family:inherit}
  .ai-dialog{width:calc(100vw - 20px);height:min(70dvh,520px)}
  .chatin{gap:6px;padding:8px 10px}
  .chatin input{min-width:0;padding:8px 10px;font-size:16px}
+ .top10-board{padding:8px;gap:8px}
+ .podium-card.rank-1 .top10-score{font-size:24px}
+ .podium-card .top10-score{font-size:18px}
+ .top10-ttl{font-size:13px}
+ .top10-row{
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:"rank score" "car reg";
+  gap:2px 6px;padding:6px 2px;font-size:12px;
+ }
+ .top10-row .top10-rank{grid-area:rank}
+ .top10-row .top10-score{grid-area:score}
+ .top10-row .top10-car{grid-area:car;white-space:nowrap}
+ .top10-row .top10-reg{grid-area:reg;justify-self:end;white-space:nowrap}
 }
 @media (max-height: 700px){
  .score-card{padding:8px 10px}

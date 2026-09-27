@@ -1,6 +1,7 @@
 import './competition.css';
 import Boss from './components/Boss.jsx';
 import Driver from './components/Driver.jsx';
+import HistoryDialog from './components/HistoryDialog.jsx';
 import Leader from './components/Leader.jsx';
 
 const BY_ROLE = { fleet: Boss, lead: Leader, driver: Driver };
@@ -11,6 +12,7 @@ export default function Competition({ role }) {
   return (
     <div className={className}>
       {Page ? <Page /> : null}
+      <HistoryDialog role={role} />
     </div>
   );
 }
