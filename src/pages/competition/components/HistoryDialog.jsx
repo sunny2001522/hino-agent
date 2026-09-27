@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { CATS, monthRanks, rankOf } from '../score.js';
+import { CATS, monthRanks, mvps, rankOf } from '../score.js';
 
 const SHELL = {
   driver: '自己的本期名次',
@@ -16,6 +16,42 @@ function ownCar() {
   const code = data.accountBindings.driver_code;
   const region = data.regions.find(r => r.id === code[0]);
   return region?.drivers[+code.slice(1)] ?? null;
+}
+
+function LeadHistory() {
+  const months = CATS.map(cat => monthRanks(cat));
+  const champs = mvps();
+  return (
+    <>
+      <ul className="hist-rows">
+        {(months[0] || []).map(m0 => (
+          <li key={m0.label} className="hist-car">
+            <strong>{m0.label}</strong>
+            {m0.ranks.map(base => (
+              <span key={base.id}>
+                {base.name}
+                {' '}
+                {CATS.map((cat, i) => {
+                  const month = months[i].find(m => m.label === m0.label);
+                  const row = month?.ranks.find(r => r.id === base.id);
+                  return row ? `${cat.name} 第 ${row.rank} / ${month.ranks.length} · ${row.v}` : null;
+                }).filter(Boolean).join(' · ')}
+              </span>
+            ))}
+          </li>
+        ))}
+      </ul>
+      <ul className="hist-rows">
+        {champs.map(m => (
+          <li key={m.id} className="hist-row">
+            <span>{CATS.find(c => c.id === m.id)?.name}</span>
+            <span>{m.c}</span>
+            <span>{m.score}</span>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
 }
 
 function FleetHistory() {
@@ -126,6 +162,7 @@ export default function HistoryDialog({ role }) {
           {period ? <p className="hist-period">資料期間：{period}</p> : null}
           {role === 'driver' ? <DriverRanks /> : null}
           {role === 'fleet' ? <FleetHistory /> : null}
+          {role === 'lead' ? <LeadHistory /> : null}
         </div>
       </dialog>
     </>
