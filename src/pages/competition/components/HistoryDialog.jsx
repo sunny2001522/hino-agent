@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { CATS, rankOf } from '../score.js';
+import { CATS, monthRanks, rankOf } from '../score.js';
 
 const SHELL = {
   driver: '自己的本期名次',
@@ -16,6 +16,58 @@ function ownCar() {
   const code = data.accountBindings.driver_code;
   const region = data.regions.find(r => r.id === code[0]);
   return region?.drivers[+code.slice(1)] ?? null;
+}
+
+function FleetHistory() {
+  const regions = typeof window !== 'undefined' ? window.HINO_EXCEL_DATA?.regions ?? [] : [];
+  const [rid, setRid] = useState(regions[0]?.id ?? '');
+  const region = regions.find(r => r.id === rid);
+  const cars = region ? [...region.drivers].sort((a, b) => (a.c < b.c ? -1 : a.c > b.c ? 1 : 0)) : [];
+  const months = CATS.map(cat => monthRanks(cat));
+  const labels = (months[0] || []).filter(m => m.ranks.some(row => row.id === rid)).map(m => m.label);
+
+  return (
+    <>
+      <div className="hist-tabs">
+        {regions.map(r => (
+          <button key={r.id} type="button" className={r.id === rid ? 'on' : ''} onClick={() => setRid(r.id)}>
+            {r.name}
+          </button>
+        ))}
+      </div>
+      {cars.length ? (
+        <ul className="hist-rows">
+          {cars.map(d => (
+            <li key={d.c} className="hist-car">
+              <strong>{d.c}</strong>
+              <span>
+                {CATS.map(cat => {
+                  const { rank, total } = rankOf(cat, d.c);
+                  return `${cat.name} ${cat.score(d)} 第 ${rank} / ${total}`;
+                }).join(' · ')}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {labels.length ? (
+        <ul className="hist-rows">
+          {labels.map(label => (
+            <li key={label} className="hist-car">
+              <strong>{label}</strong>
+              <span>
+                {CATS.map((cat, i) => {
+                  const month = months[i].find(m => m.label === label);
+                  const row = month?.ranks.find(r => r.id === rid);
+                  return row ? `${cat.name} 第 ${row.rank} / ${month.ranks.length} · ${row.v}` : null;
+                }).filter(Boolean).join(' · ')}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </>
+  );
 }
 
 function DriverRanks() {
@@ -73,6 +125,7 @@ export default function HistoryDialog({ role }) {
           {title ? <h3 className="hist-shell-title">{title}</h3> : null}
           {period ? <p className="hist-period">資料期間：{period}</p> : null}
           {role === 'driver' ? <DriverRanks /> : null}
+          {role === 'fleet' ? <FleetHistory /> : null}
         </div>
       </dialog>
     </>
