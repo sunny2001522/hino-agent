@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 global.window = {};
 await import('../excel-derived-data.js');
-const { CATS, clamp, fleetByCat, history, monthRanks, mvps, rankOf } = await import('../src/pages/competition/score.js');
+const { CATS, clamp, fleetByCat, history, monthRanks, mvps, quarterRanks, rankOf } = await import('../src/pages/competition/score.js');
 const data = window.HINO_EXCEL_DATA;
 
 test('fleet rank is stable, ties by plate, total is all cars', () => {
@@ -68,4 +68,24 @@ test('fleet history locks to lead_region cars and months', () => {
   const labels = (months[0] || []).filter(m => m.ranks.some(row => row.id === rid)).map(m => m.label);
   assert.ok(!labels.includes('8月'));
   assert.ok(!labels.includes('2月'));
+});
+
+test('quarter ranks average recorded months, skip empty quarters, tie by region order', () => {
+  for (const cat of CATS) assert.ok(quarterRanks(cat).length < monthRanks(cat).length);
+  const clone = structuredClone(data);
+  for (const m of ['4月', '5月', '6月']) {
+    const i = clone.months.indexOf(m);
+    for (const r of clone.regions) r.recordsByMonth[i] = 0;
+  }
+  const labels = quarterRanks(CATS[0], clone).map(q => q.label);
+  assert.ok(!labels.includes('第2季'));
+  assert.deepEqual(labels, ['第1季', '第3季', '第4季']);
+  const maint = quarterRanks(CATS[2]).find(q => q.label === '第2季').ranks;
+  assert.deepEqual(maint.slice(0, 2).map(r => [r.id, r.rank]), [['N', 1], ['MI', 2]]);
+  const eff = quarterRanks(CATS[1]).find(q => q.label === '第4季').ranks;
+  assert.equal(eff.find(r => r.id === 'CT').rank, 2);
+  assert.equal(eff.find(r => r.id === 'YJ').rank, 3);
+  const mi = quarterRanks(CATS[0]).find(q => q.label === '第3季').ranks.find(r => r.id === 'MI');
+  assert.equal(mi.v, 52);
+  assert.deepEqual(quarterRanks(CATS[2]), quarterRanks(CATS[2]));
 });

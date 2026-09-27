@@ -92,6 +92,24 @@ export function monthRanks(cat, data = window.HINO_EXCEL_DATA) {
   });
 }
 
+// ponytail: month labels carry no year; group by year too once data spans years.
+export function quarterRanks(cat, data = window.HINO_EXCEL_DATA) {
+  const { regions } = data;
+  const pts = regions.map(r => history(cat, r));
+  return [1, 2, 3, 4].flatMap(q => {
+    const label = `第${q}季`;
+    const rows = regions
+      .map((r, i) => {
+        const vs = pts[i].filter(p => Math.ceil(parseInt(p.label) / 3) === q).map(p => p.v);
+        return vs.length ? { i, r, v: Math.round(vs.reduce((a, v) => a + v, 0) / vs.length) } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => (b.v - a.v) || (a.i - b.i))
+      .map((row, n) => ({ id: row.r.id, name: row.r.name, v: row.v, rank: n + 1 }));
+    return rows.length ? [{ label, ranks: rows }] : [];
+  });
+}
+
 export function mvps(data = window.HINO_EXCEL_DATA) {
   const drivers = allDrivers(data);
   return CATS.map(cat => {
