@@ -18,13 +18,34 @@ function ownCar() {
   return region?.drivers[+code.slice(1)] ?? null;
 }
 
+const LEAD_TABS = [
+  { id: 'quarter', label: '每季區域排名' },
+  { id: 'mvp', label: 'MVP' },
+];
+
 function LeadHistory() {
-  const months = CATS.map(cat => quarterRanks(cat));
+  const [tab, setTab] = useState('quarter');
+  const quarters = CATS.map(cat => quarterRanks(cat));
   const champs = mvps();
   return (
     <>
-      <ul className="hist-rows">
-        {(months[0] || []).map(m0 => (
+      <div className="hist-tabs" role="tablist">
+        {LEAD_TABS.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            className={tab === t.id ? 'on' : undefined}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {tab === 'quarter' ? (
+      <ul className="hist-rows" role="tabpanel">
+        {(quarters[0] || []).map(m0 => (
           <li key={m0.label} className="hist-car">
             <strong>{m0.label}</strong>
             {m0.ranks.map(base => (
@@ -32,7 +53,7 @@ function LeadHistory() {
                 {base.name}
                 {' '}
                 {CATS.map((cat, i) => {
-                  const month = months[i].find(m => m.label === m0.label);
+                  const month = quarters[i].find(m => m.label === m0.label);
                   const row = month?.ranks.find(r => r.id === base.id);
                   return row ? `${cat.name} 第 ${row.rank} / ${month.ranks.length} · ${row.v}` : null;
                 }).filter(Boolean).join(' · ')}
@@ -41,7 +62,8 @@ function LeadHistory() {
           </li>
         ))}
       </ul>
-      <ul className="hist-rows">
+      ) : (
+      <ul className="hist-rows" role="tabpanel">
         {champs.map(m => (
           <li key={m.id} className="hist-row">
             <span>{CATS.find(c => c.id === m.id)?.name}</span>
@@ -50,6 +72,7 @@ function LeadHistory() {
           </li>
         ))}
       </ul>
+      )}
     </>
   );
 }
@@ -156,7 +179,7 @@ export default function HistoryDialog({ role }) {
           {period ? <p className="hist-period">資料期間：{period}</p> : null}
           {role === 'driver' ? <DriverRanks /> : null}
           {role === 'fleet' ? <FleetHistory /> : null}
-          {role === 'lead' ? <LeadHistory /> : null}
+          {open && role === 'lead' ? <LeadHistory /> : null}
         </div>
       </dialog>
     </>
