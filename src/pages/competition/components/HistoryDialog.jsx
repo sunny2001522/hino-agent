@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { CATS, monthRanks, mvps, rankOf } from '../score.js';
+import { CATS, mvps, quarterRanks, rankOf } from '../score.js';
 
 const SHELL = {
   driver: '自己的本期名次',
@@ -19,7 +19,7 @@ function ownCar() {
 }
 
 function LeadHistory() {
-  const months = CATS.map(cat => monthRanks(cat));
+  const months = CATS.map(cat => quarterRanks(cat));
   const champs = mvps();
   return (
     <>
@@ -60,7 +60,7 @@ function FleetHistory() {
   const region = data?.regions?.find(r => r.id === rid);
   if (!region) return <p className="hist-empty">無法載入</p>;
   const cars = [...region.drivers].sort((a, b) => (a.c < b.c ? -1 : a.c > b.c ? 1 : 0));
-  const months = CATS.map(cat => monthRanks(cat));
+  const months = CATS.map(cat => quarterRanks(cat));
   const labels = (months[0] || []).filter(m => m.ranks.some(row => row.id === rid)).map(m => m.label);
 
   return (
