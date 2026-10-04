@@ -220,24 +220,11 @@ const AppBar = memo(function AppBar() {
       <div className="logo">iTRAQ</div>
       <button className="menuToggle" id="menuToggle" type="button" aria-label="開啟導覽選單" aria-expanded="false" hidden>☰</button>
       <nav className="tabbar" id="tabbar" style={{ display: 'none' }} />
-      <button className="noticebtn" id="noticeButton" type="button" aria-label="通知中心">♧<span /></button>
-      <div className="whoami"><div className="nm" id="waName">—</div><div className="rl" id="waRole">—</div></div>
-      <button className="barbtn" id="logoutButton" type="button" onClick={() => window.logout?.()}>登出</button>
     </div>
   );
 });
 
-function DemoBanner() {
-  const period = window.HINO_EXCEL_DATA?.meta?.period || '—';
-  return (
-    <div className="demo-banner" id="demoBanner">
-      <b>DEMO</b>
-      <span>歷史資料 {period} · 非即時</span>
-      <button type="button" className="demo-banner-btn" onClick={openDemoDataNote}>資料說明</button>
-      <button type="button" className="demo-banner-btn" onClick={openDemoLabNote}>情境模擬</button>
-    </div>
-  );
-}
+
 
 const Fabs = memo(function Fabs() {
   return (

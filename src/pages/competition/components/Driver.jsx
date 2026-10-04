@@ -112,8 +112,6 @@ export default function Driver() {
   return (
     <>
       <section className="dash-top drv-dash">
-        <p className="period">{data.meta.period} · 資料截至 {asOf}</p>
-        <p className="period">歷史車號指標 Demo，非官方駕駛成績；區域為 GPS 展示分組，缺測月份不參與比較。</p>
         <div className="top10">
           <div className="top10-ttl">全隊前 10 · {cat.name}</div>
           {top10.length > 0 && (

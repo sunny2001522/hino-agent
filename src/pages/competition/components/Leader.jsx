@@ -221,7 +221,6 @@ export default function Leader() {
             </button>
           ))}
         </p>
-        <p className="period">歷史車號指標 Demo，非官方駕駛成績；區域為 GPS 展示分組，缺測月份不參與比較。</p>
         <div className="score-row">
           <div className="score-card">
             <div className="k">本區平均</div>
