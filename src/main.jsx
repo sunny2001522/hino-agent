@@ -217,7 +217,10 @@ function openDemoLabNote() {
 const AppBar = memo(function AppBar() {
   return (
     <div className="appbar" id="appbar" data-react style={{ display: 'none' }}>
-      <div className="logo">iTRAQ</div>
+      <div className="logo ">
+        
+      <img src="https://play-lh.googleusercontent.com/3Dm4FOtHkco5Pl2zNZub7X77luaxyrfW-xaeFuou_YYFi0K1uiNaTBlTjxjvK7WM76xsr9BrD8bX0NwMkSolzA" alt="" />
+      </div>
       <button className="menuToggle" id="menuToggle" type="button" aria-label="開啟導覽選單" aria-expanded="false" hidden>☰</button>
       <nav className="tabbar" id="tabbar" style={{ display: 'none' }} />
     </div>
